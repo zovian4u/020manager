@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+:root {
+    --neon-red: #ff0000;
+    --war-black: #050505;
+}
+
+
+/* Tactical Scanning Line */
+@keyframes scan {
+    0% {
+        transform: translateY(-100%);
+    }
+
+    100% {
+        transform: translateY(100%);
+    }
+}
+
+.animate-scan::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 0, 0, 0.4);
+    box-shadow: 0 0 15px var(--neon-red);
+    animation: scan 4s linear infinite;
+    pointer-events: none;
+}
+
+.neon-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+    .neon-card:hover {
+        border-color: var(--neon-red);
+        box-shadow: 0 0 25px rgba(255, 0, 0, 0.2);
+    }
+
+.neon-text {
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
