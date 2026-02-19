@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { useStackApp } from "@stackframe/stack";
 import { supabase } from "../../lib/supabase";
-import Link from "next/link"; // ✅ Import Link for navigation
+import Link from "next/link";
 
 interface MemberProfile {
     user_id: string;
     username: string;
     squad_1_power: number;
     ds_choice?: string;
-    ds_team?: string; // ✅ New Team Field
+    ds_team?: string; // Member's preference
     ds_signup_time?: string;
 }
 
@@ -20,7 +20,7 @@ export default function DesertStormSignup() {
 
     const [userData, setUserData] = useState<MemberProfile | null>(null);
     const [selectedChoice, setSelectedChoice] = useState("");
-    const [selectedTeam, setSelectedTeam] = useState(""); // ✅ New State for Team
+    const [selectedTeam, setSelectedTeam] = useState(""); 
     const [showPreview, setShowPreview] = useState(false);
     const [loading, setLoading] = useState(false);
     
@@ -29,6 +29,7 @@ export default function DesertStormSignup() {
 
     useEffect(() => {
         if (!user) return;
+
         async function fetchSystemAndUser() {
             const [userRes, settingsRes] = await Promise.all([
                 supabase.from("members").select("*").eq("user_id", user!.id).single(),
@@ -38,25 +39,32 @@ export default function DesertStormSignup() {
             if (userRes.data) {
                 setUserData(userRes.data as MemberProfile);
                 if (userRes.data.ds_choice) setSelectedChoice(userRes.data.ds_choice);
-                if (userRes.data.ds_team) setSelectedTeam(userRes.data.ds_team); // ✅ Load existing team
+                if (userRes.data.ds_team) setSelectedTeam(userRes.data.ds_team);
             }
-            if (settingsRes.data) setIsWindowOpen(settingsRes.data.registration_open);
+
+            if (settingsRes.data) {
+                setIsWindowOpen(settingsRes.data.registration_open);
+            }
             setStatusChecked(true);
         }
         fetchSystemAndUser();
     }, [user]);
 
-    if (!user) return <div className="min-h-screen flex items-center justify-center bg-pink-50 text-slate-400 font-black uppercase text-[10px] tracking-widest">Identifying...</div>;
-    if (!statusChecked) return <div className="min-h-screen flex items-center justify-center bg-pink-50 text-slate-400 font-black uppercase text-[10px] tracking-widest">Checking Protocol...</div>;
+    if (!user) return <div className="min-h-screen flex items-center justify-center bg-pink-50 font-black text-slate-400 uppercase text-[10px] tracking-widest">Identifying...</div>;
+    if (!statusChecked) return <div className="min-h-screen flex items-center justify-center bg-pink-50 font-black text-slate-400 uppercase text-[10px] tracking-widest">Checking Protocol...</div>;
 
     if (!isWindowOpen) {
         return (
-            <main className="min-h-screen flex items-center justify-center bg-slate-900 px-6 text-center">
-                 <div className="w-full max-w-md bg-white p-10 rounded-[3rem] shadow-2xl">
+            <main className="min-h-screen flex items-center justify-center bg-slate-900 px-6">
+                <div className="w-full max-w-md bg-white p-10 rounded-[3rem] text-center shadow-2xl">
                     <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">🚫</div>
                     <h2 className="text-2xl font-black text-slate-800 uppercase italic">Window Locked</h2>
-                    <p className="text-slate-500 font-bold text-[10px] mt-4 leading-relaxed uppercase tracking-[0.2em]">R4 Command has closed registration.</p>
-                    <Link href="/" className="mt-10 block py-4 bg-slate-100 rounded-full font-black text-[10px] uppercase tracking-widest text-slate-500">Return to Hub</Link>
+                    <p className="text-slate-500 font-bold text-[10px] mt-4 leading-relaxed uppercase tracking-[0.2em]">
+                        R4 Command has closed registration. No further modifications permitted.
+                    </p>
+                    <Link href="/" className="mt-10 block py-4 bg-slate-100 rounded-full font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-all">
+                        Return to Hub
+                    </Link>
                 </div>
             </main>
         );
@@ -72,7 +80,6 @@ export default function DesertStormSignup() {
         <main className="relative min-h-screen flex flex-col items-center justify-center px-6 py-12">
             <div className="absolute inset-0 bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200" />
             
-            {/* ✅ Return to Hub Link */}
             <Link href="/" className="relative z-10 mb-6 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-all font-black uppercase text-[10px] tracking-widest">
                 <span>←</span> Return to 020 Strategic Hub
             </Link>
@@ -85,8 +92,7 @@ export default function DesertStormSignup() {
 
                 {!showPreview ? (
                     <div className="space-y-6">
-                        {/* Step 1: Availability */}
-                        <div className="space-y-3">
+                        <section className="space-y-3">
                             <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] text-center mb-2">Step 1: Availability</p>
                             {choices.map((choice) => (
                                 <button key={choice} onClick={() => setSelectedChoice(choice)}
@@ -95,12 +101,11 @@ export default function DesertStormSignup() {
                                     {choice}
                                 </button>
                             ))}
-                        </div>
+                        </section>
 
-                        {/* Step 2: Team Selection (Only shown if 'Yes' is selected) */}
                         {selectedChoice.startsWith("Yes") && (
-                            <div className="space-y-3 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2">
-                                <p className="text-[9px] text-pink-500 font-black uppercase tracking-[0.2em] text-center mb-2">Step 2: Assign Team</p>
+                            <section className="space-y-3 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2">
+                                <p className="text-[9px] text-pink-500 font-black uppercase tracking-[0.2em] text-center mb-2">Step 2: Priority Choice</p>
                                 {teams.map((team) => (
                                     <button key={team.id} onClick={() => setSelectedTeam(team.id)}
                                         className={`w-full py-5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2
@@ -108,13 +113,13 @@ export default function DesertStormSignup() {
                                         {team.label}
                                     </button>
                                 ))}
-                            </div>
+                            </section>
                         )}
 
                         <button
                             disabled={!selectedChoice || (selectedChoice.startsWith("Yes") && !selectedTeam)}
                             onClick={() => setShowPreview(true)}
-                            className="w-full mt-6 py-6 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black uppercase tracking-widest shadow-xl disabled:opacity-30"
+                            className="w-full mt-6 py-6 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black uppercase tracking-widest shadow-xl disabled:opacity-30 transition-all hover:scale-[1.02]"
                         >
                             Review Intel
                         </button>
@@ -128,7 +133,7 @@ export default function DesertStormSignup() {
                             </div>
                             {selectedTeam && selectedChoice.startsWith("Yes") && (
                                 <div>
-                                    <span className="text-[9px] text-pink-500 uppercase font-black tracking-widest block mb-1">Assigned Team</span>
+                                    <span className="text-[9px] text-pink-500 uppercase font-black tracking-widest block mb-1">Requested Team</span>
                                     <p className="text-xl font-black text-pink-600 uppercase italic">{selectedTeam}</p>
                                 </div>
                             )}

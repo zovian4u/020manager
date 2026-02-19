@@ -5,14 +5,15 @@ import { useStackApp } from "@stackframe/stack";
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 
-// 🛡️ Comprehensive interface to ensure all possible data keys are caught
+// 🛡️ Updated interface to include member preferences and assignments
 interface Member {
     user_id: string;
     username: string;
     squad_1_power: number;
     total_hero_power?: number;
-    team_assignment?: string;
-    ds_choice?: string;
+    team_assignment?: string; // R4 Final Decision
+    ds_choice?: string;       // Attendance status
+    ds_team?: string;         // ✅ Member's requested Team (A or B)
     role?: string;
 }
 
@@ -20,7 +21,6 @@ export default function TacticalDashboard() {
     const stack = useStackApp();
     const user = stack.useUser();
     
-    // ✅ Mounting Guard: Essential for preventing the "state update" warning
     const [hasMounted, setHasMounted] = useState(false);
     const [members, setMembers] = useState<Member[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -33,10 +33,10 @@ export default function TacticalDashboard() {
     useEffect(() => {
         if (!hasMounted || !user) return;
         async function getData() {
-            // ✅ Explicitly fetching all columns to ensure nothing is missed
+            // ✅ Fetching ds_team to show member preferences
             const { data, error } = await supabase
                 .from('members')
-                .select('user_id, username, squad_1_power, total_hero_power, team_assignment, ds_choice, role');
+                .select('user_id, username, squad_1_power, total_hero_power, team_assignment, ds_choice, ds_team, role');
             
             if (error) {
                 console.error("Supabase Connection Error:", error.message);
@@ -45,14 +45,11 @@ export default function TacticalDashboard() {
 
             if (data) {
                 setMembers(data as Member[]);
-                // 🔍 Check your browser console (F12) to see exactly how Supabase sends the 66.40
-                console.log("Tactical Audit - Data Found:", data[0]);
             }
         }
         getData();
     }, [hasMounted, user]);
 
-    // 🛡️ Prevents render-logic errors before mounting
     if (!hasMounted) return null;
 
     // Role Guard
@@ -64,7 +61,6 @@ export default function TacticalDashboard() {
     const teamACount = members.filter(m => m.team_assignment === 'A').length;
     const teamBCount = members.filter(m => m.team_assignment === 'B').length;
 
-    // ✅ Zovi Logic: Now uses a safe Number conversion to prevent "0.00" sorting
     const sortedMembers = zoviFilter
         ? [...members].sort((a, b) => {
             const getP = (c?: string) => c?.includes("for sure") ? 3 : c?.includes("sub") ? 2 : 1;
@@ -82,7 +78,7 @@ export default function TacticalDashboard() {
 
     return (
         <main className="min-h-screen p-8 bg-slate-50 text-slate-900">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 <header className="flex justify-between items-center mb-10 border-b border-slate-200 pb-6">
                     <div>
                         <h1 className="text-3xl font-black text-red-700 uppercase italic leading-tight">Command Center</h1>
@@ -105,19 +101,19 @@ export default function TacticalDashboard() {
                 </div>
 
                 <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.05)] overflow-hidden">
-                    <table className="w-full text-left">
+                    <table className="w-full text-left border-collapse">
                         <thead className="bg-slate-50/80 border-b border-slate-100">
                             <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                 <th className="p-6 w-12 text-center">Select</th>
-                                <th className="p-6">Team</th>
+                                <th className="p-6">Final Assignment</th>
                                 <th className="p-6">Member Name</th>
-                                <th className="p-6">Squad 1 (M)</th>
-                                <th className="p-6">Desert Storm Preference</th>
+                                <th className="p-6">Power (M)</th>
+                                <th className="p-6">Attendance</th>
+                                <th className="p-6">Requested Team</th> {/* ✅ New Audit Column */}
                             </tr>
                         </thead>
                         <tbody className="text-sm font-bold text-slate-700">
                             {sortedMembers.map(m => {
-                                // 🛠️ Logic Guard: Reads either squad_1_power or total_hero_power as fallback
                                 const powerValue = Number(m.squad_1_power || m.total_hero_power || 0);
 
                                 return (
@@ -127,17 +123,23 @@ export default function TacticalDashboard() {
                                         </td>
                                         <td className="p-6">
                                             <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${m.team_assignment === 'A' ? 'bg-blue-600 shadow-[0_4px_10px_rgba(37,99,235,0.3)]' : m.team_assignment === 'B' ? 'bg-green-600 shadow-[0_4px_10px_rgba(22,163,74,0.3)]' : 'bg-slate-300'}`}>
-                                                {m.team_assignment ? `TEAM ${m.team_assignment}` : 'UNASSIGNED'}
+                                                {m.team_assignment ? `TEAM ${m.team_assignment}` : 'PENDING'}
                                             </span>
                                         </td>
                                         <td className="p-6 uppercase tracking-tighter text-slate-900">{m.username}</td>
-                                        <td className="p-6 font-mono text-pink-600">
-                                            {/* ✅ Shows 66.40M correctly */}
-                                            {powerValue.toFixed(2)}M
+                                        <td className="p-6 font-mono text-pink-600">{powerValue.toFixed(2)}M</td>
+                                        <td className="p-6 text-[10px] uppercase font-black text-slate-500">
+                                            {m.ds_choice ? m.ds_choice.split(' ')[0] : '---'}
                                         </td>
-                                        <td className="p-6 text-[11px] font-normal text-slate-500 italic">
-                                            {/* ✅ Fallback for missing preferences */}
-                                            {m.ds_choice ? m.ds_choice.toUpperCase() : '---'}
+                                        <td className="p-6">
+                                            {/* ✅ Shows exactly what the user picked in Desert Storm page */}
+                                            {m.ds_team ? (
+                                                <span className={`px-3 py-1 rounded-lg text-[9px] font-black border ${m.ds_team === 'Team A' ? 'border-blue-200 text-blue-500 bg-blue-50' : 'border-green-200 text-green-600 bg-green-50'}`}>
+                                                    {m.ds_team.toUpperCase()}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-300 text-[10px]">NO PREFERENCE</span>
+                                            )}
                                         </td>
                                     </tr>
                                 );
