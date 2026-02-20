@@ -41,17 +41,16 @@ export default function Home() {
         birthday: ""
     });
 
-    // 🛡️ System Guard: Mark as mounted once browser loads
+    // 🛡️ System Guard
     useEffect(() => {
         setHasMounted(true);
     }, []);
 
-    // 🛡️ Data Guard: Fetch logic only after mounting and user check
+    // 🛡️ Data Guard: Fetch logic
     useEffect(() => {
         if (!hasMounted) return;
 
         async function getHubData() {
-            // 1. Fetch Members
             const { data: membersData } = await supabase
                 .from('members')
                 .select('*')
@@ -77,12 +76,11 @@ export default function Home() {
                 }
             }
 
-            // 2. Fetch Registration Status (Safer fetch)
             const { data: settingsData } = await supabase
                 .from('settings')
                 .select('registration_open')
                 .eq('id', 1);
-            
+
             if (settingsData && settingsData.length > 0) {
                 setRegistrationOpen(settingsData[0].registration_open);
             }
@@ -90,10 +88,27 @@ export default function Home() {
         getHubData();
     }, [hasMounted, user]);
 
-    if (!hasMounted) return null;
-
     // ✅ Logic for Desert Signups
     const desertSignups = members.filter(m => m.ds_choice && m.ds_signup_time);
+    const totalActiveMembers = members.length || 1;
+    const signupPercentage = Math.round((desertSignups.length / totalActiveMembers) * 100);
+
+    // ✅ Fix: Specified type as string | number to resolve "Unexpected any"
+    const displayPower = (val: string | number) => {
+        const num = typeof val === 'string' ? parseFloat(val) : val;
+        const validNum = num || 0;
+        if (validNum === 0) return "0.0M";
+
+        // If raw large integer (e.g. 85000000)
+        if (validNum >= 1000) {
+            return (validNum / 1000000).toFixed(1) + "M";
+        }
+
+        // If already stored as decimal (e.g. 85.4)
+        return validNum.toFixed(1) + "M";
+    };
+
+    if (!hasMounted) return null;
 
     return (
         <main className="min-h-screen p-8 bg-pink-50/50 text-slate-900">
@@ -124,7 +139,7 @@ export default function Home() {
                         <p className="text-white font-black uppercase text-[10px] tracking-[0.3em]">Command Center</p>
                         <p className="text-slate-400 text-[9px] font-bold uppercase mt-1">Status: {registrationOpen ? "Window Open" : "Window Locked"}</p>
                     </div>
-                    <button 
+                    <button
                         onClick={async () => {
                             const newStatus = !registrationOpen;
                             const { error } = await supabase.from('settings').update({ registration_open: newStatus }).eq('id', 1);
@@ -159,33 +174,30 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* ✅ 4-Leaderboard Layout */}
+            {/* ✅ Leaderboards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-20">
                 {[
-                    { title: 'Power', data: members.slice(0, 5), val: (m: Member) => `${(m.total_hero_power / 1000000).toFixed(1)}M` },
-                    { title: 'Vs Score', data: [...members].sort((a,b) => (b.vs_score || 0) - (a.vs_score || 0)).slice(0, 5), val: (m: Member) => m.vs_score || 0 },
-                    { title: 'Desert Pts', data: [...members].sort((a,b) => (b.desert_points || 0) - (a.desert_points || 0)).slice(0, 5), val: (m: Member) => m.desert_points || 0 },
-                    { title: 'DS Mobilization', isStats: true, total: desertSignups.length, remaining: Math.max(0, members.length - desertSignups.length) }
+                    { title: 'Power', data: members.slice(0, 5), val: (m: Member) => displayPower(m.total_hero_power) },
+                    { title: 'Vs Score', data: [...members].sort((a, b) => (Number(b.vs_score || 0)) - (Number(a.vs_score || 0))).slice(0, 5), val: (m: Member) => m.vs_score || 0 },
+                    { title: 'Desert Pts', data: [...members].sort((a, b) => (Number(b.desert_points || 0)) - (Number(a.desert_points || 0))).slice(0, 5), val: (m: Member) => m.desert_points || 0 },
+                    { title: 'DS Mobilization', isStats: true, total: desertSignups.length }
                 ].map((board, i) => (
                     <div key={i} className="bg-white/70 backdrop-blur-xl border border-white p-6 rounded-[2.5rem] shadow-xl">
                         <h3 className="text-[11px] font-black text-slate-800 mb-6 uppercase italic tracking-wider border-b border-pink-100 pb-2">{board.title}</h3>
-                        
+
                         {board.isStats ? (
                             <div className="space-y-6 py-2">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase">Registered</span>
-                                    <span className="text-xl font-black text-green-600 italic">{board.total}</span>
+                                <div className="flex justify-between items-center text-xl font-black text-pink-600">
+                                    <span>{board.total}</span>
+                                    <span className="text-[10px] uppercase text-slate-400 italic">Registered</span>
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase">Pending</span>
-                                    <span className="text-xl font-black text-red-500 italic">{board.remaining}</span>
-                                </div>
-                                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-4">
-                                    <div 
-                                        className="bg-gradient-to-r from-pink-500 to-purple-600 h-full transition-all duration-1000" 
-                                        style={{ width: `${(board.total / (members.length || 1)) * 100}%` }}
+                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-50">
+                                    <div
+                                        className="bg-gradient-to-r from-pink-500 to-purple-600 h-full transition-all duration-1000"
+                                        style={{ width: `${signupPercentage}%` }}
                                     />
                                 </div>
+                                <p className="text-[9px] font-bold text-slate-400 text-right uppercase tracking-widest">{signupPercentage}% COMPLETE</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -203,7 +215,7 @@ export default function Home() {
                 ))}
             </div>
 
-            {/* ✅ Settings Modal (Original Features Preserved) */}
+            {/* ✅ Settings Modal */}
             {isEditing && (
                 <div className="fixed inset-0 bg-white/30 backdrop-blur-md z-[100] flex items-center justify-center p-6">
                     <div className="bg-white border border-pink-100 p-10 rounded-[3rem] w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh]">
@@ -219,11 +231,23 @@ export default function Home() {
                             </div>
                             <div className="flex flex-col">
                                 <label className="text-[10px] text-slate-400 font-black uppercase mb-1">Total Power</label>
-                                <input type="number" value={formData.total_hero_power} className="bg-slate-100 border p-3 rounded-xl text-slate-800 font-bold outline-none" onChange={e => setFormData({ ...formData, total_hero_power: parseInt(e.target.value) || 0 })} />
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    value={formData.total_hero_power}
+                                    className="bg-slate-100 border p-3 rounded-xl text-slate-800 font-bold outline-none"
+                                    onChange={e => setFormData({ ...formData, total_hero_power: parseFloat(e.target.value) || 0 })}
+                                />
                             </div>
                             <div className="flex flex-col">
                                 <label className="text-[10px] text-slate-400 font-black uppercase mb-1">Squad 1 Power</label>
-                                <input type="number" value={formData.squad_1_power} className="bg-slate-100 border p-3 rounded-xl text-slate-800 font-bold outline-none" onChange={e => setFormData({ ...formData, squad_1_power: parseInt(e.target.value) || 0 })} />
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    value={formData.squad_1_power}
+                                    className="bg-slate-100 border p-3 rounded-xl text-slate-800 font-bold outline-none"
+                                    onChange={e => setFormData({ ...formData, squad_1_power: parseFloat(e.target.value) || 0 })}
+                                />
                             </div>
                             <div className="flex flex-col">
                                 <label className="text-[10px] text-slate-400 font-black uppercase mb-1">Gender</label>
