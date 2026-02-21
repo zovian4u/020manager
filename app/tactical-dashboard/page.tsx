@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useStackApp } from "@stackframe/stack";
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
+import { useLanguage } from '../../lib/LanguageContext';
 
 // 🛡️ Updated interface to include member preferences and assignments
 interface Member {
@@ -20,7 +21,8 @@ interface Member {
 export default function TacticalDashboard() {
     const stack = useStackApp();
     const user = stack.useUser();
-    
+    const { t } = useLanguage();
+
     const [hasMounted, setHasMounted] = useState(false);
     const [members, setMembers] = useState<Member[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -37,7 +39,7 @@ export default function TacticalDashboard() {
             const { data, error } = await supabase
                 .from('members')
                 .select('user_id, username, squad_1_power, total_hero_power, team_assignment, ds_choice, ds_team, role');
-            
+
             if (error) {
                 console.error("Supabase Connection Error:", error.message);
                 return;
@@ -55,7 +57,7 @@ export default function TacticalDashboard() {
     // Role Guard
     const currentUser = members.find(m => m.user_id === user?.id);
     if (currentUser && currentUser.role !== 'R4') {
-        return <div className="p-20 text-center font-black text-red-600 uppercase tracking-widest">Unauthorized Access</div>;
+        return <div className="p-20 text-center font-black text-red-600 uppercase tracking-widest">{t('unauthorized')}</div>;
     }
 
     const teamACount = members.filter(m => m.team_assignment === 'A').length;
@@ -77,26 +79,25 @@ export default function TacticalDashboard() {
     };
 
     return (
-        <main className="min-h-screen p-8 bg-slate-50 text-slate-900">
+        <div className="min-h-[calc(100vh-72px)] px-4 md:px-8 pb-8 bg-slate-50 text-slate-900 pt-8">
             <div className="max-w-7xl mx-auto">
                 <header className="flex justify-between items-center mb-10 border-b border-slate-200 pb-6">
                     <div>
-                        <h1 className="text-3xl font-black text-red-700 uppercase italic leading-tight">Command Center</h1>
-                        <p className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase">Alliance 020 Strategic Board</p>
+                        <h1 className="text-3xl font-black text-red-700 uppercase italic leading-tight">{t('commandCenter')}</h1>
+                        <p className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase">{t('allianceName')} 020 Strategic Board</p>
                     </div>
-                    <Link href="/"><button className="px-6 py-2 bg-slate-200 rounded-full text-[10px] font-black uppercase cursor-pointer hover:bg-slate-300 transition-all">Back to Hub</button></Link>
                 </header>
 
                 <div className="flex flex-wrap gap-3 mb-8 items-center">
-                    <button onClick={() => handleMassAction('A')} className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md">ASSIGN TEAM A ({teamACount}/30)</button>
-                    <button onClick={() => handleMassAction('B')} className="px-5 py-2.5 bg-green-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md">ASSIGN TEAM B ({teamBCount}/30)</button>
-                    <button onClick={() => handleMassAction('None')} className="px-5 py-2.5 bg-slate-300 text-slate-700 text-[10px] font-black rounded-xl cursor-pointer hover:bg-slate-400">REMOVE FROM TEAMS</button>
+                    <button onClick={() => handleMassAction('A')} className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md">{t('assignTeamA')} ({teamACount}/30)</button>
+                    <button onClick={() => handleMassAction('B')} className="px-5 py-2.5 bg-green-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md">{t('assignTeamB')} ({teamBCount}/30)</button>
+                    <button onClick={() => handleMassAction('None')} className="px-5 py-2.5 bg-slate-300 text-slate-700 text-[10px] font-black rounded-xl cursor-pointer hover:bg-slate-400">{t('removeFromTeams')}</button>
                     <button onClick={() => setZoviFilter(!zoviFilter)} className={`px-5 py-2.5 text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${zoviFilter ? 'bg-orange-500 hover:bg-orange-600' : 'bg-purple-600 hover:bg-purple-700'}`}>
-                        {zoviFilter ? 'DISABLE ZOVI' : 'APPLY ZOVI FILTER'}
+                        {zoviFilter ? t('disableZovi') : t('applyZovi')}
                     </button>
                     <div className="ml-auto flex gap-4 text-[10px] font-black text-blue-600 uppercase underline cursor-pointer">
-                        <span onClick={() => setSelectedUsers(members.map(m => m.user_id))}>Select All</span>
-                        <span onClick={() => setSelectedUsers([])} className="text-red-500">Uncheck All</span>
+                        <span onClick={() => setSelectedUsers(members.map(m => m.user_id))}>{t('selectAll')}</span>
+                        <span onClick={() => setSelectedUsers([])} className="text-red-500">{t('uncheckAll')}</span>
                     </div>
                 </div>
 
@@ -104,12 +105,12 @@ export default function TacticalDashboard() {
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-slate-50/80 border-b border-slate-100">
                             <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                <th className="p-6 w-12 text-center">Select</th>
-                                <th className="p-6">Final Assignment</th>
-                                <th className="p-6">Member Name</th>
-                                <th className="p-6">Power (M)</th>
-                                <th className="p-6">Attendance</th>
-                                <th className="p-6">Requested Team</th> {/* ✅ New Audit Column */}
+                                <th className="p-6 w-12 text-center">{t('select')}</th>
+                                <th className="p-6">{t('finalAssignment')}</th>
+                                <th className="p-6">{t('memberName')}</th>
+                                <th className="p-6">{t('powerM')}</th>
+                                <th className="p-6">{t('attendance')}</th>
+                                <th className="p-6">{t('requestedTeam')}</th> {/* ✅ New Audit Column */}
                             </tr>
                         </thead>
                         <tbody className="text-sm font-bold text-slate-700">
@@ -123,7 +124,7 @@ export default function TacticalDashboard() {
                                         </td>
                                         <td className="p-6">
                                             <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${m.team_assignment === 'A' ? 'bg-blue-600 shadow-[0_4px_10px_rgba(37,99,235,0.3)]' : m.team_assignment === 'B' ? 'bg-green-600 shadow-[0_4px_10px_rgba(22,163,74,0.3)]' : 'bg-slate-300'}`}>
-                                                {m.team_assignment ? `TEAM ${m.team_assignment}` : 'PENDING'}
+                                                {m.team_assignment ? `${t('team')} ${m.team_assignment}` : t('pending')}
                                             </span>
                                         </td>
                                         <td className="p-6 uppercase tracking-tighter text-slate-900">{m.username}</td>
@@ -138,7 +139,7 @@ export default function TacticalDashboard() {
                                                     {m.ds_team.toUpperCase()}
                                                 </span>
                                             ) : (
-                                                <span className="text-slate-300 text-[10px]">NO PREFERENCE</span>
+                                                <span className="text-slate-300 text-[10px]">{t('noPreference')}</span>
                                             )}
                                         </td>
                                     </tr>
@@ -148,6 +149,6 @@ export default function TacticalDashboard() {
                     </table>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }

@@ -2,8 +2,10 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '../../lib/LanguageContext';
 
 export default function HatchPage() {
+    const { t } = useLanguage();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [images, setImages] = useState<HTMLImageElement[]>([]);
     const [progress, setProgress] = useState(0);
@@ -124,17 +126,7 @@ export default function HatchPage() {
         <div className="relative bg-[#f1f5f9] min-h-[300vh] text-slate-900 overflow-x-hidden">
             <div id="bf-garden" className="fixed inset-0 pointer-events-none z-[1000]" />
 
-            {/* Header */}
-            <header className="fixed top-0 w-full px-[5%] py-6 flex justify-between items-center z-[2000] bg-white/20 backdrop-blur-md border-b border-black/5">
-                <div className="text-2xl font-black bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">020 ALLIANCE.</div>
-                <nav>
-                    <ul className="flex list-none gap-8">
-                        <li><Link href="/signin" className="no-underline text-slate-600 font-bold hover:text-pink-500 transition-colors uppercase text-sm tracking-widest">Sign In</Link></li>
-                        <li><Link href="/" className="no-underline text-slate-600 font-bold hover:text-pink-500 transition-colors uppercase text-sm tracking-widest">Hub</Link></li>
-                    </ul>
-                </nav>
-            </header>
-
+            {/* MenuBar handles the header now */}
             {/* Sticky Pill Animation */}
             <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-10 bg-[radial-gradient(circle_at_center,#ffffff_0%,#cbd5e1_100%)]">
                 <div className="relative w-[85vw] max-w-[950px] aspect-video rounded-[40px] bg-black overflow-hidden border-8 border-white/50 shadow-2xl">
@@ -151,9 +143,9 @@ export default function HatchPage() {
                     <div className="bg-slate-900/95 border-2 border-[#f472b6] backdrop-blur-md px-8 py-3 rounded-full mb-6 shadow-2xl">
                         <span className="text-white font-black tracking-widest text-lg">ᴬᴶ ThinkK ʚଓ</span>
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">Incubate <br />The Victory.</h1>
+                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('incubateVictory')}</h1>
                     <p className="text-xl text-slate-900 font-bold max-w-[500px] leading-relaxed drop-shadow-[0_1px_5px_rgba(255,255,255,0.9)]">
-                        Experience the power of 020 Alliance. Witness the rebirth of our top player&apos;s breakthrough skin.
+                        {t('experiencePower')}
                     </p>
                 </section>
 
@@ -161,19 +153,19 @@ export default function HatchPage() {
                     <div className="bg-slate-900/95 border-2 border-[#f472b6] backdrop-blur-md px-8 py-3 rounded-full mb-6 shadow-2xl">
                         <span className="text-white font-black tracking-widest text-lg">ᴬᴶ ThinkK ʚଓ</span>
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">Beyond <br />Boundaries.</h1>
+                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('beyondBoundaries')}</h1>
                     <p className="text-xl text-slate-900 font-bold max-w-[500px] leading-relaxed drop-shadow-[0_1px_5px_rgba(255,255,255,0.9)]">
-                        Real strength isn&apos;t just power—it&apos;s the courage to break the shell and rise.
+                        {t('realStrength')}
                     </p>
                 </section>
 
                 <section className="h-screen flex flex-col items-center justify-center text-center px-[10%]">
                     <div className="bg-slate-900/95 border-4 border-[#f472b6] backdrop-blur-md px-10 py-4 rounded-full mb-8 shadow-2xl">
-                        <span className="text-white font-black tracking-widest text-xl uppercase italic">1st Breakthrough Completed</span>
+                        <span className="text-white font-black tracking-widest text-xl uppercase italic">{t('breakthroughCompleted')}</span>
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-10 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">The Arrival.</h1>
+                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-10 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('theArrival')}</h1>
                     <Link href="/hub" className="px-12 py-5 bg-gradient-to-r from-pink-400 to-purple-600 text-white font-black rounded-full hover:scale-110 transition-transform shadow-[0_20px_40px_rgba(236,72,153,0.3)] no-underline text-lg tracking-widest pointer-events-auto">
-                        ENTER STRATEGIC HUB
+                        {t('enterStrategicHub')}
                     </Link>
                 </section>
             </main>

@@ -1,5 +1,8 @@
 ﻿import { StackProvider, StackTheme } from "@stackframe/stack";
+import React, { Suspense } from "react";
 import { stackServerApp } from "./stack";
+import { LanguageProvider } from "../lib/LanguageContext";
+import MenuBar from "./MenuBar";
 import "./globals.css";
 
 export default function RootLayout({
@@ -12,7 +15,14 @@ export default function RootLayout({
             <body>
                 <StackProvider app={stackServerApp}>
                     <StackTheme>
-                        {children}
+                        <LanguageProvider>
+                            <Suspense fallback={null}>
+                                <MenuBar />
+                            </Suspense>
+                            <main className="pt-[160px] min-h-screen">
+                                {children}
+                            </main>
+                        </LanguageProvider>
                     </StackTheme>
                 </StackProvider>
             </body>

@@ -124,17 +124,7 @@ export default function LandingPage() {
         <div className="relative bg-[#f1f5f9] min-h-[300vh] text-slate-900 overflow-x-hidden">
             <div id="bf-garden" className="fixed inset-0 pointer-events-none z-[1000]" />
 
-            {/* Header */}
-            <header className="fixed top-0 w-full px-[5%] py-6 flex justify-between items-center z-[2000] bg-white/20 backdrop-blur-md border-b border-black/5">
-                <div className="text-2xl font-black bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">020 ALLIANCE.</div>
-                <nav>
-                    <ul className="flex list-none gap-8">
-                        <li><Link href="/signin" className="no-underline text-slate-600 font-bold hover:text-pink-500 transition-colors uppercase text-sm tracking-widest">Sign In</Link></li>
-                        <li><Link href="/hub" className="no-underline text-slate-600 font-bold hover:text-pink-500 transition-colors uppercase text-sm tracking-widest">Strategic Hub</Link></li>
-                    </ul>
-                </nav>
-            </header>
-
+            {/* MenuBar handles the header now */}
             {/* Sticky Pill Animation */}
             <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-10 bg-[radial-gradient(circle_at_center,#ffffff_0%,#cbd5e1_100%)]">
                 <div className="relative w-[85vw] max-w-[950px] aspect-video rounded-[40px] bg-black overflow-hidden border-8 border-white/50 shadow-2xl">
