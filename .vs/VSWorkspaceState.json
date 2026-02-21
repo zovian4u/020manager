@@ -5,8 +5,7 @@
     "\\app\\desert-storm",
     "\\app\\signin",
     "\\app\\signup",
-    "\\app\\tactical-dashboard",
-    "\\lib"
+    "\\app\\tactical-dashboard"
   ],
   "SelectedNode": "\\app\\page.tsx",
   "PreviewInSolutionExplorer": false
