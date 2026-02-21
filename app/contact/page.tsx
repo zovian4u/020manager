@@ -7,15 +7,13 @@ export default function ContactUs() {
     const { t } = useLanguage();
 
     return (
-        <main className="min-h-screen flex flex-col items-center justify-start bg-slate-900 px-6 pb-20 relative overflow-hidden">
+        <main className="min-h-screen flex flex-col items-center justify-center bg-slate-900 px-4 sm:px-6 pb-20 relative overflow-hidden">
             {/* Background animated gradients */}
             <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-pink-600/20 blur-[120px] rounded-full mix-blend-screen" />
             <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-purple-600/20 blur-[120px] rounded-full mix-blend-screen" />
 
-            {/* Spacer for MenuBar */}
-            <div className="h-[120px] w-full shrink-0 relative z-10"></div>
 
-            <div className="relative z-10 w-full max-w-2xl bg-white/5 backdrop-blur-2xl border border-white/10 p-12 rounded-[3rem] text-center shadow-2xl">
+            <div className="relative z-10 w-full max-w-2xl bg-white/5 backdrop-blur-2xl border border-white/10 p-8 sm:p-12 rounded-2xl sm:rounded-[3rem] text-center shadow-2xl">
                 <div className="mb-8 relative inline-block">
                     <div className="w-24 h-24 bg-[#5865F2]/20 rounded-full flex items-center justify-center mx-auto absolute top-0 left-0 blur-xl animate-pulse" />
                     <div className="w-24 h-24 bg-gradient-to-br from-[#5865F2] to-[#4752C4] rounded-full flex items-center justify-center mx-auto shadow-2xl relative z-10 hover:scale-105 transition-transform duration-300">
@@ -26,7 +24,7 @@ export default function ContactUs() {
                     </div>
                 </div>
 
-                <h1 className="text-4xl font-black text-white italic tracking-tighter uppercase mb-4">
+                <h1 className="text-2xl sm:text-4xl font-black text-white italic tracking-tighter uppercase mb-4">
                     {t('contactUs')}
                 </h1>
 
@@ -35,7 +33,7 @@ export default function ContactUs() {
                 </p>
 
                 <a
-                    href="https://discord.gg/your-discord-link-here"
+                    href="https://discord.gg/XC9nUxQZ"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block px-10 py-5 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-full font-black uppercase text-xs tracking-widest shadow-[0_0_40px_rgba(88,101,242,0.4)] hover:shadow-[0_0_60px_rgba(88,101,242,0.6)] hover:-translate-y-1 transition-all"

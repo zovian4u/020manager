@@ -138,7 +138,7 @@ export default function HubPage() {
 
             {/* 🛡️ R4 Command Panel */}
             {currentUser?.role === 'R4' && (
-                <div className="max-w-7xl mx-auto mb-10 p-6 bg-slate-900 rounded-[2.5rem] flex justify-between items-center shadow-2xl border border-slate-800">
+                <div className="max-w-7xl mx-auto mb-10 p-4 sm:p-6 bg-slate-900 rounded-2xl sm:rounded-[2.5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-2xl border border-slate-800">
                     <div>
                         <p className="text-white font-black uppercase text-[10px] tracking-[0.3em]">{t('commandCenter')}</p>
                         <p className="text-slate-400 text-[9px] font-bold uppercase mt-1">{t('status')}: {registrationOpen ? t('statusOpen') : t('statusLocked')}</p>
@@ -149,7 +149,7 @@ export default function HubPage() {
                             const { error } = await supabase.from('settings').update({ registration_open: newStatus }).eq('id', 1);
                             if (!error) setRegistrationOpen(newStatus);
                         }}
-                        className={`px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer ${registrationOpen ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}
+                        className={`px-6 sm:px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center ${registrationOpen ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}
                     >
                         {registrationOpen ? t('closeSignups') : t('openSignups')}
                     </button>
@@ -157,18 +157,18 @@ export default function HubPage() {
             )}
 
             <section className="text-center mb-20">
-                <h2 className="text-7xl md:text-9xl font-black mb-6 tracking-tighter text-slate-900 leading-none uppercase italic">
+                <h2 className="text-4xl sm:text-7xl md:text-9xl font-black mb-6 tracking-tighter text-slate-900 leading-none uppercase italic">
                     {t('allianceName')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 italic">020</span>
                 </h2>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                     {user ? (
                         <>
                             <Link href="/desert-storm">
-                                <button className="px-10 py-4 bg-slate-900 text-white rounded-full font-black text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer">{t('joinDesertStorm')}</button>
+                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-slate-900 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">{t('joinDesertStorm')}</button>
                             </Link>
                             {currentUser?.role === 'R4' && (
                                 <Link href="/tactical-dashboard">
-                                    <button className="px-10 py-4 bg-red-600 text-white rounded-full font-black text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer">📊 {t('tacticalDashboard')}</button>
+                                    <button className="px-6 sm:px-10 py-3 sm:py-4 bg-red-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">📊 {t('tacticalDashboard')}</button>
                                 </Link>
                             )}
                         </>

@@ -81,9 +81,9 @@ export default function TacticalDashboard() {
     return (
         <div className="min-h-[calc(100vh-72px)] px-4 md:px-8 pb-8 bg-slate-50 text-slate-900 pt-8">
             <div className="max-w-7xl mx-auto">
-                <header className="flex justify-between items-center mb-10 border-b border-slate-200 pb-6">
+                <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 border-b border-slate-200 pb-6 gap-2">
                     <div>
-                        <h1 className="text-3xl font-black text-red-700 uppercase italic leading-tight">{t('commandCenter')}</h1>
+                        <h1 className="text-xl sm:text-3xl font-black text-red-700 uppercase italic leading-tight">{t('commandCenter')}</h1>
                         <p className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase">{t('allianceName')} 020 Strategic Board</p>
                     </div>
                 </header>
@@ -101,52 +101,54 @@ export default function TacticalDashboard() {
                     </div>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.05)] overflow-hidden">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50/80 border-b border-slate-100">
-                            <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                <th className="p-6 w-12 text-center">{t('select')}</th>
-                                <th className="p-6">{t('finalAssignment')}</th>
-                                <th className="p-6">{t('memberName')}</th>
-                                <th className="p-6">{t('powerM')}</th>
-                                <th className="p-6">{t('attendance')}</th>
-                                <th className="p-6">{t('requestedTeam')}</th> {/* ✅ New Audit Column */}
-                            </tr>
-                        </thead>
-                        <tbody className="text-sm font-bold text-slate-700">
-                            {sortedMembers.map(m => {
-                                const powerValue = Number(m.squad_1_power || m.total_hero_power || 0);
+                <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-slate-50/80 border-b border-slate-100">
+                                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    <th className="p-6 w-12 text-center">{t('select')}</th>
+                                    <th className="p-6">{t('finalAssignment')}</th>
+                                    <th className="p-6">{t('memberName')}</th>
+                                    <th className="p-6">{t('powerM')}</th>
+                                    <th className="p-6">{t('attendance')}</th>
+                                    <th className="p-6">{t('requestedTeam')}</th> {/* ✅ New Audit Column */}
+                                </tr>
+                            </thead>
+                            <tbody className="text-sm font-bold text-slate-700">
+                                {sortedMembers.map(m => {
+                                    const powerValue = Number(m.squad_1_power || m.total_hero_power || 0);
 
-                                return (
-                                    <tr key={m.user_id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                                        <td className="p-6 text-center">
-                                            <input type="checkbox" className="cursor-pointer w-4 h-4 rounded border-slate-300 accent-blue-600" checked={selectedUsers.includes(m.user_id)} onChange={(e) => e.target.checked ? setSelectedUsers([...selectedUsers, m.user_id]) : setSelectedUsers(selectedUsers.filter(id => id !== m.user_id))} />
-                                        </td>
-                                        <td className="p-6">
-                                            <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${m.team_assignment === 'A' ? 'bg-blue-600 shadow-[0_4px_10px_rgba(37,99,235,0.3)]' : m.team_assignment === 'B' ? 'bg-green-600 shadow-[0_4px_10px_rgba(22,163,74,0.3)]' : 'bg-slate-300'}`}>
-                                                {m.team_assignment ? `${t('team')} ${m.team_assignment}` : t('pending')}
-                                            </span>
-                                        </td>
-                                        <td className="p-6 uppercase tracking-tighter text-slate-900">{m.username}</td>
-                                        <td className="p-6 font-mono text-pink-600">{powerValue.toFixed(2)}M</td>
-                                        <td className="p-6 text-[10px] uppercase font-black text-slate-500">
-                                            {m.ds_choice ? m.ds_choice.split(' ')[0] : '---'}
-                                        </td>
-                                        <td className="p-6">
-                                            {/* ✅ Shows exactly what the user picked in Desert Storm page */}
-                                            {m.ds_team ? (
-                                                <span className={`px-3 py-1 rounded-lg text-[9px] font-black border ${m.ds_team === 'Team A' ? 'border-blue-200 text-blue-500 bg-blue-50' : 'border-green-200 text-green-600 bg-green-50'}`}>
-                                                    {m.ds_team.toUpperCase()}
+                                    return (
+                                        <tr key={m.user_id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                            <td className="p-6 text-center">
+                                                <input type="checkbox" className="cursor-pointer w-4 h-4 rounded border-slate-300 accent-blue-600" checked={selectedUsers.includes(m.user_id)} onChange={(e) => e.target.checked ? setSelectedUsers([...selectedUsers, m.user_id]) : setSelectedUsers(selectedUsers.filter(id => id !== m.user_id))} />
+                                            </td>
+                                            <td className="p-6">
+                                                <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${m.team_assignment === 'A' ? 'bg-blue-600 shadow-[0_4px_10px_rgba(37,99,235,0.3)]' : m.team_assignment === 'B' ? 'bg-green-600 shadow-[0_4px_10px_rgba(22,163,74,0.3)]' : 'bg-slate-300'}`}>
+                                                    {m.team_assignment ? `${t('team')} ${m.team_assignment}` : t('pending')}
                                                 </span>
-                                            ) : (
-                                                <span className="text-slate-300 text-[10px]">{t('noPreference')}</span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                                            </td>
+                                            <td className="p-6 uppercase tracking-tighter text-slate-900">{m.username}</td>
+                                            <td className="p-6 font-mono text-pink-600">{powerValue.toFixed(2)}M</td>
+                                            <td className="p-6 text-[10px] uppercase font-black text-slate-500">
+                                                {m.ds_choice ? m.ds_choice.split(' ')[0] : '---'}
+                                            </td>
+                                            <td className="p-6">
+                                                {/* ✅ Shows exactly what the user picked in Desert Storm page */}
+                                                {m.ds_team ? (
+                                                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black border ${m.ds_team === 'Team A' ? 'border-blue-200 text-blue-500 bg-blue-50' : 'border-green-200 text-green-600 bg-green-50'}`}>
+                                                        {m.ds_team.toUpperCase()}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-300 text-[10px]">{t('noPreference')}</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

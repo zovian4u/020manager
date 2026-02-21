@@ -79,12 +79,12 @@ export default function DesertStormSignup() {
     ];
 
     return (
-        <div className="relative flex flex-col items-center justify-start px-6 pb-12 pt-8 overflow-y-auto w-full">
+        <div className="relative flex flex-col items-center justify-start px-4 sm:px-6 pb-12 pt-4 sm:pt-8 overflow-y-auto w-full">
             <div className="absolute inset-0 bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200" />
 
-            <div className="relative w-full max-w-lg bg-white/80 backdrop-blur-xl rounded-[3rem] shadow-2xl p-10 border border-white/50 z-10 mt-8">
+            <div className="relative w-full max-w-lg bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-[3rem] shadow-2xl p-6 sm:p-10 border border-white/50 z-10 mt-4 sm:mt-8">
                 <header className="text-center mb-10">
-                    <h1 className="text-4xl font-black text-slate-800 italic uppercase tracking-tighter">{t('desertStorm')}</h1>
+                    <h1 className="text-2xl sm:text-4xl font-black text-slate-800 italic uppercase tracking-tighter">{t('desertStorm')}</h1>
                     <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.4em] mt-2">{t('mobilizationProtocol')}</p>
                 </header>
 
