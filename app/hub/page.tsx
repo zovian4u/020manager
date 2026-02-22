@@ -35,6 +35,8 @@ export default function HubPage() {
     const [registrationOpen, setRegistrationOpen] = useState(false);
     const [attendanceMarked, setAttendanceMarked] = useState(true);
     const [hasAttendanceColumn, setHasAttendanceColumn] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [formData, setFormData] = useState({
         username: "",
@@ -68,6 +70,7 @@ export default function HubPage() {
 
         async function getHubData() {
             try {
+                setIsLoading(true);
                 // Fetch members
                 const { data: membersData } = await supabase
                     .from('members')
@@ -120,10 +123,22 @@ export default function HubPage() {
                 }
             } catch (err) {
                 console.error("Hub Data Loader Exception:", err);
+            } finally {
+                setIsLoading(false);
             }
         }
         getHubData();
     }, [hasMounted, user]);
+
+    // 🚨 Force profile completion for first-time login
+    useEffect(() => {
+        if (!hasMounted || !user || isLoading) return;
+
+        const current = members.find(m => m.user_id === user.id);
+        if (!current || !current.username || !current.bio || !current.gender) {
+            setIsEditing(true);
+        }
+    }, [hasMounted, user, members, isLoading]);
 
     // ✅ Helper calculations
     const desertSignups = members.filter(m => m.ds_choice && m.ds_signup_time);
@@ -287,7 +302,8 @@ export default function HubPage() {
                                 <input
                                     type="number"
                                     step="0.1"
-                                    value={formData.total_hero_power}
+                                    value={formData.total_hero_power === 0 ? "" : formData.total_hero_power}
+                                    placeholder="0.0"
                                     className="bg-slate-100 border p-3 rounded-xl text-slate-800 font-bold outline-none"
                                     onChange={e => setFormData({ ...formData, total_hero_power: parseFloat(e.target.value) || 0 })}
                                 />
@@ -297,7 +313,8 @@ export default function HubPage() {
                                 <input
                                     type="number"
                                     step="0.1"
-                                    value={formData.squad_1_power}
+                                    value={formData.squad_1_power === 0 ? "" : formData.squad_1_power}
+                                    placeholder="0.0"
                                     className="bg-slate-100 border p-3 rounded-xl text-slate-800 font-bold outline-none"
                                     onChange={e => setFormData({ ...formData, squad_1_power: parseFloat(e.target.value) || 0 })}
                                 />
@@ -333,12 +350,86 @@ export default function HubPage() {
                             </div>
                         </div>
                         <div className="mt-6 flex flex-col gap-2">
-                            <button onClick={async () => {
-                                await supabase.from('members').upsert({ user_id: user!.id, ...formData }, { onConflict: 'user_id' });
-                                setIsEditing(false);
-                                window.location.reload();
-                            }} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs cursor-pointer">{t('saveRecords')}</button>
-                            <button onClick={() => setIsEditing(false)} className="w-full text-slate-400 font-black uppercase text-[10px] mt-2 tracking-widest cursor-pointer">{t('cancel')}</button>
+                            <button
+                                disabled={isSubmitting}
+                                onClick={async () => {
+                                    if (!formData.username || !formData.bio || !formData.gender || formData.total_hero_power === 0 || formData.squad_1_power === 0) {
+                                        alert("Please complete all mandatory fields: Name, Power, Gender, and Bio.");
+                                        return;
+                                    }
+
+                                    try {
+                                        setIsSubmitting(true);
+                                        // Ensure we have a valid user ID before attempting save
+                                        if (!user?.id) {
+                                            alert("Auth session error. Please refresh the page.");
+                                            return;
+                                        }
+
+                                        console.log("Saving member data for:", user.id, formData);
+
+                                        // 🧪 Attempt 1: Full Save
+                                        const fullSaveData = {
+                                            user_id: user.id,
+                                            username: formData.username,
+                                            total_hero_power: formData.total_hero_power,
+                                            squad_1_power: formData.squad_1_power,
+                                            bio: formData.bio,
+                                            gender: formData.gender,
+                                            birthday: formData.birthday,
+                                            language: formData.language
+                                        };
+
+                                        const { error: fullError } = await supabase
+                                            .from('members')
+                                            .upsert(fullSaveData, { onConflict: 'user_id' });
+
+                                        if (!fullError) {
+                                            console.log("Full Save successful!");
+                                            setIsEditing(false);
+                                            window.location.reload();
+                                            return;
+                                        }
+
+                                        console.warn("Full Save failed, checking for missing columns...", fullError);
+
+                                        // 🧪 Attempt 2: Safe Save (Basic fields only)
+                                        // Some columns might not exist in the database yet
+                                        if (fullError.message.includes("column") || fullError.code === "42703") {
+                                            const { error: safeError } = await supabase
+                                                .from('members')
+                                                .upsert({
+                                                    user_id: user.id,
+                                                    username: formData.username,
+                                                    total_hero_power: formData.total_hero_power,
+                                                    squad_1_power: formData.squad_1_power
+                                                }, { onConflict: 'user_id' });
+
+                                            if (!safeError) {
+                                                alert("Partial Save: IGN and Power saved, but some fields (Bio/Gender/Lang) might be missing from the database schema.");
+                                                setIsEditing(false);
+                                                window.location.reload();
+                                                return;
+                                            }
+
+                                            alert("Database Error: " + safeError.message);
+                                        } else {
+                                            alert("Save Error: " + fullError.message);
+                                        }
+                                    } catch (err: any) {
+                                        console.error("Save Exception:", err);
+                                        alert("Critical Error: " + err.message);
+                                    } finally {
+                                        setIsSubmitting(false);
+                                    }
+                                }}
+                                className={`w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs cursor-pointer transition-all ${isSubmitting ? 'opacity-50 cursor-wait' : 'hover:bg-slate-800'}`}
+                            >
+                                {isSubmitting ? t('syncing') : t('saveRecords')}
+                            </button>
+                            {(currentUser?.username && currentUser?.bio && currentUser?.gender) && (
+                                <button onClick={() => setIsEditing(false)} className="w-full text-slate-400 font-black uppercase text-[10px] mt-2 tracking-widest cursor-pointer">{t('cancel')}</button>
+                            )}
                         </div>
                     </div>
                 </div>
