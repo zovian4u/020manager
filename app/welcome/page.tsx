@@ -145,7 +145,7 @@ export default function HatchPage() {
                     </div>
                     <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('incubateVictory')}</h1>
                     <p className="text-xl text-slate-900 font-bold max-w-[500px] leading-relaxed drop-shadow-[0_1px_5px_rgba(255,255,255,0.9)]">
-                        {t('experiencePower')}
+                        {t('experiencePowerBody')}
                     </p>
                 </section>
 
