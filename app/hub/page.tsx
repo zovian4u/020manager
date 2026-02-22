@@ -85,10 +85,18 @@ export default function HubPage() {
                         const current = typedData.find(m => m.user_id === user.id);
                         if (current) {
                             setCurrentUser(current);
+
+                            // Smart Detection for UI loading
+                            const formatForUI = (val: number) => {
+                                if (!val) return 0;
+                                // If already < 5000, it's likely already in Million format
+                                return val > 5000 ? val / 1000000 : val;
+                            };
+
                             setFormData({
                                 username: current.username || "",
-                                total_hero_power: current.total_hero_power || 0,
-                                squad_1_power: current.squad_1_power || 0,
+                                total_hero_power: formatForUI(current.total_hero_power || 0),
+                                squad_1_power: formatForUI(current.squad_1_power || 0),
                                 bio: current.bio || "",
                                 gender: current.gender || "",
                                 birthday: current.birthday || "",
@@ -130,12 +138,13 @@ export default function HubPage() {
         getHubData();
     }, [hasMounted, user]);
 
-    // 🚨 Force profile completion for first-time login
+    // 🚨 Force profile completion for first-time login or fresh start
     useEffect(() => {
         if (!hasMounted || !user || isLoading) return;
 
         const current = members.find(m => m.user_id === user.id);
-        if (!current || !current.username || !current.bio || !current.gender) {
+        // Force modal if missing basic info OR if starting fresh (power is 0)
+        if (!current || !current.username || !current.bio || !current.gender || (current.total_hero_power || 0) === 0) {
             setIsEditing(true);
         }
     }, [hasMounted, user, members, isLoading]);
@@ -149,7 +158,13 @@ export default function HubPage() {
         const num = typeof val === 'string' ? parseFloat(val) : val;
         const validNum = num || 0;
         if (validNum === 0) return "0.0M";
-        if (validNum >= 1000) return (validNum / 1000000).toFixed(1) + "M";
+
+        // Smart Formatting:
+        // If it's a raw integer (> 5000), divide by 1M
+        if (validNum > 5000) {
+            return (validNum / 1000000).toFixed(1) + "M";
+        }
+        // If it's already in Million format (e.g. 148.5), just show it
         return validNum.toFixed(1) + "M";
     };
 
@@ -368,12 +383,29 @@ export default function HubPage() {
 
                                         console.log("Saving member data for:", user.id, formData);
 
-                                        // 🧪 Attempt 1: Full Save
+                                        // 🧪 Intelligent Scaling: Handle both Millions (173.9) and Raw (173935040)
+                                        const smartScale = (val: number) => {
+                                            if (val <= 0) return 0;
+                                            // If input is less than 5000, it's definitely the "Million" format (e.g. 200.0)
+                                            return val < 5000 ? Math.round(val * 1000000) : Math.round(val);
+                                        };
+
+                                        const finalTHP = smartScale(formData.total_hero_power);
+                                        const finalS1P = smartScale(formData.squad_1_power);
+
+                                        // 🚨 Tactical Validation: Ensure it's at least 10M
+                                        if (finalTHP < 10000000) {
+                                            alert("Minimum power required is 10M.");
+                                            setIsSubmitting(false);
+                                            return;
+                                        }
+
+                                        // 🧪 Attempt 1: Full Save (Raw Integer Storage)
                                         const fullSaveData = {
                                             user_id: user.id,
                                             username: formData.username,
-                                            total_hero_power: formData.total_hero_power,
-                                            squad_1_power: formData.squad_1_power,
+                                            total_hero_power: finalTHP,
+                                            squad_1_power: finalS1P,
                                             bio: formData.bio,
                                             gender: formData.gender,
                                             birthday: formData.birthday,
@@ -401,8 +433,8 @@ export default function HubPage() {
                                                 .upsert({
                                                     user_id: user.id,
                                                     username: formData.username,
-                                                    total_hero_power: formData.total_hero_power,
-                                                    squad_1_power: formData.squad_1_power
+                                                    total_hero_power: finalTHP,
+                                                    squad_1_power: finalS1P
                                                 }, { onConflict: 'user_id' });
 
                                             if (!safeError) {
