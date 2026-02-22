@@ -357,6 +357,7 @@ export default function HubPage() {
                                     <option value="zh">中文 (Chinese)</option>
                                     <option value="ja">日本語 (Japanese)</option>
                                     <option value="th">ไทย (Thai)</option>
+                                    <option value="vi">Tiếng Việt (Vietnamese)</option>
                                 </select>
                             </div>
                             <div className="flex flex-col md:col-span-2">

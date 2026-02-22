@@ -83,7 +83,7 @@ export function LanguageProvider({ children, initialLanguage = 'en' }: { childre
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('preferred_language') as Language;
-            if (saved && (saved === 'en' || saved === 'zh' || saved === 'ja' || saved === 'th')) {
+            if (saved && (saved === 'en' || saved === 'zh' || saved === 'ja' || saved === 'th' || saved === 'vi')) {
                 setLanguageState(saved);
             }
         }
