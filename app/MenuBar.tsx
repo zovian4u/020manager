@@ -8,7 +8,7 @@ import { useStackApp } from "@stackframe/stack";
 import { useState } from "react";
 
 export default function MenuBar() {
-    const { t } = useLanguage();
+    const { language, setLanguage, t } = useLanguage();
     const pathname = usePathname();
     const stack = useStackApp();
     const user = stack.useUser();
@@ -96,6 +96,26 @@ export default function MenuBar() {
 
                 {/* Desktop Auth Section */}
                 <div className="hidden sm:flex items-center gap-3 flex-shrink-0">
+                    {/* Language Selector (Visible to All) */}
+                    <div className="relative group mr-1">
+                        <select
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value as any)}
+                            className="bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-700 outline-none cursor-pointer hover:bg-slate-700 hover:text-white transition-all appearance-none pr-8"
+                        >
+                            <option value="en">EN</option>
+                            <option value="zh">ZH</option>
+                            <option value="ja">JA</option>
+                            <option value="th">TH</option>
+                            <option value="vi">VI</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
+
                     {user ? (
                         <>
                             {pathname === '/hub' ? (
@@ -142,6 +162,18 @@ export default function MenuBar() {
                     className="sm:hidden bg-slate-900/98 backdrop-blur-xl border-b border-slate-700 shadow-2xl animate-in slide-in-from-top overflow-y-auto max-h-[calc(100vh-56px)]"
                 >
                     <div className="flex flex-col gap-2 p-4">
+                        {/* Mobile Language Selector */}
+                        <div className="flex items-center justify-between gap-1 mb-2 bg-slate-800 p-1 rounded-xl border border-slate-700">
+                            {['en', 'zh', 'ja', 'th', 'vi'].map((lang) => (
+                                <button
+                                    key={lang}
+                                    onClick={() => setLanguage(lang as any)}
+                                    className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${language === lang ? 'bg-pink-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                >
+                                    {lang}
+                                </button>
+                            ))}
+                        </div>
                         <NavLink href="/" label={t('homePage')} isActive={pathname === '/'} />
                         {user ? (
                             <>

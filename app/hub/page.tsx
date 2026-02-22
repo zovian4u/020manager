@@ -16,6 +16,7 @@ interface Member {
     team_assignment?: string;
     ds_choice?: string;
     ds_signup_time?: string;
+    arena_power?: number;
     bio?: string;
     gender?: string;
     birthday?: string;
@@ -42,6 +43,7 @@ export default function HubPage() {
         username: "",
         total_hero_power: 0,
         squad_1_power: 0,
+        arena_power: 0,
         bio: "",
         gender: "",
         birthday: "",
@@ -97,6 +99,7 @@ export default function HubPage() {
                                 username: current.username || "",
                                 total_hero_power: formatForUI(current.total_hero_power || 0),
                                 squad_1_power: formatForUI(current.squad_1_power || 0),
+                                arena_power: formatForUI(current.arena_power || 0),
                                 bio: current.bio || "",
                                 gender: current.gender || "",
                                 birthday: current.birthday || "",
@@ -335,6 +338,17 @@ export default function HubPage() {
                                 />
                             </div>
                             <div className="flex flex-col">
+                                <label className="text-[10px] text-slate-400 font-black uppercase mb-1">{t('arenaPower')}</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    value={formData.arena_power === 0 ? "" : formData.arena_power}
+                                    placeholder="0.0"
+                                    className="bg-slate-100 border p-3 rounded-xl text-slate-800 font-bold outline-none"
+                                    onChange={e => setFormData({ ...formData, arena_power: parseFloat(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div className="flex flex-col">
                                 <label className="text-[10px] text-slate-400 font-black uppercase mb-1">{t('gender')}</label>
                                 <select value={formData.gender} className="bg-slate-100 border p-3 rounded-xl text-slate-800 font-bold outline-none" onChange={e => setFormData({ ...formData, gender: e.target.value })}>
                                     <option value="">Select Gender</option>
@@ -393,6 +407,7 @@ export default function HubPage() {
 
                                         const finalTHP = smartScale(formData.total_hero_power);
                                         const finalS1P = smartScale(formData.squad_1_power);
+                                        const finalAP = smartScale(formData.arena_power);
 
                                         // 🚨 Tactical Validation: Ensure it's at least 10M
                                         if (finalTHP < 10000000) {
@@ -407,6 +422,7 @@ export default function HubPage() {
                                             username: formData.username,
                                             total_hero_power: finalTHP,
                                             squad_1_power: finalS1P,
+                                            arena_power: finalAP,
                                             bio: formData.bio,
                                             gender: formData.gender,
                                             birthday: formData.birthday,
@@ -435,7 +451,8 @@ export default function HubPage() {
                                                     user_id: user.id,
                                                     username: formData.username,
                                                     total_hero_power: finalTHP,
-                                                    squad_1_power: finalS1P
+                                                    squad_1_power: finalS1P,
+                                                    arena_power: finalAP
                                                 }, { onConflict: 'user_id' });
 
                                             if (!safeError) {

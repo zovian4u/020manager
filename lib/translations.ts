@@ -171,6 +171,7 @@ export const translations = {
         ajTrainDesc: "Conducted by ᴬᴶ ThinkK ʚଓ. Guardian/VIP selected daily.",
         babyTrainDesc: "Conducted by Baby ʚଓ奥特曼. Guardian/VIP selected daily.",
         specialTrain: "Special Train",
+        arenaPower: "Arena Power",
     },
     zh: {
         hubTitle: "战略中心",
@@ -344,6 +345,7 @@ export const translations = {
         ajTrainDesc: "由 ᴬᴶ ThinkK ʚଓ 进行。每日选择守护者/VIP。",
         babyTrainDesc: "由 Baby ʚଓ奥特曼 进行。每日选择守护者/VIP。",
         specialTrain: "特约列车",
+        arenaPower: "竞技场战力",
     },
     ja: {
         hubTitle: "戦略ハブ",
@@ -517,6 +519,7 @@ export const translations = {
         ajTrainDesc: "ᴬᴶ ThinkK ʚଓ によって行われます。ガーディアン/VIPは毎日選択されます。",
         babyTrainDesc: "Baby ʚଓ奥特曼 によって行われます。ガーディアン/VIPは毎日選択されます。",
         specialTrain: "特別列車",
+        arenaPower: "アリーナ戦力",
     },
     th: {
         hubTitle: "ศูนย์ยุทธศาสตร์",
@@ -690,6 +693,7 @@ export const translations = {
         ajTrainDesc: "ดำเนินการโดย ᴬᴶ ThinkK ʚଓ เลือกผู้พิทักษ์/VIP ทุกวัน",
         babyTrainDesc: "ดำเนินการโดย Baby ʚଓ奥特曼 เลือกผู้พิทักษ์/VIP ทุกวัน",
         specialTrain: "รถไฟพิเศษ",
+        arenaPower: "พลังอารีน่า",
     },
     vi: {
         hubTitle: "Trung tâm Chiến lược",
@@ -863,6 +867,7 @@ export const translations = {
         ajTrainDesc: "Được thực hiện bởi ᴬᴶ ThinkK ʚଓ. Hộ vệ/VIP được chọn hàng ngày.",
         babyTrainDesc: "Được thực hiện bởi Baby ʚଓ奥特曼. Hộ vệ/VIP được chọn hàng ngày.",
         specialTrain: "Tàu Đặc biệt",
+        arenaPower: "Sức mạnh Arena",
     },
 };
 

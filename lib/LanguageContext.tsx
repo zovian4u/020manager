@@ -79,12 +79,23 @@ export function LanguageProvider({ children, initialLanguage = 'en' }: { childre
         // We can try to fetch the user session manually via Supabase or handle it in a way that doesn't suspend.
     };
 
-    // 1. Initial Load from LocalStorage (Immediate)
+    // 1. Initial Load from LocalStorage or URL (Immediate)
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('preferred_language') as Language;
-            if (saved && (saved === 'en' || saved === 'zh' || saved === 'ja' || saved === 'th' || saved === 'vi')) {
-                setLanguageState(saved);
+            const urlParams = new URLSearchParams(window.location.search);
+            const langParam = urlParams.get('lang') as Language;
+
+            if (langParam && (['en', 'zh', 'ja', 'th', 'vi'].includes(langParam))) {
+                setLanguageState(langParam);
+                localStorage.setItem('preferred_language', langParam);
+                // Clean URL
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            } else {
+                const saved = localStorage.getItem('preferred_language') as Language;
+                if (saved && (saved === 'en' || saved === 'zh' || saved === 'ja' || saved === 'th' || saved === 'vi')) {
+                    setLanguageState(saved);
+                }
             }
         }
     }, []);
