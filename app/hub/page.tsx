@@ -11,8 +11,6 @@ interface Member {
     user_id: string;
     username: string;
     total_hero_power: number;
-    vs_score?: number;
-    desert_points?: number;
     squad_1_power: number;
     role?: string;
     team_assignment?: string;
@@ -35,6 +33,8 @@ export default function HubPage() {
     const [currentUser, setCurrentUser] = useState<Member | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [registrationOpen, setRegistrationOpen] = useState(false);
+    const [attendanceMarked, setAttendanceMarked] = useState(true);
+    const [hasAttendanceColumn, setHasAttendanceColumn] = useState(true);
 
     const [formData, setFormData] = useState({
         username: "",
@@ -50,11 +50,9 @@ export default function HubPage() {
     useEffect(() => {
         setHasMounted(true);
 
-        // Listen for global settings dispatch
         const handleOpenSettings = () => setIsEditing(true);
         window.addEventListener('open-settings', handleOpenSettings);
 
-        // Check URL params
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('settings') === 'true') {
             setIsEditing(true);
@@ -69,64 +67,74 @@ export default function HubPage() {
         if (!hasMounted) return;
 
         async function getHubData() {
-            const { data: membersData } = await supabase
-                .from('members')
-                .select('*')
-                .order('total_hero_power', { ascending: false });
+            try {
+                // Fetch members
+                const { data: membersData } = await supabase
+                    .from('members')
+                    .select('*')
+                    .order('total_hero_power', { ascending: false });
 
-            if (membersData) {
-                const typedData = membersData as Member[];
-                setMembers(typedData);
+                if (membersData) {
+                    const typedData = membersData as Member[];
+                    setMembers(typedData);
 
-                if (user) {
-                    const current = typedData.find(m => m.user_id === user.id);
-                    if (current) {
-                        setCurrentUser(current);
-                        setFormData({
-                            username: current.username || "",
-                            total_hero_power: current.total_hero_power || 0,
-                            squad_1_power: current.squad_1_power || 0,
-                            bio: current.bio || "",
-                            gender: current.gender || "",
-                            birthday: current.birthday || "",
-                            language: current.language || "en"
-                        });
-                        if (current.language) {
-                            setLanguage(current.language as Language);
+                    if (user) {
+                        const current = typedData.find(m => m.user_id === user.id);
+                        if (current) {
+                            setCurrentUser(current);
+                            setFormData({
+                                username: current.username || "",
+                                total_hero_power: current.total_hero_power || 0,
+                                squad_1_power: current.squad_1_power || 0,
+                                bio: current.bio || "",
+                                gender: current.gender || "",
+                                birthday: current.birthday || "",
+                                language: current.language || "en"
+                            });
+                            if (current.language) {
+                                setLanguage(current.language as Language);
+                            }
                         }
                     }
                 }
-            }
 
-            const { data: settingsData } = await supabase
-                .from('settings')
-                .select('registration_open')
-                .eq('id', 1);
+                // Fetch settings
+                const { data: settingsData, error: settingsError } = await supabase
+                    .from('settings')
+                    .select('*')
+                    .eq('id', 1);
 
-            if (settingsData && settingsData.length > 0) {
-                setRegistrationOpen(settingsData[0].registration_open);
+                if (settingsError) {
+                    console.error("Settings Fetch Error:", settingsError.message);
+                } else if (settingsData && settingsData.length > 0) {
+                    setRegistrationOpen(settingsData[0].registration_open);
+
+                    // Column detection
+                    if (settingsData[0].attendance_marked === undefined) {
+                        setHasAttendanceColumn(false);
+                        setAttendanceMarked(true);
+                    } else {
+                        setHasAttendanceColumn(true);
+                        setAttendanceMarked(settingsData[0].attendance_marked ?? true);
+                    }
+                }
+            } catch (err) {
+                console.error("Hub Data Loader Exception:", err);
             }
         }
         getHubData();
     }, [hasMounted, user]);
 
-    // ✅ Logic for Desert Signups
+    // ✅ Helper calculations
     const desertSignups = members.filter(m => m.ds_choice && m.ds_signup_time);
     const totalActiveMembers = members.length || 1;
     const signupPercentage = Math.round((desertSignups.length / totalActiveMembers) * 100);
 
-    // ✅ Fix: Specified type as string | number to resolve "Unexpected any"
     const displayPower = (val: string | number) => {
         const num = typeof val === 'string' ? parseFloat(val) : val;
         const validNum = num || 0;
         if (validNum === 0) return "0.0M";
-
-        // If raw large integer (e.g. 85000000)
-        if (validNum >= 1000) {
-            return (validNum / 1000000).toFixed(1) + "M";
-        }
-
-        // If already stored as decimal (e.g. 85.4)
+        if (validNum >= 1000) return (validNum / 1000000).toFixed(1) + "M";
         return validNum.toFixed(1) + "M";
     };
 
@@ -134,25 +142,58 @@ export default function HubPage() {
 
     return (
         <div className="min-h-[calc(100vh-72px)] px-4 md:px-8 pb-8 bg-pink-50/50 text-slate-900 overflow-x-hidden pt-8">
-            {/* Main Content */}
 
             {/* 🛡️ R4 Command Panel */}
             {currentUser?.role === 'R4' && (
-                <div className="max-w-7xl mx-auto mb-10 p-4 sm:p-6 bg-slate-900 rounded-2xl sm:rounded-[2.5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-2xl border border-slate-800">
+                <div className="max-w-7xl mx-auto mb-10 p-4 sm:p-6 bg-slate-900 rounded-2xl sm:rounded-[2.5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-2xl border border-slate-800 animate-in fade-in slide-in-from-top-4">
                     <div>
                         <p className="text-white font-black uppercase text-[10px] tracking-[0.3em]">{t('commandCenter')}</p>
                         <p className="text-slate-400 text-[9px] font-bold uppercase mt-1">{t('status')}: {registrationOpen ? t('statusOpen') : t('statusLocked')}</p>
                     </div>
-                    <button
-                        onClick={async () => {
-                            const newStatus = !registrationOpen;
-                            const { error } = await supabase.from('settings').update({ registration_open: newStatus }).eq('id', 1);
-                            if (!error) setRegistrationOpen(newStatus);
-                        }}
-                        className={`px-6 sm:px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center ${registrationOpen ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}
-                    >
-                        {registrationOpen ? t('closeSignups') : t('openSignups')}
-                    </button>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                        {!registrationOpen && !attendanceMarked && hasAttendanceColumn && (
+                            <p className="text-orange-400 text-[9px] font-black uppercase tracking-widest animate-pulse text-center sm:text-right max-w-[200px]">
+                                ⚠️ {t('attendanceNotMarked')}
+                            </p>
+                        )}
+                        <button
+                            onClick={async () => {
+                                if (hasAttendanceColumn && !registrationOpen && !attendanceMarked) {
+                                    alert(t('attendanceNotMarked'));
+                                    return;
+                                }
+
+                                const newStatus = !registrationOpen;
+                                const updateData: any = { registration_open: newStatus };
+                                if (hasAttendanceColumn && newStatus === true) {
+                                    updateData.attendance_marked = false;
+                                }
+
+                                const { error } = await supabase.from('settings').update(updateData).eq('id', 1);
+                                if (error) {
+                                    console.error("Update Registration Error:", error.message);
+                                    // Fallback if attendance column is actually missing despite our detection
+                                    if (error.message.includes('attendance_marked')) {
+                                        const { error: fallbackError } = await supabase.from('settings').update({ registration_open: newStatus }).eq('id', 1);
+                                        if (!fallbackError) {
+                                            setRegistrationOpen(newStatus);
+                                            setHasAttendanceColumn(false);
+                                        } else {
+                                            alert("Database Error: " + fallbackError.message);
+                                        }
+                                    } else {
+                                        alert("Error: " + error.message);
+                                    }
+                                } else {
+                                    setRegistrationOpen(newStatus);
+                                    if (hasAttendanceColumn && newStatus === true) setAttendanceMarked(false);
+                                }
+                            }}
+                            className={`px-6 sm:px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center ${registrationOpen ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : ((attendanceMarked || !hasAttendanceColumn) ? 'bg-green-600 text-white shadow-[0_0_20px_rgba(22,163,74,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed')}`}
+                        >
+                            {registrationOpen ? t('closeSignups') : t('openSignups')}
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -165,6 +206,15 @@ export default function HubPage() {
                         <>
                             <Link href="/desert-storm">
                                 <button className="px-6 sm:px-10 py-3 sm:py-4 bg-slate-900 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">{t('joinDesertStorm')}</button>
+                            </Link>
+                            <Link href="/alliance-duel">
+                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">{t('enterVsScores')}</button>
+                            </Link>
+                            <Link href="/train">
+                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-amber-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">🚂 {t('trainConductor')}</button>
+                            </Link>
+                            <Link href="/guide">
+                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-indigo-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">📖 {t('guide')}</button>
                             </Link>
                             {currentUser?.role === 'R4' && (
                                 <Link href="/tactical-dashboard">
@@ -179,14 +229,13 @@ export default function HubPage() {
             </section>
 
             {/* ✅ Leaderboards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-20">
                 {[
                     { title: t('power'), data: members.slice(0, 5), val: (m: Member) => displayPower(m.total_hero_power) },
-                    { title: t('vsScore'), data: [...members].sort((a, b) => (Number(b.vs_score || 0)) - (Number(a.vs_score || 0))).slice(0, 5), val: (m: Member) => m.vs_score || 0 },
-                    { title: t('desertPts'), data: [...members].sort((a, b) => (Number(b.desert_points || 0)) - (Number(a.desert_points || 0))).slice(0, 5), val: (m: Member) => m.desert_points || 0 },
+                    { title: t('squad1Power'), data: [...members].sort((a, b) => (b.squad_1_power || 0) - (a.squad_1_power || 0)).slice(0, 5), val: (m: Member) => displayPower(m.squad_1_power) },
                     { title: t('dsMobilization'), isStats: true, total: desertSignups.length }
                 ].map((board, i) => (
-                    <div key={i} className="bg-white/70 backdrop-blur-xl border border-white p-6 rounded-[2.5rem] shadow-xl">
+                    <div key={i} className="bg-white/70 backdrop-blur-xl border border-white p-6 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all">
                         <h3 className="text-[11px] font-black text-slate-800 mb-6 uppercase italic tracking-wider border-b border-pink-100 pb-2">{board.title}</h3>
 
                         {board.isStats ? (
@@ -256,7 +305,7 @@ export default function HubPage() {
                             <div className="flex flex-col">
                                 <label className="text-[10px] text-slate-400 font-black uppercase mb-1">{t('gender')}</label>
                                 <select value={formData.gender} className="bg-slate-100 border p-3 rounded-xl text-slate-800 font-bold outline-none" onChange={e => setFormData({ ...formData, gender: e.target.value })}>
-                                    <option value="">{t('selectLanguage')}</option>
+                                    <option value="">Select Gender</option>
                                     <option value="Male">Male</option>
                                     <option value="Female">Female</option>
                                 </select>

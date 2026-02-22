@@ -75,57 +75,134 @@ export default function AboutUs() {
                     </p>
                 </header>
 
+                {/* Season Gallery Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16 group">
+                    <div className="relative group/season">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-[3rem] blur opacity-25 group-hover/season:opacity-50 transition duration-1000"></div>
+                        <div className="relative bg-slate-900 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
+                            <img
+                                src="/images/about/season 3.jpg"
+                                alt="020 Season 3"
+                                className="w-full h-[400px] object-cover hover:scale-110 transition-transform duration-[2s] cursor-zoom-in"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent">
+                                <span className="text-pink-500 font-black text-[10px] uppercase tracking-[0.4em] mb-2 block">Legacy Operations</span>
+                                <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Season 3 Campaign</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="relative group/season">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-blue-600 rounded-[3rem] blur opacity-25 group-hover/season:opacity-50 transition duration-1000"></div>
+                        <div className="relative bg-slate-900 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
+                            <img
+                                src="/images/about/season 4.jpg"
+                                alt="020 Season 4"
+                                className="w-full h-[400px] object-cover hover:scale-110 transition-transform duration-[2s] cursor-zoom-in"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent">
+                                <span className="text-blue-500 font-black text-[10px] uppercase tracking-[0.4em] mb-2 block">Active Deployment</span>
+                                <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Season 4 Vanguard</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Localized Description Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-all duration-500">
+                        <div className="text-pink-500 mb-4 text-2xl">🌍</div>
+                        <p className="text-slate-200 font-medium leading-relaxed">{t('aboutIntro')}</p>
+                    </div>
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-all duration-500">
+                        <div className="text-purple-500 mb-4 text-2xl">💬</div>
+                        <p className="text-slate-200 font-medium leading-relaxed">{t('aboutGroups')}</p>
+                    </div>
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-all duration-500">
+                        <div className="text-blue-500 mb-4 text-2xl">⚡</div>
+                        <p className="text-slate-200 font-medium leading-relaxed">{t('aboutInactive')}</p>
+                    </div>
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-all duration-500">
+                        <div className="text-emerald-500 mb-4 text-2xl">🤝</div>
+                        <p className="text-slate-200 font-medium leading-relaxed">{t('aboutSpirit')}</p>
+                    </div>
+                </div>
+
                 {loading ? (
                     <div className="flex justify-center items-center py-32">
                         <div className="w-16 h-16 border-4 border-pink-500/30 border-t-pink-500 rounded-full animate-spin shadow-[0_0_30px_rgba(236,72,153,0.5)]" />
                     </div>
                 ) : (
-                    <div className="space-y-32">
-                        {orderedRoles.map((role) => (
-                            <section key={role} className="relative">
-                                {/* Section Header */}
-                                <div className="flex items-center gap-6 mb-12">
-                                    <div className="h-[2px] w-12 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full" />
-                                    <h2 className="text-xl sm:text-3xl font-black text-white uppercase italic tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                                        Rank {role}
-                                    </h2>
-                                    <div className="h-[2px] flex-1 bg-gradient-to-r from-purple-500/50 to-transparent rounded-full" />
-                                </div>
+                    <div className="space-y-12 pb-20">
+                        {orderedRoles.map((role) => {
+                            const isAlpha = role === "R5" || role === "R4" || role === "R3";
 
-                                {/* Members Grid */}
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-                                    {groupedMembers[role].map((member, i) => (
-                                        <div
-                                            key={member.user_id}
-                                            className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 rounded-2xl sm:rounded-3xl hover:-translate-y-2 transition-transform duration-500 hover:shadow-[0_20px_40px_-20px_rgba(236,72,153,0.3)]"
-                                        >
-                                            {/* Glowing border effect on hover */}
-                                            <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-pink-500/50 transition-colors duration-500" />
+                            return (
+                                <section key={role} className="relative">
+                                    {/* Section Header */}
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <h2 className={`font-black uppercase italic tracking-widest ${isAlpha ? 'text-xl sm:text-2xl text-white' : 'text-sm text-slate-400'}`}>
+                                            Rank {role}
+                                        </h2>
+                                        <div className="h-[1px] flex-1 bg-gradient-to-r from-slate-700/50 to-transparent rounded-full" />
+                                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                                            {role === 'R5' ? 'Leader' : role === 'R4' ? 'Admin' : 'Member'}
+                                        </span>
+                                    </div>
 
-                                            <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-inner rounded-full flex items-center justify-center mx-auto mb-4 relative overflow-hidden">
-                                                <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-br from-pink-400 to-purple-400">
-                                                    {member.username.charAt(0).toUpperCase()}
-                                                </span>
-                                            </div>
-
-                                            <div className="text-center relative z-10">
-                                                <h3 className="text-white font-black text-sm uppercase tracking-wide truncate mb-1" title={member.username}>
-                                                    {member.username}
-                                                </h3>
-                                                <p className="text-[10px] text-pink-400 font-bold uppercase tracking-widest">
-                                                    PWR: {(() => {
-                                                        const num = typeof member.total_hero_power === 'string' ? parseFloat(member.total_hero_power) : (member.total_hero_power || 0);
-                                                        if (num === 0) return "0.0M";
-                                                        if (num >= 1000) return (num / 1000000).toFixed(1) + "M";
-                                                        return num.toFixed(1) + "M";
-                                                    })()}
-                                                </p>
-                                            </div>
+                                    {/* Conditional Grid Layout */}
+                                    {isAlpha ? (
+                                        /* Prominent cards for High Ranks */
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                            {groupedMembers[role].map((member) => (
+                                                <div
+                                                    key={member.user_id}
+                                                    className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl hover:bg-white/10 transition-all duration-300"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 shrink-0 bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-full flex items-center justify-center relative overflow-hidden">
+                                                            <span className="text-xs font-black text-pink-400">
+                                                                {member.username.charAt(0).toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <h3 className="text-white font-black text-[11px] uppercase truncate" title={member.username}>
+                                                                {member.username}
+                                                            </h3>
+                                                            <p className="text-[9px] text-pink-400/70 font-bold uppercase">
+                                                                {(() => {
+                                                                    const num = typeof member.total_hero_power === 'string' ? parseFloat(member.total_hero_power) : (member.total_hero_power || 0);
+                                                                    // Show in Millions if > 1000000, otherwise show raw Millions if it's already a million-scale number
+                                                                    return num >= 1000 ? (num / 1000000).toFixed(1) + "M" : num.toFixed(1) + "M";
+                                                                })()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-                            </section>
-                        ))}
+                                    ) : (
+                                        /* High-density layout for R2 and lower */
+                                        <div className="flex flex-wrap gap-2">
+                                            {groupedMembers[role].map((member) => (
+                                                <div
+                                                    key={member.user_id}
+                                                    className="flex items-center gap-2 bg-white/5 border border-white/5 px-3 py-2 rounded-xl group hover:border-slate-500 transition-colors"
+                                                >
+                                                    <span className="text-white font-bold text-[10px] uppercase">{member.username}</span>
+                                                    <span className="text-[9px] text-slate-500 font-black">
+                                                        {(() => {
+                                                            const num = typeof member.total_hero_power === 'string' ? parseFloat(member.total_hero_power) : (member.total_hero_power || 0);
+                                                            return num >= 1000 ? (num / 1000000).toFixed(1) + "M" : num.toFixed(1) + "M";
+                                                        })()}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
+                            );
+                        })}
                     </div>
                 )}
             </div>

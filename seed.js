@@ -9,11 +9,11 @@ const supabase = createClient(
 
 async function seedData() {
     const members = [
-        { username: 'Zovian', total_hero_power: 125500000, vs_score: 950000, desert_points: 4500 },
-        { username: 'Jade', total_hero_power: 118000000, vs_score: 820000, desert_points: 3800 },
-        { username: 'May', total_hero_power: 95000000, vs_score: 750000, desert_points: 4100 },
-        { username: 'Shadow', total_hero_power: 110000000, vs_score: 680000, desert_points: 2900 },
-        { username: 'Raptor', total_hero_power: 88000000, vs_score: 550000, desert_points: 3200 },
+        { username: 'Zovian', total_hero_power: 125500000 },
+        { username: 'Jade', total_hero_power: 118000000 },
+        { username: 'May', total_hero_power: 95000000 },
+        { username: 'Shadow', total_hero_power: 110000000 },
+        { username: 'Raptor', total_hero_power: 88000000 },
     ];
 
     console.log('🚀 Seeding 020 Alliance members...');

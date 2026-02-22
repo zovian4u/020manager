@@ -119,7 +119,7 @@ export default function DesertStormSignup() {
                             onClick={() => setShowPreview(true)}
                             className="w-full mt-6 py-6 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black uppercase tracking-widest shadow-xl disabled:opacity-30 transition-all hover:scale-[1.02]"
                         >
-                            {t('reviewIntel')}
+                            {t('submitIntel')}
                         </button>
                     </div>
                 ) : (

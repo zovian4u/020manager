@@ -2,11 +2,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '../lib/LanguageContext';
 
 export default function LandingPage() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [images, setImages] = useState<HTMLImageElement[]>([]);
     const [progress, setProgress] = useState(0);
+    const { t } = useLanguage();
 
     // 1. Preload 162 Frames
     useEffect(() => {
@@ -141,9 +143,9 @@ export default function LandingPage() {
                     <div className="bg-slate-900/95 border-2 border-[#f472b6] backdrop-blur-md px-8 py-3 rounded-full mb-6 shadow-2xl">
                         <span className="text-white font-black tracking-widest text-lg">ᴬᴶ ThinkK ʚଓ</span>
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">Incubate <br />The Victory.</h1>
+                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('incubateVictory')}</h1>
                     <p className="text-xl text-slate-900 font-bold max-w-[500px] leading-relaxed drop-shadow-[0_1px_5px_rgba(255,255,255,0.9)]">
-                        Experience the power of 020 Alliance. Witness the rebirth of our top player&apos;s breakthrough skin.
+                        {t('experiencePowerBody')}
                     </p>
                 </section>
 
@@ -151,19 +153,19 @@ export default function LandingPage() {
                     <div className="bg-slate-900/95 border-2 border-[#f472b6] backdrop-blur-md px-8 py-3 rounded-full mb-6 shadow-2xl">
                         <span className="text-white font-black tracking-widest text-lg">ᴬᴶ ThinkK ʚଓ</span>
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">Beyond <br />Boundaries.</h1>
+                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('beyondBoundaries')}</h1>
                     <p className="text-xl text-slate-900 font-bold max-w-[500px] leading-relaxed drop-shadow-[0_1px_5px_rgba(255,255,255,0.9)]">
-                        Real strength isn&apos;t just power—it&apos;s the courage to break the shell and rise.
+                        {t('realStrength')}
                     </p>
                 </section>
 
                 <section className="h-screen flex flex-col items-center justify-center text-center px-[10%]">
                     <div className="bg-slate-900/95 border-4 border-[#f472b6] backdrop-blur-md px-10 py-4 rounded-full mb-8 shadow-2xl">
-                        <span className="text-white font-black tracking-widest text-xl uppercase italic">1st Breakthrough Completed</span>
+                        <span className="text-white font-black tracking-widest text-xl uppercase italic">{t('breakthroughCompleted')}</span>
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-10 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">The Arrival.</h1>
+                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-10 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('theArrival')}</h1>
                     <Link href="/hub" className="px-12 py-5 bg-gradient-to-r from-pink-400 to-purple-600 text-white font-black rounded-full hover:scale-110 transition-transform shadow-[0_20px_40px_rgba(236,72,153,0.3)] no-underline text-lg tracking-widest pointer-events-auto">
-                        ENTER STRATEGIC HUB
+                        {t('enterStrategicHub')}
                     </Link>
                 </section>
             </main>
