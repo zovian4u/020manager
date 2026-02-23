@@ -21,6 +21,7 @@ interface Member {
     gender?: string;
     birthday?: string;
     language?: string;
+    ds_team?: string;
 }
 
 export default function HubPage() {
@@ -197,6 +198,9 @@ export default function HubPage() {
                                 }
 
                                 const newStatus = !registrationOpen;
+                                if (newStatus && !window.confirm("Opening signups will CLEAR all current member registrations for the new week. Proceed?")) {
+                                    return;
+                                }
                                 const updateData: any = { registration_open: newStatus };
                                 if (hasAttendanceColumn && newStatus === true) {
                                     updateData.attendance_marked = false;
@@ -219,7 +223,26 @@ export default function HubPage() {
                                     }
                                 } else {
                                     setRegistrationOpen(newStatus);
-                                    if (hasAttendanceColumn && newStatus === true) setAttendanceMarked(false);
+
+                                    // 📝 COMMAND AUDIT LOG
+                                    await supabase.from('audit_logs').insert({
+                                        user_id: user?.id,
+                                        username: currentUser?.username,
+                                        action: newStatus ? "OPEN_DS_SIGNUPS" : "CLOSE_DS_SIGNUPS",
+                                        details: { context: "R4 Hub Control Panel" }
+                                    });
+
+                                    if (hasAttendanceColumn && newStatus === true) {
+                                        setAttendanceMarked(false);
+                                        // 🔄 Reset the mobilization data for the new week
+                                        await supabase.from('members').update({
+                                            ds_choice: null,
+                                            ds_team: null,
+                                            ds_signup_time: null,
+                                            team_assignment: null
+                                        }).neq('user_id', ''); // Update all rows
+                                        window.location.reload();
+                                    }
                                 }
                             }}
                             className={`px-6 sm:px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center ${registrationOpen ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : ((attendanceMarked || !hasAttendanceColumn) ? 'bg-green-600 text-white shadow-[0_0_20px_rgba(22,163,74,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed')}`}
@@ -257,6 +280,52 @@ export default function HubPage() {
                         </>
                     ) : (
                         <p className="text-slate-400 font-bold uppercase text-xs tracking-[0.3em]">{t('signInPrompt')}</p>
+                    )}
+                </div>
+
+                {/* ✅ Individual Tactical Status */}
+                <div className="mt-12 max-w-xl mx-auto bg-white/50 backdrop-blur-md rounded-[2rem] p-6 border border-white shadow-lg animate-in fade-in zoom-in slide-in-from-top-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('dsMobilization')} - {t('status').toUpperCase()}</h3>
+                        <span className={`flex h-2 w-2 rounded-full ${registrationOpen ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></span>
+                    </div>
+
+                    {!registrationOpen ? (
+                        <div className="text-center py-2">
+                            <p className="text-sm font-black text-slate-400 uppercase tracking-widest">{t('mobilizationInactive')}</p>
+                            {currentUser?.team_assignment && (
+                                <div className="mt-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                    <p className="text-[10px] text-blue-400 font-black uppercase mb-1">{t('finalAssignment')}</p>
+                                    <p className="text-xl font-black text-blue-600 uppercase italic">{t('team')} {currentUser.team_assignment}</p>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="text-left">
+                                {currentUser?.ds_choice ? (
+                                    <>
+                                        <p className="text-xl font-black text-slate-800 uppercase italic leading-tight">{currentUser.ds_choice}</p>
+                                        {currentUser.team_assignment ? (
+                                            <p className="text-[10px] font-black text-blue-600 uppercase mt-1 tracking-widest">
+                                                ✅ {t('assignedTo')} {t('team')} {currentUser.team_assignment}
+                                            </p>
+                                        ) : (
+                                            <p className="text-[10px] font-black text-pink-500 uppercase mt-1 tracking-widest">
+                                                ⏳ {t('awaitingAssignment')}
+                                            </p>
+                                        )}
+                                    </>
+                                ) : (
+                                    <p className="text-lg font-black text-slate-400 uppercase italic leading-tight">{t('notRegistered')}</p>
+                                )}
+                            </div>
+                            <Link href="/desert-storm">
+                                <button className="px-6 py-3 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md">
+                                    {currentUser?.ds_choice ? t('edit') : t('joinDesertStorm')}
+                                </button>
+                            </Link>
+                        </div>
                     )}
                 </div>
             </section>

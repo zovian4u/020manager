@@ -180,6 +180,10 @@ export const translations = {
         noAccount: "Don't have an account?",
         alreadyAccount: "Already have an account?",
         errorAuth: "Invalid email or password. Please try again.",
+        awaitingAssignment: "Awaiting R4 assignment",
+        assignedTo: "Assigned to",
+        notRegistered: "Not Registered",
+        mobilizationInactive: "Mobilization Inactive",
     },
     zh: {
         hubTitle: "战略中心",
@@ -362,6 +366,10 @@ export const translations = {
         noAccount: "没有账号？",
         alreadyAccount: "已有账号？",
         errorAuth: "邮箱或密码错误，请重试。",
+        awaitingAssignment: "等待 R4 指挥官分配",
+        assignedTo: "已分配至",
+        notRegistered: "未报名",
+        mobilizationInactive: "动员协议未开启",
     },
     ja: {
         hubTitle: "戦略ハブ",
@@ -544,6 +552,10 @@ export const translations = {
         noAccount: "アカウントをお持ちでない方",
         alreadyAccount: "既にアカウントをお持ちの方",
         errorAuth: "メールアドレスまたはパスワードが正しくありません。",
+        awaitingAssignment: "R4 指揮官の割り当て待ち",
+        assignedTo: "に割り当てられました",
+        notRegistered: "未登録",
+        mobilizationInactive: "動員プロトコル無効",
     },
     th: {
         hubTitle: "ศูนย์ยุทธศาสตร์",
@@ -726,6 +738,10 @@ export const translations = {
         noAccount: "ยังไม่มีบัญชีใช่ไหม?",
         alreadyAccount: "มีบัญชีอยู่แล้วใช่ไหม?",
         errorAuth: "อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่",
+        awaitingAssignment: "รอการตอบรับจากหน่วย R4",
+        assignedTo: "ได้รับมอบหมายให้อยู่ทีม",
+        notRegistered: "ยังไม่ได้ลงทะเบียน",
+        mobilizationInactive: "ยังไม่เปิดการระดมพล",
     },
     vi: {
         hubTitle: "Trung tâm Chiến lược",
@@ -908,6 +924,10 @@ export const translations = {
         noAccount: "Chưa có tài khoản?",
         alreadyAccount: "Đã có tài khoản?",
         errorAuth: "Email hoặc mật khẩu không hợp lệ. Vui lòng thử lại.",
+        awaitingAssignment: "Đang chờ R4 phân công",
+        assignedTo: "Đã được phân vào",
+        notRegistered: "Chưa đăng ký",
+        mobilizationInactive: "Nghị định thư điều động chưa kích hoạt",
     },
 };
 

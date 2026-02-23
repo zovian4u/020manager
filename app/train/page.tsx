@@ -5,6 +5,7 @@ import { useStackApp } from "@stackframe/stack";
 import { supabase } from '../../lib/supabase';
 import { useLanguage } from '../../lib/LanguageContext';
 import Link from 'next/link';
+import { getWeekKey } from '../../lib/utils';
 
 interface TrainRecord {
     id?: number;
@@ -36,7 +37,7 @@ export default function TrainPage() {
     const [loading, setLoading] = useState(true);
     const [members, setMembers] = useState<Member[]>([]);
     const [schedule, setSchedule] = useState<TrainRecord[]>([]);
-    const [weekKey, setWeekKey] = useState('2026-W08');
+    const [weekKey, setWeekKey] = useState(getWeekKey());
     const [isR4, setIsR4] = useState(false);
     const [currentUserMember, setCurrentUserMember] = useState<Member | null>(null);
 
@@ -55,7 +56,7 @@ export default function TrainPage() {
         setLoading(true);
 
         const { data: sData } = await supabase.from('settings').select('current_vs_week').eq('id', 1).single();
-        const currentWeek = sData?.current_vs_week || '2026-W08';
+        const currentWeek = sData?.current_vs_week || getWeekKey();
         setWeekKey(currentWeek);
 
         const { data: mData } = await supabase.from('members').select('user_id, username, total_hero_power, role');

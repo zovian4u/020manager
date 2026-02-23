@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useStackApp } from "@stackframe/stack";
 import { supabase } from '../../lib/supabase';
 import { useLanguage } from '../../lib/LanguageContext';
+import { getWeekKey } from '../../lib/utils';
 
 interface VSScore {
     user_id: string;
@@ -35,7 +36,7 @@ export default function AllianceDuelPage() {
     const [settings, setSettings] = useState<VSSettings>({
         vs_strategy: 'save',
         vs_active_days: [true, true, true, true, false, false],
-        current_vs_week: '2026-W08'
+        current_vs_week: getWeekKey()
     });
 
     const [allScores, setAllScores] = useState<VSScore[]>([]);

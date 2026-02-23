@@ -28,6 +28,7 @@ export default function DesertStormSignup() {
 
     const [isWindowOpen, setIsWindowOpen] = useState(false);
     const [statusChecked, setStatusChecked] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
 
     useEffect(() => {
         if (!user) return;
@@ -88,7 +89,33 @@ export default function DesertStormSignup() {
                     <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.4em] mt-2">{t('mobilizationProtocol')}</p>
                 </header>
 
-                {!showPreview ? (
+                {isSuccess ? (
+                    <div className="text-center py-10 animate-in fade-in zoom-in duration-500">
+                        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-5xl shadow-lg border-4 border-white animate-bounce">✅</div>
+                        <h2 className="text-3xl font-black text-slate-800 uppercase italic mb-4">{t('registered')}!</h2>
+                        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 mb-8 text-left">
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">{t('status')}</p>
+                            <p className="font-bold text-slate-700 uppercase mb-4">
+                                {selectedChoice === choices[0] ? t('yesBeThere') : selectedChoice === choices[1] ? t('maybeSub') : t('sorryCantMakeIt')}
+                            </p>
+
+                            {selectedTeam && selectedChoice.startsWith("Yes") && (
+                                <>
+                                    <p className="text-[10px] text-pink-500 font-black uppercase tracking-widest mb-2">{t('requestedTeam')}</p>
+                                    <p className="font-bold text-pink-600 uppercase">
+                                        {selectedTeam === "Team A" ? t('teamALabel') : t('teamBLabel')}
+                                    </p>
+                                </>
+                            )}
+                        </div>
+                        <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest mb-8 leading-relaxed">
+                            Your orders have been logged in the Strategic Hub. <br />R4 Command will finalize team assignments soon.
+                        </p>
+                        <Link href="/hub" className="block w-full py-5 bg-slate-900 text-white rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:scale-105 transition-all">
+                            {t('backToHub')}
+                        </Link>
+                    </div>
+                ) : !showPreview ? (
                     <div className="space-y-6">
                         <section className="space-y-3">
                             <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] text-center mb-2">{t('step1Availability')}</p>
@@ -153,7 +180,7 @@ export default function DesertStormSignup() {
                                     }, { onConflict: "user_id" });
 
                                     if (error) { setLoading(false); console.error(error.message); }
-                                    else { window.location.href = "/hub"; }
+                                    else { setIsSuccess(true); }
                                 }}
                                 className="flex-1 py-5 rounded-full bg-slate-900 text-white font-black uppercase text-[10px]"
                             >

@@ -5,6 +5,7 @@ import { useStackApp } from "@stackframe/stack";
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
 import { useLanguage } from '../../lib/LanguageContext';
+import { getWeekKey } from '../../lib/utils';
 
 // 🛡️ Updated interface to include member preferences and assignments
 interface Member {
@@ -112,7 +113,7 @@ export default function TacticalDashboard() {
 
     const handleSubmitAttendance = async () => {
         setIsSubmitting(true);
-        const weekKey = new Date().toISOString().split('T')[0]; // Simple week identifier
+        const weekKey = getWeekKey();
 
         try {
             // 1. Log to history table (assumes table exists or handled by Supabase)
