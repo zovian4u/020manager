@@ -13,6 +13,7 @@ interface Member {
     username: string;
     squad_1_power: number;
     total_hero_power?: number;
+    arena_power?: number;
     team_assignment?: string; // R4 Final Decision
     ds_choice?: string;       // Attendance status
     ds_team?: string;         // ✅ Member's requested Team (A or B)
@@ -28,7 +29,8 @@ export default function TacticalDashboard() {
     const [hasMounted, setHasMounted] = useState(false);
     const [members, setMembers] = useState<Member[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-    const [zoviFilter, setZoviFilter] = useState(false);
+    const [magicFilterMode, setMagicFilterMode] = useState<'off' | 'hero' | 'squad' | 'arena'>('off');
+    const [useAttendancePreference, setUseAttendancePreference] = useState(true);
 
     // ✅ Attendance Tracking States
     const [attendanceMode, setAttendanceMode] = useState(false);
@@ -48,7 +50,7 @@ export default function TacticalDashboard() {
                 let data: Member[] | null = null;
                 const { data: initialData, error } = await supabase
                     .from('members')
-                    .select('user_id, username, squad_1_power, total_hero_power, team_assignment, ds_choice, ds_team, role, missed_ds');
+                    .select('user_id, username, squad_1_power, total_hero_power, arena_power, team_assignment, ds_choice, ds_team, role, missed_ds');
 
                 if (initialData) {
                     data = initialData as Member[];
@@ -56,7 +58,7 @@ export default function TacticalDashboard() {
                     console.warn("Retrying without missed_ds column...");
                     const { data: fallbackData, error: fallbackError } = await supabase
                         .from('members')
-                        .select('user_id, username, squad_1_power, total_hero_power, team_assignment, ds_choice, ds_team, role');
+                        .select('user_id, username, squad_1_power, total_hero_power, arena_power, team_assignment, ds_choice, ds_team, role');
 
                     if (fallbackData) {
                         data = fallbackData as Member[];
@@ -96,12 +98,39 @@ export default function TacticalDashboard() {
     const teamACount = members.filter(m => m.team_assignment === 'A').length;
     const teamBCount = members.filter(m => m.team_assignment === 'B').length;
 
-    const sortedMembers = zoviFilter
+    const shouldSort = magicFilterMode !== 'off' || useAttendancePreference;
+    const sortedMembers = shouldSort
         ? [...members].sort((a, b) => {
-            const getP = (c?: string) => c?.includes("for sure") ? 3 : c?.includes("sub") ? 2 : 1;
-            const pA = Number(a.squad_1_power || a.total_hero_power || 0);
-            const pB = Number(b.squad_1_power || b.total_hero_power || 0);
-            return getP(b.ds_choice) !== getP(a.ds_choice) ? getP(b.ds_choice) - getP(a.ds_choice) : pB - pA;
+            let pA = 0;
+            let pB = 0;
+            if (magicFilterMode === 'hero') {
+                pA = Number(a.total_hero_power || 0);
+                pB = Number(b.total_hero_power || 0);
+            } else if (magicFilterMode === 'squad') {
+                pA = Number(a.squad_1_power || 0);
+                pB = Number(b.squad_1_power || 0);
+            } else if (magicFilterMode === 'arena') {
+                pA = Number(a.arena_power || 0);
+                pB = Number(b.arena_power || 0);
+            }
+
+            if (useAttendancePreference) {
+                const getP = (c?: string) => {
+                    if (!c) return 0;
+                    const lower = c.toLowerCase();
+                    if (lower.includes("yes") || lower.includes("for sure")) return 3;
+                    if (lower.includes("maybe") || lower.includes("sub")) return 2;
+                    if (lower.includes("sorry") || lower.includes("can't") || lower.includes("cant")) return 1;
+                    return 0;
+                };
+                const prefA = getP(a.ds_choice);
+                const prefB = getP(b.ds_choice);
+                if (prefA !== prefB) {
+                    return prefB - prefA; // Higher preference values first
+                }
+            }
+
+            return pB - pA; // If tie in preference or preference is off, sort by power
         })
         : members;
 
@@ -199,9 +228,22 @@ export default function TacticalDashboard() {
                             <button onClick={() => handleMassAction('A')} className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md">{t('assignTeamA')} ({teamACount}/30)</button>
                             <button onClick={() => handleMassAction('B')} className="px-5 py-2.5 bg-green-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md">{t('assignTeamB')} ({teamBCount}/30)</button>
                             <button onClick={() => handleMassAction(null)} className="px-5 py-2.5 bg-slate-300 text-slate-700 text-[10px] font-black rounded-xl cursor-pointer hover:bg-slate-400">{t('removeFromTeams')}</button>
-                            <button onClick={() => setZoviFilter(!zoviFilter)} className={`px-5 py-2.5 text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${zoviFilter ? 'bg-orange-500 hover:bg-orange-600' : 'bg-purple-600 hover:bg-purple-700'}`}>
-                                {zoviFilter ? t('disableZovi') : t('applyZovi')}
+                            <button
+                                onClick={() => setUseAttendancePreference(!useAttendancePreference)}
+                                className={`px-5 py-2.5 text-[10px] font-black rounded-xl cursor-pointer shadow-md transition-all ${useAttendancePreference ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
+                            >
+                                ATTENDANCE PRIORITY: {useAttendancePreference ? 'ON' : 'OFF'}
                             </button>
+                            <select
+                                value={magicFilterMode}
+                                onChange={(e) => setMagicFilterMode(e.target.value as any)}
+                                className={`px-5 py-2.5 outline-none appearance-none text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${magicFilterMode !== 'off' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-purple-600 hover:bg-purple-700'}`}
+                            >
+                                <option value="off" className="bg-slate-800">MAGIC FILTER: OFF</option>
+                                <option value="hero" className="bg-slate-800">MAGIC FILTER: HERO</option>
+                                <option value="squad" className="bg-slate-800">MAGIC FILTER: SQUAD 1</option>
+                                <option value="arena" className="bg-slate-800">MAGIC FILTER: ARENA</option>
+                            </select>
                             <div className="ml-auto flex gap-4 text-[10px] font-black text-blue-600 uppercase underline cursor-pointer">
                                 <span onClick={() => setSelectedUsers(members.map(m => m.user_id))}>{t('selectAll')}</span>
                                 <span onClick={() => setSelectedUsers([])} className="text-red-500">{t('uncheckAll')}</span>
@@ -216,14 +258,18 @@ export default function TacticalDashboard() {
                                             <th className="p-6 w-12 text-center">{t('select')}</th>
                                             <th className="p-6">{t('finalAssignment')}</th>
                                             <th className="p-6">{t('memberName')}</th>
-                                            <th className="p-6">{t('powerM')}</th>
+                                            <th className="p-6">HERO (M)</th>
+                                            <th className="p-6">SQUAD 1 (M)</th>
+                                            <th className="p-6">ARENA (M)</th>
                                             <th className="p-6">{t('attendance')}</th>
                                             <th className="p-6">{t('requestedTeam')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="text-sm font-bold text-slate-700">
                                         {sortedMembers.map(m => {
-                                            const powerValue = Number(m.squad_1_power || m.total_hero_power || 0);
+                                            const heroPower = Number(m.total_hero_power || 0);
+                                            const squadPower = Number(m.squad_1_power || 0);
+                                            const arenaPower = Number(m.arena_power || 0);
                                             return (
                                                 <tr key={m.user_id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                                                     <td className="p-6 text-center">
@@ -235,7 +281,9 @@ export default function TacticalDashboard() {
                                                         </span>
                                                     </td>
                                                     <td className="p-6 uppercase tracking-tighter text-slate-900">{m.username}</td>
-                                                    <td className="p-6 font-mono text-pink-600">{powerValue.toFixed(2)}M</td>
+                                                    <td className={`p-6 font-mono ${magicFilterMode === 'hero' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{heroPower.toFixed(2)}M</td>
+                                                    <td className={`p-6 font-mono ${magicFilterMode === 'squad' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{squadPower.toFixed(2)}M</td>
+                                                    <td className={`p-6 font-mono ${magicFilterMode === 'arena' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{arenaPower.toFixed(2)}M</td>
                                                     <td className="p-6 text-[10px] uppercase font-black text-slate-500">
                                                         {m.ds_choice ? m.ds_choice.split(' ')[0] : '---'}
                                                     </td>
