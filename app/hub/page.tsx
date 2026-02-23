@@ -198,8 +198,10 @@ export default function HubPage() {
                                 }
 
                                 const newStatus = !registrationOpen;
-                                if (newStatus && !window.confirm("Opening signups will CLEAR all current member registrations for the new week. Proceed?")) {
-                                    return;
+                                if (newStatus) {
+                                    if (!window.confirm("Opening signups will CLEAR all current member registrations for the new week. Proceed?")) return;
+                                } else {
+                                    if (!window.confirm("Are you sure you want to CLOSE signups and lock currently registered members?")) return;
                                 }
                                 const updateData: any = { registration_open: newStatus };
                                 if (hasAttendanceColumn && newStatus === true) {
