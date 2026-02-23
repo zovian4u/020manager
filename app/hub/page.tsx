@@ -293,7 +293,7 @@ export default function HubPage() {
                     {!registrationOpen ? (
                         <div className="text-center py-2">
                             <p className="text-sm font-black text-slate-400 uppercase tracking-widest">{t('mobilizationInactive')}</p>
-                            {currentUser?.team_assignment && (
+                            {currentUser?.team_assignment && currentUser.team_assignment !== "None" && (
                                 <div className="mt-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
                                     <p className="text-[10px] text-blue-400 font-black uppercase mb-1">{t('finalAssignment')}</p>
                                     <p className="text-xl font-black text-blue-600 uppercase italic">{t('team')} {currentUser.team_assignment}</p>
@@ -305,8 +305,10 @@ export default function HubPage() {
                             <div className="text-left">
                                 {currentUser?.ds_choice ? (
                                     <>
-                                        <p className="text-xl font-black text-slate-800 uppercase italic leading-tight">{currentUser.ds_choice}</p>
-                                        {currentUser.team_assignment ? (
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('registered')}</p>
+                                        <p className="text-xl font-black text-slate-800 uppercase italic leading-tight mb-2">{currentUser.ds_choice}</p>
+
+                                        {currentUser.team_assignment && currentUser.team_assignment !== "None" ? (
                                             <p className="text-[10px] font-black text-blue-600 uppercase mt-1 tracking-widest">
                                                 ✅ {t('assignedTo')} {t('team')} {currentUser.team_assignment}
                                             </p>

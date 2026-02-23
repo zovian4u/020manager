@@ -105,7 +105,7 @@ export default function TacticalDashboard() {
         })
         : members;
 
-    const handleMassAction = async (team: string) => {
+    const handleMassAction = async (team: string | null) => {
         if (selectedUsers.length === 0) return;
         const { error } = await supabase.from('members').update({ team_assignment: team }).in('user_id', selectedUsers);
         if (!error) window.location.reload();
@@ -198,7 +198,7 @@ export default function TacticalDashboard() {
                         <div className="flex flex-wrap gap-3 mb-8 items-center">
                             <button onClick={() => handleMassAction('A')} className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md">{t('assignTeamA')} ({teamACount}/30)</button>
                             <button onClick={() => handleMassAction('B')} className="px-5 py-2.5 bg-green-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md">{t('assignTeamB')} ({teamBCount}/30)</button>
-                            <button onClick={() => handleMassAction('None')} className="px-5 py-2.5 bg-slate-300 text-slate-700 text-[10px] font-black rounded-xl cursor-pointer hover:bg-slate-400">{t('removeFromTeams')}</button>
+                            <button onClick={() => handleMassAction(null)} className="px-5 py-2.5 bg-slate-300 text-slate-700 text-[10px] font-black rounded-xl cursor-pointer hover:bg-slate-400">{t('removeFromTeams')}</button>
                             <button onClick={() => setZoviFilter(!zoviFilter)} className={`px-5 py-2.5 text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${zoviFilter ? 'bg-orange-500 hover:bg-orange-600' : 'bg-purple-600 hover:bg-purple-700'}`}>
                                 {zoviFilter ? t('disableZovi') : t('applyZovi')}
                             </button>
@@ -230,8 +230,8 @@ export default function TacticalDashboard() {
                                                         <input type="checkbox" className="cursor-pointer w-4 h-4 rounded border-slate-300 accent-blue-600" checked={selectedUsers.includes(m.user_id)} onChange={(e) => e.target.checked ? setSelectedUsers([...selectedUsers, m.user_id]) : setSelectedUsers(selectedUsers.filter(id => id !== m.user_id))} />
                                                     </td>
                                                     <td className="p-6">
-                                                        <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${m.team_assignment === 'A' ? 'bg-blue-600 shadow-[0_4px_10px_rgba(37,99,235,0.3)]' : m.team_assignment === 'B' ? 'bg-green-600 shadow-[0_4px_10px_rgba(22,163,74,0.3)]' : 'bg-slate-300'}`}>
-                                                            {m.team_assignment ? `${t('team')} ${m.team_assignment}` : t('pending')}
+                                                        <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${m.team_assignment === 'A' ? 'bg-blue-600 shadow-[0_4px_10px_rgba(37,99,235,0.3)]' : m.team_assignment === 'B' ? 'bg-green-600 shadow-[0_4px_10px_rgba(22,163,74,0.3)]' : 'bg-slate-700'}`}>
+                                                            {m.team_assignment && m.team_assignment !== 'None' ? `${t('team')} ${m.team_assignment}` : t('pending')}
                                                         </span>
                                                     </td>
                                                     <td className="p-6 uppercase tracking-tighter text-slate-900">{m.username}</td>
