@@ -224,45 +224,49 @@ export default function TacticalDashboard() {
 
                 {!attendanceMode && !historyMode && (
                     <>
-                        <div className="flex flex-wrap gap-3 mb-8 items-center">
-                            <button onClick={() => handleMassAction('A')} className="px-5 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md">{t('assignTeamA')} ({teamACount}/30)</button>
-                            <button onClick={() => handleMassAction('B')} className="px-5 py-2.5 bg-green-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md">{t('assignTeamB')} ({teamBCount}/30)</button>
-                            <button onClick={() => handleMassAction(null)} className="px-5 py-2.5 bg-slate-300 text-slate-700 text-[10px] font-black rounded-xl cursor-pointer hover:bg-slate-400">{t('removeFromTeams')}</button>
-                            <button
-                                onClick={() => setUseAttendancePreference(!useAttendancePreference)}
-                                className={`px-5 py-2.5 text-[10px] font-black rounded-xl cursor-pointer shadow-md transition-all ${useAttendancePreference ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
-                            >
-                                ATTENDANCE PRIORITY: {useAttendancePreference ? 'ON' : 'OFF'}
-                            </button>
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-8 items-stretch sm:items-center">
+                            <div className="flex flex-wrap gap-2">
+                                <button onClick={() => handleMassAction('A')} className="flex-1 sm:flex-none px-4 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md whitespace-nowrap">{t('assignTeamA')} ({teamACount}/30)</button>
+                                <button onClick={() => handleMassAction('B')} className="flex-1 sm:flex-none px-4 py-2.5 bg-green-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md whitespace-nowrap">{t('assignTeamB')} ({teamBCount}/30)</button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <button onClick={() => handleMassAction(null)} className="flex-1 sm:flex-none px-4 py-2.5 bg-slate-300 text-slate-700 text-[10px] font-black rounded-xl cursor-pointer hover:bg-slate-400 whitespace-nowrap">{t('removeFromTeams')}</button>
+                                <button
+                                    onClick={() => setUseAttendancePreference(!useAttendancePreference)}
+                                    className={`flex-1 sm:flex-none px-4 py-2.5 text-[10px] whitespace-nowrap font-black rounded-xl cursor-pointer shadow-md transition-all ${useAttendancePreference ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
+                                >
+                                    PRIORITY: {useAttendancePreference ? 'ON' : 'OFF'}
+                                </button>
+                            </div>
                             <select
                                 value={magicFilterMode}
                                 onChange={(e) => setMagicFilterMode(e.target.value as any)}
-                                className={`px-5 py-2.5 outline-none appearance-none text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${magicFilterMode !== 'off' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-purple-600 hover:bg-purple-700'}`}
+                                className={`w-full sm:w-auto px-4 py-2.5 outline-none appearance-none text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${magicFilterMode !== 'off' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-purple-600 hover:bg-purple-700'}`}
                             >
                                 <option value="off" className="bg-slate-800">MAGIC FILTER: OFF</option>
                                 <option value="hero" className="bg-slate-800">MAGIC FILTER: HERO</option>
                                 <option value="squad" className="bg-slate-800">MAGIC FILTER: SQUAD 1</option>
                                 <option value="arena" className="bg-slate-800">MAGIC FILTER: ARENA</option>
                             </select>
-                            <div className="ml-auto flex gap-4 text-[10px] font-black text-blue-600 uppercase underline cursor-pointer">
+                            <div className="w-full sm:w-auto sm:ml-auto flex justify-between sm:justify-end gap-4 text-[10px] font-black text-blue-600 uppercase underline cursor-pointer mt-2 sm:mt-0">
                                 <span onClick={() => setSelectedUsers(members.map(m => m.user_id))}>{t('selectAll')}</span>
                                 <span onClick={() => setSelectedUsers([])} className="text-red-500">{t('uncheckAll')}</span>
                             </div>
                         </div>
 
                         <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.05)] overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
+                            <div className="overflow-x-auto w-full">
+                                <table className="w-full text-left border-collapse min-w-max">
                                     <thead className="bg-slate-50/80 border-b border-slate-100">
-                                        <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                            <th className="p-6 w-12 text-center">{t('select')}</th>
-                                            <th className="p-6">{t('finalAssignment')}</th>
-                                            <th className="p-6">{t('memberName')}</th>
-                                            <th className="p-6">HERO (M)</th>
-                                            <th className="p-6">SQUAD 1 (M)</th>
-                                            <th className="p-6">ARENA (M)</th>
-                                            <th className="p-6">{t('attendance')}</th>
-                                            <th className="p-6">{t('requestedTeam')}</th>
+                                        <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                                            <th className="px-4 py-4 sm:p-6 w-12 text-center">{t('select')}</th>
+                                            <th className="px-4 py-4 sm:p-6">{t('finalAssignment')}</th>
+                                            <th className="px-4 py-4 sm:p-6">{t('memberName')}</th>
+                                            <th className="px-4 py-4 sm:p-6">HERO (M)</th>
+                                            <th className="px-4 py-4 sm:p-6">SQUAD 1 (M)</th>
+                                            <th className="px-4 py-4 sm:p-6">ARENA (M)</th>
+                                            <th className="px-4 py-4 sm:p-6">{t('attendance')}</th>
+                                            <th className="px-4 py-4 sm:p-6">{t('requestedTeam')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="text-sm font-bold text-slate-700">
@@ -271,23 +275,23 @@ export default function TacticalDashboard() {
                                             const squadPower = Number(m.squad_1_power || 0);
                                             const arenaPower = Number(m.arena_power || 0);
                                             return (
-                                                <tr key={m.user_id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                                                    <td className="p-6 text-center">
+                                                <tr key={m.user_id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors whitespace-nowrap">
+                                                    <td className="px-4 py-4 sm:p-6 text-center">
                                                         <input type="checkbox" className="cursor-pointer w-4 h-4 rounded border-slate-300 accent-blue-600" checked={selectedUsers.includes(m.user_id)} onChange={(e) => e.target.checked ? setSelectedUsers([...selectedUsers, m.user_id]) : setSelectedUsers(selectedUsers.filter(id => id !== m.user_id))} />
                                                     </td>
-                                                    <td className="p-6">
+                                                    <td className="px-4 py-4 sm:p-6">
                                                         <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${m.team_assignment === 'A' ? 'bg-blue-600 shadow-[0_4px_10px_rgba(37,99,235,0.3)]' : m.team_assignment === 'B' ? 'bg-green-600 shadow-[0_4px_10px_rgba(22,163,74,0.3)]' : 'bg-slate-700'}`}>
                                                             {m.team_assignment && m.team_assignment !== 'None' ? `${t('team')} ${m.team_assignment}` : t('pending')}
                                                         </span>
                                                     </td>
-                                                    <td className="p-6 uppercase tracking-tighter text-slate-900">{m.username}</td>
-                                                    <td className={`p-6 font-mono ${magicFilterMode === 'hero' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{heroPower.toFixed(2)}M</td>
-                                                    <td className={`p-6 font-mono ${magicFilterMode === 'squad' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{squadPower.toFixed(2)}M</td>
-                                                    <td className={`p-6 font-mono ${magicFilterMode === 'arena' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{arenaPower.toFixed(2)}M</td>
-                                                    <td className="p-6 text-[10px] uppercase font-black text-slate-500">
+                                                    <td className="px-4 py-4 sm:p-6 uppercase tracking-tighter text-slate-900">{m.username}</td>
+                                                    <td className={`px-4 py-4 sm:p-6 font-mono ${magicFilterMode === 'hero' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{heroPower.toFixed(2)}M</td>
+                                                    <td className={`px-4 py-4 sm:p-6 font-mono ${magicFilterMode === 'squad' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{squadPower.toFixed(2)}M</td>
+                                                    <td className={`px-4 py-4 sm:p-6 font-mono ${magicFilterMode === 'arena' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{arenaPower.toFixed(2)}M</td>
+                                                    <td className="px-4 py-4 sm:p-6 text-[10px] uppercase font-black text-slate-500">
                                                         {m.ds_choice ? m.ds_choice.split(' ')[0] : '---'}
                                                     </td>
-                                                    <td className="p-6">
+                                                    <td className="px-4 py-4 sm:p-6">
                                                         {m.ds_team ? (
                                                             <span className={`px-3 py-1 rounded-lg text-[9px] font-black border ${m.ds_team === 'Team A' ? 'border-blue-200 text-blue-500 bg-blue-50' : 'border-green-200 text-green-600 bg-green-50'}`}>
                                                                 {m.ds_team.toUpperCase()}
@@ -322,49 +326,51 @@ export default function TacticalDashboard() {
                             </button>
                         </div>
 
-                        <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-xl overflow-hidden">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-50 border-b border-slate-100">
-                                    <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        <th className="p-6">{t('memberName')}</th>
-                                        <th className="p-6">{t('team')}</th>
-                                        <th className="p-6 text-center">{t('status')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {assignedMembers.map(m => (
-                                        <tr key={m.user_id} className="border-b border-slate-50">
-                                            <td className="p-6 font-bold uppercase">{m.username}</td>
-                                            <td className="p-6">
-                                                <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${m.team_assignment === 'A' ? 'bg-blue-600' : 'bg-green-600'}`}>
-                                                    {t('team')} {m.team_assignment}
-                                                </span>
-                                            </td>
-                                            <td className="p-6">
-                                                <div className="flex justify-center gap-2">
-                                                    <button
-                                                        onClick={() => setAttendanceMap({ ...attendanceMap, [m.user_id]: true })}
-                                                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${attendanceMap[m.user_id] ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}
-                                                    >
-                                                        {t('showedUp')}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setAttendanceMap({ ...attendanceMap, [m.user_id]: false })}
-                                                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${attendanceMap[m.user_id] === false ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}
-                                                    >
-                                                        {t('missed')}
-                                                    </button>
-                                                </div>
-                                            </td>
+                        <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[2.5rem] shadow-xl overflow-hidden">
+                            <div className="overflow-x-auto w-full">
+                                <table className="w-full text-left min-w-max">
+                                    <thead className="bg-slate-50 border-b border-slate-100">
+                                        <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                                            <th className="px-4 py-4 sm:p-6">{t('memberName')}</th>
+                                            <th className="px-4 py-4 sm:p-6">{t('team')}</th>
+                                            <th className="px-4 py-4 sm:p-6 text-center">{t('status')}</th>
                                         </tr>
-                                    ))}
-                                    {assignedMembers.length === 0 && (
-                                        <tr>
-                                            <td colSpan={3} className="p-20 text-center text-slate-300 font-black uppercase italic tracking-widest">{t('noData')}</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {assignedMembers.map(m => (
+                                            <tr key={m.user_id} className="border-b border-slate-50 whitespace-nowrap">
+                                                <td className="px-4 py-4 sm:p-6 font-bold uppercase">{m.username}</td>
+                                                <td className="px-4 py-4 sm:p-6">
+                                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${m.team_assignment === 'A' ? 'bg-blue-600' : 'bg-green-600'}`}>
+                                                        {t('team')} {m.team_assignment}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-4 sm:p-6">
+                                                    <div className="flex justify-center gap-2">
+                                                        <button
+                                                            onClick={() => setAttendanceMap({ ...attendanceMap, [m.user_id]: true })}
+                                                            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${attendanceMap[m.user_id] ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}
+                                                        >
+                                                            {t('showedUp')}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setAttendanceMap({ ...attendanceMap, [m.user_id]: false })}
+                                                            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${attendanceMap[m.user_id] === false ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}
+                                                        >
+                                                            {t('missed')}
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {assignedMembers.length === 0 && (
+                                            <tr>
+                                                <td colSpan={3} className="p-20 text-center text-slate-300 font-black uppercase italic tracking-widest">{t('noData')}</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 )}
