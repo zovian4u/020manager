@@ -32,6 +32,7 @@ export default function TacticalDashboard() {
     const [magicFilterMode, setMagicFilterMode] = useState<'off' | 'hero' | 'squad' | 'arena'>('off');
     const [useAttendancePreference, setUseAttendancePreference] = useState(true);
     const [requestedTeamFilter, setRequestedTeamFilter] = useState<'All' | 'Team A' | 'Team B' | 'Both'>('All');
+    const [assignedTeamFilter, setAssignedTeamFilter] = useState<'All' | 'Team A' | 'Team B' | 'Unassigned'>('All');
 
     // ✅ Attendance Tracking States
     const [attendanceMode, setAttendanceMode] = useState(false);
@@ -99,12 +100,16 @@ export default function TacticalDashboard() {
     const teamACount = members.filter(m => m.team_assignment === 'A').length;
     const teamBCount = members.filter(m => m.team_assignment === 'B').length;
 
-    const shouldSort = magicFilterMode !== 'off' || useAttendancePreference || requestedTeamFilter !== 'All';
+    const shouldSort = magicFilterMode !== 'off' || useAttendancePreference || requestedTeamFilter !== 'All' || assignedTeamFilter !== 'All';
     const filteredMembers = members.filter(m => {
-        if (requestedTeamFilter === 'All') return true;
-        if (requestedTeamFilter === 'Team A') return m.ds_team === 'Team A' || m.ds_team === 'Both';
-        if (requestedTeamFilter === 'Team B') return m.ds_team === 'Team B' || m.ds_team === 'Both';
-        if (requestedTeamFilter === 'Both') return m.ds_team === 'Both';
+        if (assignedTeamFilter === 'Team A' && m.team_assignment !== 'A') return false;
+        if (assignedTeamFilter === 'Team B' && m.team_assignment !== 'B') return false;
+        if (assignedTeamFilter === 'Unassigned' && (m.team_assignment === 'A' || m.team_assignment === 'B')) return false;
+
+        if (requestedTeamFilter === 'Team A' && m.ds_team !== 'Team A' && m.ds_team !== 'Both') return false;
+        if (requestedTeamFilter === 'Team B' && m.ds_team !== 'Team B' && m.ds_team !== 'Both') return false;
+        if (requestedTeamFilter === 'Both' && m.ds_team !== 'Both') return false;
+
         return true;
     });
 
@@ -277,6 +282,16 @@ export default function TacticalDashboard() {
                                 <option value="Team A" className="bg-slate-800">RQ TEAM: A (+ BOTH)</option>
                                 <option value="Team B" className="bg-slate-800">RQ TEAM: B (+ BOTH)</option>
                                 <option value="Both" className="bg-slate-800">RQ TEAM: STRICTLY BOTH</option>
+                            </select>
+                            <select
+                                value={assignedTeamFilter}
+                                onChange={(e) => setAssignedTeamFilter(e.target.value as any)}
+                                className={`w-full sm:w-auto px-4 py-2.5 outline-none appearance-none text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${assignedTeamFilter !== 'All' ? 'bg-teal-600 hover:bg-teal-700' : 'bg-slate-500 hover:bg-slate-600'}`}
+                            >
+                                <option value="All" className="bg-slate-800">ASSIGNED: ALL</option>
+                                <option value="Team A" className="bg-slate-800">ASSIGNED: TEAM A</option>
+                                <option value="Team B" className="bg-slate-800">ASSIGNED: TEAM B</option>
+                                <option value="Unassigned" className="bg-slate-800">ASSIGNED: NONE</option>
                             </select>
                             <div className="w-full sm:w-auto sm:ml-auto flex justify-between sm:justify-end gap-4 text-[10px] font-black text-blue-600 uppercase underline cursor-pointer mt-2 sm:mt-0">
                                 <span onClick={() => setSelectedUsers(members.map(m => m.user_id))}>{t('selectAll')}</span>
