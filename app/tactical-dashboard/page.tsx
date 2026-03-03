@@ -31,6 +31,7 @@ export default function TacticalDashboard() {
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [magicFilterMode, setMagicFilterMode] = useState<'off' | 'hero' | 'squad' | 'arena'>('off');
     const [useAttendancePreference, setUseAttendancePreference] = useState(true);
+    const [requestedTeamFilter, setRequestedTeamFilter] = useState<'All' | 'Team A' | 'Team B' | 'Both'>('All');
 
     // ✅ Attendance Tracking States
     const [attendanceMode, setAttendanceMode] = useState(false);
@@ -90,7 +91,7 @@ export default function TacticalDashboard() {
 
     // Role Guard
     const currentUser = members.find(m => m.user_id === user?.id);
-    if (currentUser && currentUser.role !== 'R4') {
+    if (currentUser && currentUser.role !== 'R4' && currentUser.role !== 'R5') {
         return <div className="p-20 text-center font-black text-red-600 uppercase tracking-widest">{t('unauthorized')}</div>;
     }
 
@@ -98,22 +99,27 @@ export default function TacticalDashboard() {
     const teamACount = members.filter(m => m.team_assignment === 'A').length;
     const teamBCount = members.filter(m => m.team_assignment === 'B').length;
 
-    const shouldSort = magicFilterMode !== 'off' || useAttendancePreference;
+    const shouldSort = magicFilterMode !== 'off' || useAttendancePreference || requestedTeamFilter !== 'All';
+    const filteredMembers = members.filter(m => {
+        if (requestedTeamFilter === 'All') return true;
+        if (requestedTeamFilter === 'Team A') return m.ds_team === 'Team A' || m.ds_team === 'Both';
+        if (requestedTeamFilter === 'Team B') return m.ds_team === 'Team B' || m.ds_team === 'Both';
+        if (requestedTeamFilter === 'Both') return m.ds_team === 'Both';
+        return true;
+    });
+
     const sortedMembers = shouldSort
-        ? [...members].sort((a, b) => {
-            let pA = 0;
-            let pB = 0;
-            if (magicFilterMode === 'hero') {
-                pA = Number(a.total_hero_power || 0);
-                pB = Number(b.total_hero_power || 0);
-            } else if (magicFilterMode === 'squad') {
-                pA = Number(a.squad_1_power || 0);
-                pB = Number(b.squad_1_power || 0);
-            } else if (magicFilterMode === 'arena') {
-                pA = Number(a.arena_power || 0);
-                pB = Number(b.arena_power || 0);
+        ? [...filteredMembers].sort((a, b) => {
+            // Priority 1: Requested 'Both' vs Specific Team
+            if (requestedTeamFilter === 'Team A' || requestedTeamFilter === 'Team B') {
+                const aIsBoth = a.ds_team === 'Both';
+                const bIsBoth = b.ds_team === 'Both';
+
+                if (aIsBoth && !bIsBoth) return -1;
+                if (!aIsBoth && bIsBoth) return 1;
             }
 
+            // Priority 2: Attendance Preference
             if (useAttendancePreference) {
                 const getP = (c?: string) => {
                     if (!c) return 0;
@@ -130,9 +136,23 @@ export default function TacticalDashboard() {
                 }
             }
 
+            // Priority 3: Magic Filter Power
+            let pA = 0;
+            let pB = 0;
+            if (magicFilterMode === 'hero') {
+                pA = Number(a.total_hero_power || 0);
+                pB = Number(b.total_hero_power || 0);
+            } else if (magicFilterMode === 'squad') {
+                pA = Number(a.squad_1_power || 0);
+                pB = Number(b.squad_1_power || 0);
+            } else if (magicFilterMode === 'arena') {
+                pA = Number(a.arena_power || 0);
+                pB = Number(b.arena_power || 0);
+            }
+
             return pB - pA; // If tie in preference or preference is off, sort by power
         })
-        : members;
+        : filteredMembers;
 
     const handleMassAction = async (team: string | null) => {
         if (selectedUsers.length === 0) return;
@@ -248,6 +268,16 @@ export default function TacticalDashboard() {
                                 <option value="squad" className="bg-slate-800">MAGIC FILTER: SQUAD 1</option>
                                 <option value="arena" className="bg-slate-800">MAGIC FILTER: ARENA</option>
                             </select>
+                            <select
+                                value={requestedTeamFilter}
+                                onChange={(e) => setRequestedTeamFilter(e.target.value as any)}
+                                className={`w-full sm:w-auto px-4 py-2.5 outline-none appearance-none text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${requestedTeamFilter !== 'All' ? 'bg-pink-600 hover:bg-pink-700' : 'bg-slate-500 hover:bg-slate-600'}`}
+                            >
+                                <option value="All" className="bg-slate-800">RQ TEAM: ALL</option>
+                                <option value="Team A" className="bg-slate-800">RQ TEAM: A (+ BOTH)</option>
+                                <option value="Team B" className="bg-slate-800">RQ TEAM: B (+ BOTH)</option>
+                                <option value="Both" className="bg-slate-800">RQ TEAM: STRICTLY BOTH</option>
+                            </select>
                             <div className="w-full sm:w-auto sm:ml-auto flex justify-between sm:justify-end gap-4 text-[10px] font-black text-blue-600 uppercase underline cursor-pointer mt-2 sm:mt-0">
                                 <span onClick={() => setSelectedUsers(members.map(m => m.user_id))}>{t('selectAll')}</span>
                                 <span onClick={() => setSelectedUsers([])} className="text-red-500">{t('uncheckAll')}</span>
@@ -284,7 +314,10 @@ export default function TacticalDashboard() {
                                                             {m.team_assignment && m.team_assignment !== 'None' ? `${t('team')} ${m.team_assignment}` : t('pending')}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-4 sm:p-6 uppercase tracking-tighter text-slate-900">{m.username}</td>
+                                                    <td className="px-4 py-4 sm:p-6">
+                                                        <div className="uppercase tracking-tighter text-slate-900 font-bold">{m.username}</div>
+                                                        <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mt-1">({m.role || 'R1'})</div>
+                                                    </td>
                                                     <td className={`px-4 py-4 sm:p-6 font-mono ${magicFilterMode === 'hero' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{heroPower.toFixed(2)}M</td>
                                                     <td className={`px-4 py-4 sm:p-6 font-mono ${magicFilterMode === 'squad' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{squadPower.toFixed(2)}M</td>
                                                     <td className={`px-4 py-4 sm:p-6 font-mono ${magicFilterMode === 'arena' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{arenaPower.toFixed(2)}M</td>
@@ -293,7 +326,10 @@ export default function TacticalDashboard() {
                                                     </td>
                                                     <td className="px-4 py-4 sm:p-6">
                                                         {m.ds_team ? (
-                                                            <span className={`px-3 py-1 rounded-lg text-[9px] font-black border ${m.ds_team === 'Team A' ? 'border-blue-200 text-blue-500 bg-blue-50' : 'border-green-200 text-green-600 bg-green-50'}`}>
+                                                            <span className={`px-3 py-1 rounded-lg text-[9px] font-black border ${m.ds_team === 'Team A' ? 'border-blue-200 text-blue-500 bg-blue-50' :
+                                                                m.ds_team === 'Team B' ? 'border-green-200 text-green-600 bg-green-50' :
+                                                                    'border-purple-200 text-purple-600 bg-purple-50'
+                                                                }`}>
                                                                 {m.ds_team.toUpperCase()}
                                                             </span>
                                                         ) : (

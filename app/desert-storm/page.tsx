@@ -76,7 +76,8 @@ export default function DesertStormSignup() {
     const choices = ["Yes, I will be there 🎉", "Maybe, sign me as sub 🤔", "Sorry, can't make it 😢"];
     const teams = [
         { id: "Team A", label: "Team A (Fri 09:00 Server)" },
-        { id: "Team B", label: "Team B (Fri 23:00 Server)" }
+        { id: "Team B", label: "Team B (Fri 23:00 Server)" },
+        { id: "Both", label: "Both Teams (Any)" }
     ];
 
     return (
@@ -103,7 +104,7 @@ export default function DesertStormSignup() {
                                 <>
                                     <p className="text-[10px] text-pink-500 font-black uppercase tracking-widest mb-2">{t('requestedTeam')}</p>
                                     <p className="font-bold text-pink-600 uppercase">
-                                        {selectedTeam === "Team A" ? t('teamALabel') : t('teamBLabel')}
+                                        {selectedTeam === "Team A" ? t('teamALabel') : selectedTeam === "Team B" ? t('teamBLabel') : "Both Teams (Any)"}
                                     </p>
                                 </>
                             )}
@@ -135,7 +136,7 @@ export default function DesertStormSignup() {
                                     <button key={team.id} onClick={() => setSelectedTeam(team.id)}
                                         className={`w-full py-5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2
                                         ${selectedTeam === team.id ? "bg-pink-600 text-white border-transparent" : "bg-white border-slate-100 text-slate-400"}`}>
-                                        {team.id === "Team A" ? t('teamALabel') : t('teamBLabel')}
+                                        {team.id === "Team A" ? t('teamALabel') : team.id === "Team B" ? t('teamBLabel') : "Both Teams (Any)"}
                                     </button>
                                 ))}
                             </section>
@@ -162,7 +163,7 @@ export default function DesertStormSignup() {
                                 <div>
                                     <span className="text-[9px] text-pink-500 uppercase font-black tracking-widest block mb-1">{t('requestedTeam')}</span>
                                     <p className="text-xl font-black text-pink-600 uppercase italic">
-                                        {selectedTeam === "Team A" ? t('teamALabel') : t('teamBLabel')}
+                                        {selectedTeam === "Team A" ? t('teamALabel') : selectedTeam === "Team B" ? t('teamBLabel') : "Both Teams (Any)"}
                                     </p>
                                 </div>
                             )}

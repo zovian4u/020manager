@@ -39,6 +39,7 @@ export default function HubPage() {
     const [hasAttendanceColumn, setHasAttendanceColumn] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showRankModal, setShowRankModal] = useState(false);
 
     const [formData, setFormData] = useState({
         username: "",
@@ -178,7 +179,7 @@ export default function HubPage() {
         <div className="min-h-[calc(100vh-72px)] px-4 md:px-8 pb-8 bg-pink-50/50 text-slate-900 overflow-x-hidden pt-8">
 
             {/* 🛡️ R4 Command Panel */}
-            {currentUser?.role === 'R4' && (
+            {(currentUser?.role === 'R4' || currentUser?.role === 'R5') && (
                 <div className="max-w-7xl mx-auto mb-10 p-4 sm:p-6 bg-slate-900 rounded-2xl sm:rounded-[2.5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-2xl border border-slate-800 animate-in fade-in slide-in-from-top-4">
                     <div>
                         <p className="text-white font-black uppercase text-[10px] tracking-[0.3em]">{t('commandCenter')}</p>
@@ -199,7 +200,7 @@ export default function HubPage() {
 
                                 const newStatus = !registrationOpen;
                                 if (newStatus) {
-                                    if (!window.confirm("Opening signups will CLEAR all current member registrations for the new week. Proceed?")) return;
+                                    if (!window.confirm("Are you sure you want to OPEN the registration window?")) return;
                                 } else {
                                     if (!window.confirm("Are you sure you want to CLOSE signups and lock currently registered members?")) return;
                                 }
@@ -231,25 +232,44 @@ export default function HubPage() {
                                         user_id: user?.id,
                                         username: currentUser?.username,
                                         action: newStatus ? "OPEN_DS_SIGNUPS" : "CLOSE_DS_SIGNUPS",
-                                        details: { context: "R4 Hub Control Panel" }
+                                        details: { context: "R4/R5 Hub Control Panel" }
                                     });
 
                                     if (hasAttendanceColumn && newStatus === true) {
                                         setAttendanceMarked(false);
-                                        // 🔄 Reset the mobilization data for the new week
-                                        await supabase.from('members').update({
-                                            ds_choice: null,
-                                            ds_team: null,
-                                            ds_signup_time: null,
-                                            team_assignment: null
-                                        }).neq('user_id', ''); // Update all rows
-                                        window.location.reload();
                                     }
                                 }
                             }}
                             className={`px-6 sm:px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center ${registrationOpen ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : ((attendanceMarked || !hasAttendanceColumn) ? 'bg-green-600 text-white shadow-[0_0_20px_rgba(22,163,74,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed')}`}
                         >
                             {registrationOpen ? t('closeSignups') : t('openSignups')}
+                        </button>
+                        <button
+                            onClick={async () => {
+                                if (!window.confirm("⚠️ WARNING: This will CLEAR ALL signups, choices, and team assignments for the entire alliance! Proceed?")) return;
+
+                                const { error } = await supabase.from('members').update({
+                                    ds_choice: null,
+                                    ds_team: null,
+                                    ds_signup_time: null,
+                                    team_assignment: null
+                                }).not('user_id', 'is', null);
+
+                                if (error) {
+                                    alert("Database Error: " + error.message);
+                                } else {
+                                    await supabase.from('audit_logs').insert({
+                                        user_id: user?.id,
+                                        username: currentUser?.username,
+                                        action: "CLEAR_ALL_SIGNUPS",
+                                        details: { context: "R4/R5 Hub Control Panel" }
+                                    });
+                                    window.location.reload();
+                                }
+                            }}
+                            className="px-6 sm:px-8 py-3 bg-slate-700 hover:bg-red-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center shadow-lg"
+                        >
+                            Clear Signups
                         </button>
                     </div>
                 </div>
@@ -274,10 +294,13 @@ export default function HubPage() {
                             <Link href="/guide">
                                 <button className="px-6 sm:px-10 py-3 sm:py-4 bg-indigo-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">📖 {t('guide')}</button>
                             </Link>
-                            {currentUser?.role === 'R4' && (
-                                <Link href="/tactical-dashboard">
-                                    <button className="px-6 sm:px-10 py-3 sm:py-4 bg-red-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">📊 {t('tacticalDashboard')}</button>
-                                </Link>
+                            {(currentUser?.role === 'R4' || currentUser?.role === 'R5') && (
+                                <>
+                                    <Link href="/tactical-dashboard">
+                                        <button className="px-6 sm:px-10 py-3 sm:py-4 bg-red-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">📊 {t('tacticalDashboard')}</button>
+                                    </Link>
+                                    <button onClick={() => setShowRankModal(true)} className="px-6 sm:px-10 py-3 sm:py-4 bg-blue-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">⭐ Manage Ranks</button>
+                                </>
                             )}
                         </>
                     ) : (
@@ -550,9 +573,86 @@ export default function HubPage() {
                             >
                                 {isSubmitting ? t('syncing') : t('saveRecords')}
                             </button>
-                            {(currentUser?.username && currentUser?.bio && currentUser?.gender) && (
-                                <button onClick={() => setIsEditing(false)} className="w-full text-slate-400 font-black uppercase text-[10px] mt-2 tracking-widest cursor-pointer">{t('cancel')}</button>
-                            )}
+
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* ✅ Rank Assignment Modal */}
+            {showRankModal && (
+                <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white border border-slate-200 p-8 rounded-[3rem] w-full max-w-4xl shadow-2xl overflow-y-auto max-h-[90vh]">
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-2xl font-black text-slate-800 uppercase italic">Rank Assignment</h3>
+                            <button onClick={() => setShowRankModal(false)} className="bg-slate-200 hover:bg-slate-300 text-slate-600 font-black rounded-full w-10 h-10 flex items-center justify-center transition-colors">
+                                X
+                            </button>
+                        </div>
+
+                        <div className="overflow-x-auto w-full border border-slate-100 rounded-3xl">
+                            <table className="w-full text-left border-collapse min-w-max">
+                                <thead className="bg-slate-50 border-b border-slate-100">
+                                    <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                                        <th className="px-6 py-4">{t('memberName')}</th>
+                                        <th className="px-6 py-4">{t('power')}</th>
+                                        <th className="px-6 py-4">Current Rank</th>
+                                        <th className="px-6 py-4 text-right">Assign New Rank</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-sm font-bold text-slate-700">
+                                    {members.map(m => (
+                                        <tr key={m.user_id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4 uppercase tracking-tighter text-slate-900">{m.username}</td>
+                                            <td className="px-6 py-4 font-mono text-pink-600">{displayPower(m.total_hero_power)}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${m.role === 'R5' ? 'bg-orange-100 text-orange-600' :
+                                                    m.role === 'R4' ? 'bg-red-100 text-red-600' :
+                                                        m.role === 'R3' ? 'bg-blue-100 text-blue-600' :
+                                                            m.role === 'R2' ? 'bg-green-100 text-green-600' :
+                                                                'bg-slate-100 text-slate-500'
+                                                    }`}>
+                                                    {m.role || 'R1'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                {(m.role === 'R4' || m.role === 'R5') ? (
+                                                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest bg-slate-100 px-4 py-2 rounded-xl">🔒 Locked</span>
+                                                ) : (
+                                                    <select
+                                                        className="bg-slate-100 border border-slate-200 outline-none rounded-xl px-4 py-2 text-[10px] font-black uppercase text-slate-700 cursor-pointer hover:bg-slate-200 transition-colors"
+                                                        value={m.role || 'R1'}
+                                                        onChange={async (e) => {
+                                                            const newRole = e.target.value;
+                                                            // Optimistic UI update
+                                                            setMembers(members.map(member => member.user_id === m.user_id ? { ...member, role: newRole } : member));
+
+                                                            const { error } = await supabase.from('members').update({ role: newRole }).eq('user_id', m.user_id);
+
+                                                            if (error) {
+                                                                alert("Failed to update rank: " + error.message);
+                                                                // Revert on local state if failed
+                                                                setMembers(members);
+                                                            } else {
+                                                                // Optional: log to audit_logs if needed
+                                                                await supabase.from('audit_logs').insert({
+                                                                    user_id: user?.id,
+                                                                    username: currentUser?.username,
+                                                                    action: `UPDATE_RANK_TO_${newRole}`,
+                                                                    details: { context: `R4 Hub Control Panel - Target: ${m.username}` }
+                                                                });
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="R1">R1 (Member)</option>
+                                                        <option value="R2">R2 (Veteran)</option>
+                                                        <option value="R3">R3 (Officer)</option>
+                                                    </select>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
