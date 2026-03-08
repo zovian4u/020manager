@@ -27,7 +27,7 @@ export default function MenuBar() {
         </Link>
     );
 
-    const isActivityActive = ['/desert-storm', '/alliance-duel', '/train'].includes(pathname);
+    const isActivityActive = ['/desert-storm', '/canyon-storm', '/alliance-duel', '/train'].includes(pathname);
 
     return (
         <>
@@ -69,6 +69,11 @@ export default function MenuBar() {
                                         <Link href="/desert-storm" onClick={() => setDesktopDropdownOpen(false)}>
                                             <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/desert-storm' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
                                                 {t('desertStorm')}
+                                            </button>
+                                        </Link>
+                                        <Link href="/canyon-storm" onClick={() => setDesktopDropdownOpen(false)}>
+                                            <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/canyon-storm' ? 'bg-orange-500/10 text-orange-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
+                                                {t('canyonStorm')}
                                             </button>
                                         </Link>
                                         <Link href="/alliance-duel" onClick={() => setDesktopDropdownOpen(false)}>
@@ -194,6 +199,7 @@ export default function MenuBar() {
                                     {mobileSubmenuOpen && (
                                         <div className="flex flex-col gap-1 pl-4 mt-1 border-l-2 border-slate-700 ml-5 animate-in slide-in-from-top-2">
                                             <NavLink href="/desert-storm" label={t('desertStorm')} isActive={pathname === '/desert-storm'} />
+                                            <NavLink href="/canyon-storm" label={t('canyonStorm')} isActive={pathname === '/canyon-storm'} />
                                             <NavLink href="/alliance-duel" label={t('allianceDuel')} isActive={pathname === '/alliance-duel'} />
                                             <NavLink href="/train" label={t('train')} isActive={pathname === '/train'} />
                                         </div>

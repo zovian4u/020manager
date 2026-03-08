@@ -70,6 +70,8 @@ export default function ProtocolGuide() {
                         </div>
                     </section>
 
+
+
                     {/* Alliance Duel Section */}
                     <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[3rem] p-8 md:p-12 hover:border-blue-500/30 transition-all">
                         <div className="flex flex-col md:flex-row gap-12">

@@ -22,6 +22,9 @@ interface Member {
     birthday?: string;
     language?: string;
     ds_team?: string;
+    cs_choice?: string;
+    cs_team?: string;
+    cs_signup_time?: string;
 }
 
 export default function HubPage() {
@@ -35,6 +38,7 @@ export default function HubPage() {
     const [currentUser, setCurrentUser] = useState<Member | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [registrationOpen, setRegistrationOpen] = useState(false);
+    const [csRegistrationOpen, setCsRegistrationOpen] = useState(false);
     const [attendanceMarked, setAttendanceMarked] = useState(true);
     const [hasAttendanceColumn, setHasAttendanceColumn] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
@@ -124,6 +128,7 @@ export default function HubPage() {
                     console.error("Settings Fetch Error:", settingsError.message);
                 } else if (settingsData && settingsData.length > 0) {
                     setRegistrationOpen(settingsData[0].registration_open);
+                    setCsRegistrationOpen(settingsData[0].cs_registration_open);
 
                     // Column detection
                     if (settingsData[0].attendance_marked === undefined) {
@@ -156,8 +161,10 @@ export default function HubPage() {
 
     // ✅ Helper calculations
     const desertSignups = members.filter(m => m.ds_choice && m.ds_signup_time);
+    const canyonSignups = members.filter(m => m.cs_choice && m.cs_signup_time);
     const totalActiveMembers = members.length || 1;
     const signupPercentage = Math.round((desertSignups.length / totalActiveMembers) * 100);
+    const csSignupPercentage = Math.round((canyonSignups.length / totalActiveMembers) * 100);
 
     const displayPower = (val: string | number) => {
         const num = typeof val === 'string' ? parseFloat(val) : val;
@@ -182,7 +189,7 @@ export default function HubPage() {
             {(currentUser?.role === 'R4' || currentUser?.role === 'R5') && (
                 <div className="max-w-7xl mx-auto mb-10 p-4 sm:p-6 bg-slate-900 rounded-2xl sm:rounded-[2.5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-2xl border border-slate-800 animate-in fade-in slide-in-from-top-4">
                     <div>
-                        <p className="text-white font-black uppercase text-[10px] tracking-[0.3em]">{t('commandCenter')}</p>
+                        <p className="text-pink-400 font-black uppercase text-[10px] tracking-[0.3em]">Desert Storm Command</p>
                         <p className="text-slate-400 text-[9px] font-bold uppercase mt-1">{t('status')}: {registrationOpen ? t('statusOpen') : t('statusLocked')}</p>
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -275,6 +282,74 @@ export default function HubPage() {
                 </div>
             )}
 
+            {/* 🛡️ Canyon Storm Command Panel */}
+            {(currentUser?.role === 'R4' || currentUser?.role === 'R5') && (
+                <div className="max-w-7xl mx-auto mb-10 p-4 sm:p-6 bg-slate-800 rounded-2xl sm:rounded-[2.5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-2xl border border-orange-500/30 animate-in fade-in slide-in-from-top-4">
+                    <div>
+                        <p className="text-orange-400 font-black uppercase text-[10px] tracking-[0.3em]">{t('canyonStorm')} Command</p>
+                        <p className="text-slate-400 text-[9px] font-bold uppercase mt-1">{t('status')}: {csRegistrationOpen ? t('statusOpen') : t('statusLocked')}</p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                        <button
+                            onClick={async () => {
+                                const newStatus = !csRegistrationOpen;
+                                if (newStatus) {
+                                    if (!window.confirm("Are you sure you want to OPEN the Canyon Storm registration window?")) return;
+                                } else {
+                                    if (!window.confirm("Are you sure you want to CLOSE CS signups and lock currently registered members?")) return;
+                                }
+
+                                const { error } = await supabase.from('settings').update({ cs_registration_open: newStatus }).eq('id', 1);
+                                if (error) {
+                                    console.error("Update CS Registration Error:", error.message);
+                                    alert("Error: " + error.message);
+                                } else {
+                                    setCsRegistrationOpen(newStatus);
+
+                                    // 📝 COMMAND AUDIT LOG
+                                    await supabase.from('audit_logs').insert({
+                                        user_id: user?.id,
+                                        username: currentUser?.username,
+                                        action: newStatus ? "OPEN_CS_SIGNUPS" : "CLOSE_CS_SIGNUPS",
+                                        details: { context: "R4/R5 Hub Control Panel" }
+                                    });
+                                }
+                            }}
+                            className={`px-6 sm:px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center ${csRegistrationOpen ? 'bg-orange-600 text-white shadow-[0_0_20px_rgba(234,88,12,0.4)]' : 'bg-green-600 text-white shadow-[0_0_20px_rgba(22,163,74,0.4)]'}`}
+                        >
+                            {csRegistrationOpen ? t('closeSignups') : t('openSignups')}
+                        </button>
+                        <button
+                            onClick={async () => {
+                                if (!window.confirm("⚠️ WARNING: This will CLEAR ALL Canyon Storm signups, choices, and team assignments for the entire alliance! Proceed?")) return;
+
+                                const { error } = await supabase.from('members').update({
+                                    cs_choice: null,
+                                    cs_team: null,
+                                    cs_team_assignment: null,
+                                    cs_signup_time: null
+                                }).not('user_id', 'is', null);
+
+                                if (error) {
+                                    alert("Database Error: " + error.message);
+                                } else {
+                                    await supabase.from('audit_logs').insert({
+                                        user_id: user?.id,
+                                        username: currentUser?.username,
+                                        action: "CLEAR_ALL_CS_SIGNUPS",
+                                        details: { context: "R4/R5 Hub Control Panel" }
+                                    });
+                                    window.location.reload();
+                                }
+                            }}
+                            className="px-6 sm:px-8 py-3 bg-slate-700 hover:bg-red-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center shadow-lg"
+                        >
+                            Clear CS Signups
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <section className="text-center mb-20">
                 <h2 className="text-4xl sm:text-7xl md:text-9xl font-black mb-6 tracking-tighter text-slate-900 leading-none uppercase italic">
                     {t('allianceName')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 italic">020</span>
@@ -284,6 +359,9 @@ export default function HubPage() {
                         <>
                             <Link href="/desert-storm">
                                 <button className="px-6 sm:px-10 py-3 sm:py-4 bg-slate-900 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">{t('joinDesertStorm')}</button>
+                            </Link>
+                            <Link href="/canyon-storm">
+                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-orange-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">{t('joinCanyonStorm')}</button>
                             </Link>
                             <Link href="/alliance-duel">
                                 <button className="px-6 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">{t('enterVsScores')}</button>
@@ -355,14 +433,50 @@ export default function HubPage() {
                         </div>
                     )}
                 </div>
+
+                {/* ✅ Individual Tactical Status - Canyon Storm */}
+                <div className="mt-8 max-w-xl mx-auto bg-orange-50/50 backdrop-blur-md rounded-[2rem] p-6 border border-orange-100 shadow-lg animate-in fade-in zoom-in slide-in-from-top-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em]">{t('csMobilization')}</h3>
+                        <span className={`flex h-2 w-2 rounded-full ${csRegistrationOpen ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></span>
+                    </div>
+
+                    {!csRegistrationOpen ? (
+                        <div className="text-center py-2">
+                            <p className="text-sm font-black text-slate-400 uppercase tracking-widest">{t('mobilizationInactive')}</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="text-left">
+                                {currentUser?.cs_choice ? (
+                                    <>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('registered')}</p>
+                                        <p className="text-xl font-black text-slate-800 uppercase italic leading-tight mb-2">{currentUser.cs_choice}</p>
+                                        <p className="text-[10px] font-black text-orange-500 uppercase mt-1 tracking-widest">
+                                            ⏳ {t('awaitingAssignment')}
+                                        </p>
+                                    </>
+                                ) : (
+                                    <p className="text-lg font-black text-slate-400 uppercase italic leading-tight">{t('notRegistered')}</p>
+                                )}
+                            </div>
+                            <Link href="/canyon-storm">
+                                <button className="px-6 py-3 bg-orange-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md">
+                                    {currentUser?.cs_choice ? t('edit') : t('joinCanyonStorm')}
+                                </button>
+                            </Link>
+                        </div>
+                    )}
+                </div>
             </section>
 
             {/* ✅ Leaderboards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-20">
                 {[
                     { title: t('power'), data: members.slice(0, 5), val: (m: Member) => displayPower(m.total_hero_power) },
                     { title: t('squad1Power'), data: [...members].sort((a, b) => (b.squad_1_power || 0) - (a.squad_1_power || 0)).slice(0, 5), val: (m: Member) => displayPower(m.squad_1_power) },
-                    { title: t('dsMobilization'), isStats: true, total: desertSignups.length }
+                    { title: t('dsMobilization'), isStats: true, total: desertSignups.length },
+                    { title: t('csMobilization'), isStats: true, isCS: true, total: canyonSignups.length }
                 ].map((board, i) => (
                     <div key={i} className="bg-white/70 backdrop-blur-xl border border-white p-6 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all">
                         <h3 className="text-[11px] font-black text-slate-800 mb-6 uppercase italic tracking-wider border-b border-pink-100 pb-2">{board.title}</h3>
@@ -375,11 +489,11 @@ export default function HubPage() {
                                 </div>
                                 <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-50">
                                     <div
-                                        className="bg-gradient-to-r from-pink-500 to-purple-600 h-full transition-all duration-1000"
-                                        style={{ width: `${signupPercentage}%` }}
+                                        className={board.isCS ? "bg-gradient-to-r from-orange-400 to-orange-600 h-full transition-all duration-1000" : "bg-gradient-to-r from-pink-500 to-purple-600 h-full transition-all duration-1000"}
+                                        style={{ width: `${board.isCS ? csSignupPercentage : signupPercentage}%` }}
                                     />
                                 </div>
-                                <p className="text-[9px] font-bold text-slate-400 text-right uppercase tracking-widest">{signupPercentage}% {t('complete')}</p>
+                                <p className="text-[9px] font-bold text-slate-400 text-right uppercase tracking-widest">{board.isCS ? csSignupPercentage : signupPercentage}% {t('complete')}</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
