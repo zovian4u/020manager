@@ -189,6 +189,7 @@ export const translations = {
         assignedTo: "Assigned to",
         notRegistered: "Not Registered",
         mobilizationInactive: "Mobilization Inactive",
+        searchPlayer: "Search Player...",
     },
     zh: {
         hubTitle: "战略中心",
@@ -380,6 +381,7 @@ export const translations = {
         assignedTo: "已分配至",
         notRegistered: "未报名",
         mobilizationInactive: "动员协议未开启",
+        searchPlayer: "搜索玩家...",
     },
     ja: {
         hubTitle: "戦略ハブ",
@@ -571,6 +573,7 @@ export const translations = {
         assignedTo: "に割り当てられました",
         notRegistered: "未登録",
         mobilizationInactive: "動員プロトコル無効",
+        searchPlayer: "プレイヤーを検索...",
     },
     th: {
         hubTitle: "ศูนย์ยุทธศาสตร์",
@@ -762,6 +765,7 @@ export const translations = {
         assignedTo: "ได้รับมอบหมายให้อยู่ทีม",
         notRegistered: "ยังไม่ได้ลงทะเบียน",
         mobilizationInactive: "ยังไม่เปิดการระดมพล",
+        searchPlayer: "ค้นหาผู้เล่น...",
     },
     vi: {
         hubTitle: "Trung tâm Chiến lược",
@@ -953,6 +957,7 @@ export const translations = {
         assignedTo: "Đã được phân vào",
         notRegistered: "Chưa đăng ký",
         mobilizationInactive: "Nghị định thư điều động chưa kích hoạt",
+        searchPlayer: "Tìm kiếm người chơi...",
     },
 };
 

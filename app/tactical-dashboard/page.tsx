@@ -33,6 +33,7 @@ export default function TacticalDashboard() {
     const [hasMounted, setHasMounted] = useState(false);
     const [members, setMembers] = useState<Member[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const [magicFilterMode, setMagicFilterMode] = useState<'off' | 'hero' | 'squad' | 'arena'>('off');
     const [useAttendancePreference, setUseAttendancePreference] = useState(true);
     const [requestedTeamFilter, setRequestedTeamFilter] = useState<'All' | 'Team A' | 'Team B' | 'Both'>('All');
@@ -114,6 +115,8 @@ export default function TacticalDashboard() {
 
     const shouldSort = magicFilterMode !== 'off' || useAttendancePreference || requestedTeamFilter !== 'All' || assignedTeamFilter !== 'All';
     const filteredMembers = members.filter(m => {
+        if (searchQuery && !m.username.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+
         if (assignedTeamFilter === 'Team A' && getAssignment(m) !== 'A') return false;
         if (assignedTeamFilter === 'Team B' && getAssignment(m) !== 'B') return false;
         if (assignedTeamFilter === 'Unassigned' && (getAssignment(m) === 'A' || getAssignment(m) === 'B')) return false;
@@ -305,6 +308,15 @@ export default function TacticalDashboard() {
                                     PRIORITY: {useAttendancePreference ? 'ON' : 'OFF'}
                                 </button>
                             </div>
+                            <div className="w-full sm:w-auto flex-1 min-w-[150px]">
+                                <input
+                                    type="text"
+                                    placeholder={t('searchPlayer') || "Search Player..."}
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full px-4 py-2.5 outline-none text-[10px] font-black rounded-xl bg-white border border-slate-200 text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all shadow-sm"
+                                />
+                            </div>
                             <select
                                 value={magicFilterMode}
                                 onChange={(e) => setMagicFilterMode(e.target.value as any)}
@@ -347,6 +359,7 @@ export default function TacticalDashboard() {
                                     <thead className="bg-slate-50/80 border-b border-slate-100">
                                         <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
                                             <th className="px-4 py-4 sm:p-6 w-12 text-center">{t('select')}</th>
+                                            <th className="px-4 py-4 sm:p-6 w-12 text-center">S.No.</th>
                                             <th className="px-4 py-4 sm:p-6">{t('finalAssignment')}</th>
                                             <th className="px-4 py-4 sm:p-6">{t('memberName')}</th>
                                             <th className="px-4 py-4 sm:p-6">HERO (M)</th>
@@ -357,7 +370,7 @@ export default function TacticalDashboard() {
                                         </tr>
                                     </thead>
                                     <tbody className="text-sm font-bold text-slate-700">
-                                        {sortedMembers.map(m => {
+                                        {sortedMembers.map((m, index) => {
                                             const heroPower = Number(m.total_hero_power || 0);
                                             const squadPower = Number(m.squad_1_power || 0);
                                             const arenaPower = Number(m.arena_power || 0);
@@ -366,6 +379,7 @@ export default function TacticalDashboard() {
                                                     <td className="px-4 py-4 sm:p-6 text-center">
                                                         <input type="checkbox" className={`cursor-pointer w-4 h-4 rounded border-slate-300 ${activeEvent === 'DS' ? 'accent-pink-600' : 'accent-orange-600'}`} checked={selectedUsers.includes(m.user_id)} onChange={(e) => e.target.checked ? setSelectedUsers([...selectedUsers, m.user_id]) : setSelectedUsers(selectedUsers.filter(id => id !== m.user_id))} />
                                                     </td>
+                                                    <td className="px-4 py-4 sm:p-6 text-center text-slate-400 text-[10px] font-black">{index + 1}</td>
                                                     <td className="px-4 py-4 sm:p-6">
                                                         <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${getAssignment(m) === 'A' ? 'bg-blue-600 shadow-[0_4px_10px_rgba(37,99,235,0.3)]' : getAssignment(m) === 'B' ? 'bg-green-600 shadow-[0_4px_10px_rgba(22,163,74,0.3)]' : 'bg-slate-700'}`}>
                                                             {getAssignment(m) && getAssignment(m) !== 'None' ? `${t('team')} ${getAssignment(m)}` : t('pending')}
@@ -424,14 +438,16 @@ export default function TacticalDashboard() {
                                 <table className="w-full text-left min-w-max">
                                     <thead className="bg-slate-50 border-b border-slate-100">
                                         <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                                            <th className="px-4 py-4 sm:p-6 w-12 text-center">S.No.</th>
                                             <th className="px-4 py-4 sm:p-6">{t('memberName')}</th>
                                             <th className="px-4 py-4 sm:p-6">{t('team')}</th>
                                             <th className="px-4 py-4 sm:p-6 text-center">{t('status')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {assignedMembers.map(m => (
+                                        {assignedMembers.map((m, index) => (
                                             <tr key={m.user_id} className="border-b border-slate-50 whitespace-nowrap">
+                                                <td className="px-4 py-4 sm:p-6 text-center text-slate-400 text-[10px] font-black">{index + 1}</td>
                                                 <td className="px-4 py-4 sm:p-6 font-bold uppercase">{m.username}</td>
                                                 <td className="px-4 py-4 sm:p-6">
                                                     <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${getAssignment(m) === 'A' ? 'bg-blue-600' : 'bg-green-600'}`}>
