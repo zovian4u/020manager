@@ -1,7 +1,8 @@
-export const translations = {
-    en: {
-        hubTitle: "Strategic Hub",
-        logout: "Logout",
+export type Language = 'en' | 'zh' | 'ja' | 'th' | 'vi';
+
+const enBase = {
+    hubTitle: "Strategic Hub",
+    logout: "Logout",
         settings: "Settings",
         commandCenter: "Command Center",
         statusOpen: "Window Open",
@@ -19,6 +20,7 @@ export const translations = {
         csMobilization: "CS Mobilization",
         registered: "Registered",
         complete: "COMPLETE",
+        noData: "No Data",
         commanderIntel: "Commander Intel",
         calculators: "Calculators",
         droneCalculator: "Drone Calculator",
@@ -60,6 +62,7 @@ export const translations = {
         select: "Select",
         finalAssignment: "Final Assignment",
         memberName: "Member Name",
+        ign: "IGN",
         powerM: "Power (M)",
         attendance: "Attendance",
         requestedTeam: "Requested Team",
@@ -196,7 +199,12 @@ export const translations = {
         notRegistered: "Not Registered",
         mobilizationInactive: "Mobilization Inactive",
         searchPlayer: "Search Player...",
-    },
+};
+
+export type TranslationKey = keyof typeof enBase;
+
+export const translations: Record<Language, Record<TranslationKey, string>> = {
+    en: enBase,
     zh: {
         hubTitle: "战略中心",
         logout: "登出",
@@ -419,6 +427,14 @@ export const translations = {
         complete: "完了",
         noData: "データなし",
         commanderIntel: "指揮官情報",
+        calculators: "計算機",
+        droneCalculator: "ドローン計算機",
+        droneCalcDesc: "次のアップグレード目標に必要な正確なドローンパーツと戦闘データを計算します。",
+        currentLevel: "現在のレベル",
+        targetLevel: "目標レベル",
+        requiredResources: "必要なリソース",
+        droneParts: "ドローンパーツ",
+        battleData: "戦闘データ",
         ign: "インゲーム名",
         birthday: "誕生日",
         totalPower: "総英雄戦力",
@@ -991,5 +1007,3 @@ export const translations = {
     },
 };
 
-export type Language = 'en' | 'zh' | 'ja' | 'th' | 'vi';
-export type TranslationKey = keyof typeof translations.en;
