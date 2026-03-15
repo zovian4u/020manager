@@ -471,18 +471,42 @@ export default function HubPage() {
             </section>
 
             {/* ✅ Leaderboards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 max-w-[1400px] mx-auto mb-20 px-4">
                 {[
-                    { title: t('power'), data: members.slice(0, 5), val: (m: Member) => displayPower(m.total_hero_power) },
-                    { title: t('squad1Power'), data: [...members].sort((a, b) => (b.squad_1_power || 0) - (a.squad_1_power || 0)).slice(0, 5), val: (m: Member) => displayPower(m.squad_1_power) },
+                    { title: t('power'), data: members, val: (m: Member) => displayPower(m.total_hero_power) },
+                    { title: t('squad1Power'), data: [...members].sort((a, b) => (b.squad_1_power || 0) - (a.squad_1_power || 0)), val: (m: Member) => displayPower(m.squad_1_power) },
+                    { title: 'Upcoming Birthdays 🎂', data: [...members].filter(m => {
+                        if (!m.birthday) return false;
+                        const today = new Date();
+                        const bday = new Date(m.birthday);
+                        bday.setFullYear(today.getFullYear());
+                        
+                        // If birthday already passed this year, look at next year
+                        if (bday < today) {
+                            bday.setFullYear(today.getFullYear() + 1);
+                        }
+                        
+                        const diffTime = Math.abs(bday.getTime() - today.getTime());
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        return diffDays <= 30;
+                    }).sort((a, b) => {
+                        const today = new Date();
+                        const getNextBday = (dateStr: string) => {
+                            const d = new Date(dateStr);
+                            d.setFullYear(today.getFullYear());
+                            if (d < today) d.setFullYear(today.getFullYear() + 1);
+                            return d.getTime();
+                        };
+                        return getNextBday(a.birthday!) - getNextBday(b.birthday!);
+                    }), val: (m: Member) => new Date(m.birthday!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) },
                     { title: t('dsMobilization'), isStats: true, total: desertSignups.length },
                     { title: t('csMobilization'), isStats: true, isCS: true, total: canyonSignups.length }
                 ].map((board, i) => (
-                    <div key={i} className="bg-white/70 backdrop-blur-xl border border-white p-6 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all">
-                        <h3 className="text-[11px] font-black text-slate-800 mb-6 uppercase italic tracking-wider border-b border-pink-100 pb-2">{board.title}</h3>
+                    <div key={i} className="bg-white/70 backdrop-blur-xl border border-white p-6 rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all flex flex-col h-[280px]">
+                        <h3 className="text-[11px] font-black text-slate-800 mb-6 uppercase italic tracking-wider border-b border-pink-100 pb-2 shrink-0">{board.title}</h3>
 
                         {board.isStats ? (
-                            <div className="space-y-6 py-2">
+                            <div className="space-y-6 py-2 flex-1">
                                 <div className="flex justify-between items-center text-xl font-black text-pink-600">
                                     <span>{board.total}</span>
                                     <span className="text-[10px] uppercase text-slate-400 italic">{t('registered')}</span>
@@ -496,11 +520,11 @@ export default function HubPage() {
                                 <p className="text-[9px] font-bold text-slate-400 text-right uppercase tracking-widest">{board.isCS ? csSignupPercentage : signupPercentage}% {t('complete')}</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-4 overflow-y-auto flex-1 pr-2 pb-2 custom-scrollbar">
                                 {board.data && board.data.length > 0 ? board.data.map((m, idx) => (
                                     <div key={idx} className="flex justify-between items-center">
                                         <span className="font-bold text-slate-600 text-[11px] truncate mr-2">{idx + 1}. {m.username}</span>
-                                        <span className="font-mono text-[9px] text-pink-600 bg-pink-50 px-2 py-0.5 rounded-lg font-bold">
+                                        <span className="font-mono text-[9px] text-pink-600 bg-pink-50 px-2 py-0.5 rounded-lg font-bold shrink-0">
                                             {board.val ? board.val(m) : ''}
                                         </span>
                                     </div>

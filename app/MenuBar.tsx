@@ -15,9 +15,11 @@ export default function MenuBar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [desktopDropdownOpen, setDesktopDropdownOpen] = useState(false);
     const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState(false);
+    const [desktopCalculatorsDropdownOpen, setDesktopCalculatorsDropdownOpen] = useState(false);
+    const [mobileCalculatorsSubmenuOpen, setMobileCalculatorsSubmenuOpen] = useState(false);
 
     const NavLink = ({ href, label, isActive }: { href: string, label: string, isActive: boolean }) => (
-        <Link href={href} onClick={() => { setMobileMenuOpen(false); setMobileSubmenuOpen(false); }}>
+        <Link href={href} onClick={() => { setMobileMenuOpen(false); setMobileSubmenuOpen(false); setMobileCalculatorsSubmenuOpen(false); }}>
             <button className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border w-full sm:w-auto ${isActive
                 ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white border-transparent scale-105 shadow-[0_4px_20px_rgba(236,72,153,0.5)]'
                 : 'bg-transparent text-slate-300 border-transparent hover:bg-slate-800 hover:text-white'
@@ -28,6 +30,7 @@ export default function MenuBar() {
     );
 
     const isActivityActive = ['/desert-storm', '/canyon-storm', '/alliance-duel', '/train'].includes(pathname);
+    const isCalculatorsActive = ['/calculators/drone'].includes(pathname);
 
     return (
         <>
@@ -65,27 +68,58 @@ export default function MenuBar() {
                                 </button>
 
                                 {desktopDropdownOpen && (
-                                    <div className="absolute top-full left-0 mt-1 w-48 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-2 animate-in fade-in slide-in-from-top-2">
-                                        <Link href="/desert-storm" onClick={() => setDesktopDropdownOpen(false)}>
-                                            <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/desert-storm' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                                                {t('desertStorm')}
-                                            </button>
-                                        </Link>
-                                        <Link href="/canyon-storm" onClick={() => setDesktopDropdownOpen(false)}>
-                                            <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/canyon-storm' ? 'bg-orange-500/10 text-orange-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                                                {t('canyonStorm')}
-                                            </button>
-                                        </Link>
-                                        <Link href="/alliance-duel" onClick={() => setDesktopDropdownOpen(false)}>
-                                            <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/alliance-duel' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                                                {t('allianceDuel')}
-                                            </button>
-                                        </Link>
-                                        <Link href="/train" onClick={() => setDesktopDropdownOpen(false)}>
-                                            <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/train' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                                                {t('train')}
-                                            </button>
-                                        </Link>
+                                    <div className="absolute top-full left-0 pt-2 w-48 z-50">
+                                        <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-2 animate-in fade-in slide-in-from-top-2">
+                                            <Link href="/desert-storm" onClick={() => setDesktopDropdownOpen(false)}>
+                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/desert-storm' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
+                                                    {t('desertStorm')}
+                                                </button>
+                                            </Link>
+                                            <Link href="/canyon-storm" onClick={() => setDesktopDropdownOpen(false)}>
+                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/canyon-storm' ? 'bg-orange-500/10 text-orange-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
+                                                    {t('canyonStorm')}
+                                                </button>
+                                            </Link>
+                                            <Link href="/alliance-duel" onClick={() => setDesktopDropdownOpen(false)}>
+                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/alliance-duel' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
+                                                    {t('allianceDuel')}
+                                                </button>
+                                            </Link>
+                                            <Link href="/train" onClick={() => setDesktopDropdownOpen(false)}>
+                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/train' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
+                                                    {t('train')}
+                                                </button>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Desktop Calculators Dropdown */}
+                            <div
+                                className="relative group"
+                                onMouseEnter={() => setDesktopCalculatorsDropdownOpen(true)}
+                                onMouseLeave={() => setDesktopCalculatorsDropdownOpen(false)}
+                            >
+                                <button className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border flex items-center gap-2 ${isCalculatorsActive
+                                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white border-transparent'
+                                    : 'bg-transparent text-slate-300 border-transparent hover:bg-slate-800 hover:text-white'
+                                    }`}>
+                                    {t('calculators')}
+                                    <svg className={`w-3 h-3 transition-transform duration-300 ${desktopCalculatorsDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                {desktopCalculatorsDropdownOpen && (
+                                    <div className="absolute top-full left-0 pt-2 w-48 z-50">
+                                        <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-2 animate-in fade-in slide-in-from-top-2">
+                                            <Link href="/calculators/drone" onClick={() => setDesktopCalculatorsDropdownOpen(false)}>
+                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/calculators/drone' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
+                                                    {t('droneCalculator') || "Drone Calculator"}
+                                                </button>
+                                            </Link>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -202,6 +236,25 @@ export default function MenuBar() {
                                             <NavLink href="/canyon-storm" label={t('canyonStorm')} isActive={pathname === '/canyon-storm'} />
                                             <NavLink href="/alliance-duel" label={t('allianceDuel')} isActive={pathname === '/alliance-duel'} />
                                             <NavLink href="/train" label={t('train')} isActive={pathname === '/train'} />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Mobile Calculators Submenu */}
+                                <div className="flex flex-col gap-1">
+                                    <button
+                                        onClick={() => setMobileCalculatorsSubmenuOpen(!mobileCalculatorsSubmenuOpen)}
+                                        className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border flex justify-between items-center transition-all ${isCalculatorsActive ? 'bg-pink-500/10 border-pink-500/50 text-pink-400' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
+                                    >
+                                        {t('calculators') || "Calculators"}
+                                        <svg className={`w-4 h-4 transition-transform duration-300 ${mobileCalculatorsSubmenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+
+                                    {mobileCalculatorsSubmenuOpen && (
+                                        <div className="flex flex-col gap-1 pl-4 mt-1 border-l-2 border-slate-700 ml-5 animate-in slide-in-from-top-2">
+                                            <NavLink href="/calculators/drone" label={t('droneCalculator') || "Drone Calculator"} isActive={pathname === '/calculators/drone'} />
                                         </div>
                                     )}
                                 </div>

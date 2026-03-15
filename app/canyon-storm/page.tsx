@@ -9,7 +9,9 @@ import { useLanguage } from "../../lib/LanguageContext";
 interface MemberProfile {
     user_id: string;
     username: string;
+    total_hero_power: number;
     squad_1_power: number;
+    arena_power?: number;
     cs_choice?: string;
     cs_team?: string; // Member's preference
     cs_signup_time?: string;
@@ -25,6 +27,12 @@ export default function CanyonStormSignup() {
     const [selectedTeam, setSelectedTeam] = useState("");
     const [showPreview, setShowPreview] = useState(false);
     const [loading, setLoading] = useState(false);
+    
+    const [statsData, setStatsData] = useState({
+        total_hero_power: 0,
+        squad_1_power: 0,
+        arena_power: 0,
+    });
 
     const [isWindowOpen, setIsWindowOpen] = useState(false);
     const [statusChecked, setStatusChecked] = useState(false);
@@ -43,6 +51,16 @@ export default function CanyonStormSignup() {
                 setUserData(userRes.data as MemberProfile);
                 if (userRes.data.cs_choice) setSelectedChoice(userRes.data.cs_choice);
                 if (userRes.data.cs_team) setSelectedTeam(userRes.data.cs_team);
+
+                const formatForUI = (val: number) => {
+                    if (!val) return 0;
+                    return val > 5000 ? val / 1000000 : val;
+                };
+                setStatsData({
+                    total_hero_power: formatForUI(userRes.data.total_hero_power || 0),
+                    squad_1_power: formatForUI(userRes.data.squad_1_power || 0),
+                    arena_power: formatForUI(userRes.data.arena_power || 0),
+                });
             }
 
             if (settingsRes.data) {
@@ -152,8 +170,49 @@ export default function CanyonStormSignup() {
                     </div>
                 ) : (
                     <div className="text-center">
-                        <div className="bg-white border border-orange-100 rounded-[2.5rem] p-10 mb-8 space-y-4">
+                        <div className="bg-white border border-orange-100 rounded-[2.5rem] p-10 mb-8 space-y-4 text-left">
                             <div>
+                                <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('ign' as any)}</span>
+                                <p className="text-xl font-black text-slate-800 uppercase italic">
+                                    {userData?.username || "Commander"}
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('totalPower')}</span>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        value={statsData.total_hero_power === 0 ? "" : statsData.total_hero_power}
+                                        placeholder="0.0"
+                                        className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-800 font-bold outline-none w-full"
+                                        onChange={e => setStatsData({ ...statsData, total_hero_power: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                                <div>
+                                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('squad1Power')}</span>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        value={statsData.squad_1_power === 0 ? "" : statsData.squad_1_power}
+                                        placeholder="0.0"
+                                        className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-800 font-bold outline-none w-full"
+                                        onChange={e => setStatsData({ ...statsData, squad_1_power: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                                <div>
+                                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('arenaPower')}</span>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        value={statsData.arena_power === 0 ? "" : statsData.arena_power}
+                                        placeholder="0.0"
+                                        className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-800 font-bold outline-none w-full"
+                                        onChange={e => setStatsData({ ...statsData, arena_power: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="pt-4 border-t border-slate-100">
                                 <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('status')}</span>
                                 <p className="text-xl font-black text-slate-800 uppercase italic">
                                     {selectedChoice === choices[0] ? t('yesBeThere') : selectedChoice === choices[1] ? t('maybeSub') : t('sorryCantMakeIt')}
@@ -173,8 +232,20 @@ export default function CanyonStormSignup() {
                             <button
                                 onClick={async () => {
                                     setLoading(true);
+                                    const smartScale = (val: number) => {
+                                        if (val <= 0) return 0;
+                                        return val < 5000 ? Math.round(val * 1000000) : Math.round(val);
+                                    };
+                                    
+                                    const finalTHP = smartScale(statsData.total_hero_power);
+                                    const finalS1P = smartScale(statsData.squad_1_power);
+                                    const finalAP = smartScale(statsData.arena_power);
+
                                     const { error } = await supabase.from("members").upsert({
                                         ...userData,
+                                        total_hero_power: finalTHP,
+                                        squad_1_power: finalS1P,
+                                        arena_power: finalAP,
                                         cs_choice: selectedChoice,
                                         cs_team: selectedChoice.startsWith("Yes") ? selectedTeam : null,
                                         cs_signup_time: new Date().toISOString()
