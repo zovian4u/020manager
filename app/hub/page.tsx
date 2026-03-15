@@ -372,6 +372,9 @@ export default function HubPage() {
                             <Link href="/guide">
                                 <button className="px-6 sm:px-10 py-3 sm:py-4 bg-indigo-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">📖 {t('guide')}</button>
                             </Link>
+                            <Link href="/calculators/drone">
+                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-teal-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">🧮 {t('droneCalculator')}</button>
+                            </Link>
                             {(currentUser?.role === 'R4' || currentUser?.role === 'R5') && (
                                 <>
                                     <Link href="/tactical-dashboard">
