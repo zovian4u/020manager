@@ -39,7 +39,7 @@ export default function MenuBar() {
 
     const NavLink = ({ href, label, isActive }: { href: string, label: string, isActive: boolean }) => (
         <Link href={href} onClick={() => { setMobileMenuOpen(false); setMobileSubmenuOpen(false); setMobileCalculatorsSubmenuOpen(false); }}>
-            <button className={`px-2 xl:px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border w-full sm:w-auto ${isActive
+            <button className={`px-2 xl:px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border ${isActive
                 ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white border-transparent scale-105 shadow-[0_4px_20px_rgba(236,72,153,0.5)]'
                 : 'bg-transparent text-slate-300 border-transparent hover:bg-slate-800 hover:text-white'
                 }`}>
@@ -65,10 +65,40 @@ export default function MenuBar() {
 
                             {/* Conditional Navigation for Guests */}
                             {!user ? (
-                                <div className="flex items-center gap-1 p-1 bg-slate-800 rounded-2xl shadow-inner">
+                                <div className="flex items-center gap-1 p-1 bg-slate-800 rounded-2xl shadow-inner ml-2 sm:ml-4 mr-auto">
                                     <NavLink href="/" label={t('homePage')} isActive={pathname === '/'} />
-                                    <NavLink href="/about" label={t('aboutUs')} isActive={pathname === '/about'} />
-                                    <NavLink href="/contact" label={t('contactUs')} isActive={pathname === '/contact'} />
+                                    {/* Desktop view for guests */}
+                                    <div className="hidden lg:flex items-center gap-1">
+                                        <NavLink href="/about" label={t('aboutUs')} isActive={pathname === '/about'} />
+                                        <NavLink href="/contact" label={t('contactUs')} isActive={pathname === '/contact'} />
+                                    </div>
+                                    {/* Mobile/Medium view for guests - "More" dropdown */}
+                                    <div className="lg:hidden relative">
+                                        <button 
+                                            onClick={() => setDesktopDropdownOpen(!desktopDropdownOpen)}
+                                            onMouseEnter={() => setDesktopDropdownOpen(true)}
+                                            onMouseLeave={() => setDesktopDropdownOpen(false)}
+                                            className="px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-slate-800 hover:text-white transition-all flex items-center gap-2 border border-transparent"
+                                        >
+                                            <div className="flex flex-col gap-0.5 items-center">
+                                                <span className="w-3.5 h-0.5 bg-current rounded-full" />
+                                                <span className="w-3.5 h-0.5 bg-current rounded-full" />
+                                                <span className="w-3.5 h-0.5 bg-current rounded-full" />
+                                            </div>
+                                        </button>
+                                        {desktopDropdownOpen && (
+                                            <div 
+                                                className="absolute top-full right-0 pt-2 w-48 z-[99999]"
+                                                onMouseEnter={() => setDesktopDropdownOpen(true)}
+                                                onMouseLeave={() => setDesktopDropdownOpen(false)}
+                                            >
+                                                <div className="bg-slate-900/98 backdrop-blur-2xl border border-slate-700/60 rounded-2xl shadow-2xl p-2 animate-in fade-in slide-in-from-top-3 ring-1 ring-white/10">
+                                                    <Link href="/about" onClick={() => setDesktopDropdownOpen(false)} className="block px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">{t('aboutUs')}</Link>
+                                                    <Link href="/contact" onClick={() => setDesktopDropdownOpen(false)} className="block px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">{t('contactUs')}</Link>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <>
@@ -187,7 +217,7 @@ export default function MenuBar() {
                             )}
 
                 {/* Desktop Auth Section */}
-                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-auto">
                     {/* Global Language Selector (Globe Icon) */}
                     <div className="relative group p-1 bg-slate-800 rounded-2xl shadow-inner flex items-center gap-1 border border-slate-700/50">
                         <div className="pl-3 pr-1 text-slate-400">
@@ -215,7 +245,7 @@ export default function MenuBar() {
 
                     {user ? (
                         <>
-                            <div className="hidden xl:flex items-center gap-2">
+                            <div className="hidden lg:flex items-center gap-2">
                                 <UserStatusButton />
                                 <div className="relative group" 
                                     onMouseEnter={() => setDesktopSettingsOpen(true)}
