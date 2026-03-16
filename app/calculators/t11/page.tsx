@@ -120,6 +120,23 @@ export default function T11CalculatorPage() {
         inputSetter(newVal.toString());
     };
 
+    const handleInputChange = (type: 'from' | 'to', value: string) => {
+        const sanitized = value.replace(/\D/g, '');
+        if (type === 'from') {
+            setFromInput(sanitized);
+            const num = parseInt(sanitized);
+            if (!isNaN(num)) {
+                setFromLevel(Math.max(0, Math.min(100, num)));
+            }
+        } else {
+            setToInput(sanitized);
+            const num = parseInt(sanitized);
+            if (!isNaN(num)) {
+                setToLevel(Math.max(0, Math.min(100, num)));
+            }
+        }
+    };
+
     const handleInputBlur = (type: 'from' | 'to') => {
         const val = type === 'from' ? fromInput : toInput;
         let num = parseInt(val) || 0;
@@ -263,7 +280,7 @@ export default function T11CalculatorPage() {
                                             type="text"
                                             inputMode="numeric"
                                             value={fromInput}
-                                            onChange={(e) => setFromInput(e.target.value.replace(/\D/g, ''))}
+                                            onChange={(e) => handleInputChange('from', e.target.value)}
                                             onBlur={() => handleInputBlur('from')}
                                             className="flex-1 bg-transparent text-center font-black text-xl text-white outline-none w-8"
                                         />
@@ -278,7 +295,7 @@ export default function T11CalculatorPage() {
                                             type="text"
                                             inputMode="numeric"
                                             value={toInput}
-                                            onChange={(e) => setToInput(e.target.value.replace(/\D/g, ''))}
+                                            onChange={(e) => handleInputChange('to', e.target.value)}
                                             onBlur={() => handleInputBlur('to')}
                                             className="flex-1 bg-transparent text-center font-black text-xl text-white outline-none w-8"
                                         />
