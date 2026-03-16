@@ -66,28 +66,28 @@ export default function DroneCalculatorPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pt-24 pb-12">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6">
-                <div className="mb-8 text-center animate-in slide-in-from-bottom border-b border-pink-100 pb-8">
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-800 uppercase italic tracking-tighter mb-4">
+        <div className="bg-slate-50 pt-0 pb-4">
+            <div className="max-w-2xl mx-auto px-4">
+                <div className="mb-2 text-center animate-in slide-in-from-bottom border-b border-pink-100 pb-2">
+                    <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic tracking-tighter mb-0.5">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
                             {t('droneCalculator') || "Drone Calculator"}
                         </span>
                     </h1>
-                    <p className="text-slate-500 font-bold max-w-2xl mx-auto">
+                    <p className="text-slate-500 font-bold text-[10px] max-w-2xl mx-auto hidden md:block">
                         {t('droneCalcDesc') || "Calculate the exact Drone Parts and Battle Data required for your next upgrade target."}
                     </p>
                 </div>
 
-                <div className="bg-white/70 backdrop-blur-xl border border-white p-8 rounded-[3rem] shadow-xl hover:shadow-2xl transition-all relative overflow-hidden group">
+                <div className="bg-white/70 backdrop-blur-xl border border-white p-3 rounded-[1.5rem] shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
                     {/* Decorative Background Element */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 group-hover:opacity-50 transition-opacity duration-700 pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
 
                     <div className="relative z-10">
                         {/* Inputs Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                        <div className="grid grid-cols-2 gap-3 mb-3">
                             <div className="flex flex-col">
-                                <label className="text-[10px] text-slate-400 font-black uppercase mb-2 tracking-widest">{t('currentLevel') || "Current Level"}</label>
+                                <label className="text-[9px] text-slate-400 font-black uppercase mb-1 tracking-widest">{t('currentLevel') || "Current Level"}</label>
                                 <input
                                     type="text"
                                     inputMode="numeric"
@@ -98,11 +98,11 @@ export default function DroneCalculatorPage() {
                                         setFromLevelInputValue(val);
                                     }}
                                     onBlur={handleFromLevelBlur}
-                                    className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-slate-800 font-bold text-xl outline-none focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 transition-all shadow-inner"
+                                    className="bg-slate-50 border border-slate-200 p-2 rounded-lg text-slate-800 font-bold text-sm outline-none focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 transition-all shadow-inner"
                                 />
                             </div>
                             <div className="flex flex-col">
-                                <label className="text-[10px] text-slate-400 font-black uppercase mb-2 tracking-widest">{t('targetLevel') || "Target Level"}</label>
+                                <label className="text-[9px] text-slate-400 font-black uppercase mb-1 tracking-widest">{t('targetLevel') || "Target Level"}</label>
                                 <input
                                     type="text"
                                     inputMode="numeric"
@@ -113,26 +113,26 @@ export default function DroneCalculatorPage() {
                                         setToLevelInputValue(val);
                                     }}
                                     onBlur={handleToLevelBlur}
-                                    className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-slate-800 font-bold text-xl outline-none focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 transition-all shadow-inner"
+                                    className="bg-slate-50 border border-slate-200 p-2 rounded-lg text-slate-800 font-bold text-sm outline-none focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 transition-all shadow-inner"
                                 />
                             </div>
                         </div>
 
                         {/* Results Section */}
-                        <div className="bg-slate-900 rounded-[2rem] p-8 shadow-inner border border-slate-800 relative overflow-hidden">
+                        <div className="bg-slate-900 rounded-[1rem] p-3 shadow-inner border border-slate-800 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500"></div>
 
-                            <h3 className="text-center text-[10px] text-slate-400 font-black uppercase mb-6 tracking-widest">
+                            <h3 className="text-center text-[8px] text-slate-400 font-black uppercase mb-2 tracking-widest">
                                 {t('requiredResources') || "Required Resources"}
                             </h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="flex items-center justify-center p-6 bg-slate-800/50 rounded-3xl border border-slate-700/50 hover:border-pink-500/30 transition-colors gap-6 pointer-events-auto group/item relative">
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 animate-in zoom-in spin-in-12 duration-700 pointer-events-none drop-shadow-2xl">
-                                        <img src="/images/resources/drone-part.png" alt="Drone Parts" className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(236,72,153,0.3)]" />
+                            <div className="grid grid-cols-1 gap-2">
+                                <div className="flex items-center justify-center p-2.5 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-pink-500/30 transition-colors gap-3 pointer-events-auto group/item relative">
+                                    <div className="w-10 h-10 flex-shrink-0 animate-in zoom-in spin-in-12 duration-700 pointer-events-none">
+                                        <img src="/images/resources/drone-part.png" alt="Drone Parts" className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(236,72,153,0.3)]" />
                                     </div>
                                     <div className="flex flex-col text-left">
-                                        <div className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 mb-1 font-mono cursor-help" title={totals.totalParts.toLocaleString()}>
+                                        <div className="text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 mb-0 font-mono cursor-help line-height-none" title={totals.totalParts.toLocaleString()}>
                                             {formatNumber(totals.totalParts, true)}
                                         </div>
                                         <div className="text-[11px] text-pink-400 font-black uppercase tracking-widest">
@@ -141,12 +141,12 @@ export default function DroneCalculatorPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-center p-6 bg-slate-800/50 rounded-3xl border border-slate-700/50 hover:border-blue-500/30 transition-colors gap-6 pointer-events-auto group/item relative">
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 animate-in zoom-in spin-in-12 duration-700 pointer-events-none drop-shadow-2xl">
-                                        <img src="/images/resources/battle-data.png" alt="Battle Data" className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]" />
+                                <div className="flex items-center justify-center p-2.5 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-blue-500/30 transition-colors gap-3 pointer-events-auto group/item relative">
+                                    <div className="w-10 h-10 flex-shrink-0 animate-in zoom-in spin-in-12 duration-700 pointer-events-none">
+                                        <img src="/images/resources/battle-data.png" alt="Battle Data" className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(59,130,246,0.3)]" />
                                     </div>
                                     <div className="flex flex-col text-left">
-                                        <div className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 mb-1 font-mono cursor-help" title={totals.totalData.toLocaleString()}>
+                                        <div className="text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 mb-0 font-mono cursor-help line-height-none" title={totals.totalData.toLocaleString()}>
                                             {formatNumber(totals.totalData, true)}
                                         </div>
                                         <div className="text-[11px] text-blue-400 font-black uppercase tracking-widest">

@@ -5,7 +5,8 @@ import { useLanguage } from "../lib/LanguageContext";
 import UserStatusButton from "./UserStatusButton";
 import { usePathname } from "next/navigation";
 import { useStackApp } from "@stackframe/stack";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
 
 export default function MenuBar() {
     const { language, setLanguage, t } = useLanguage();
@@ -14,13 +15,31 @@ export default function MenuBar() {
     const user = stack.useUser();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [desktopDropdownOpen, setDesktopDropdownOpen] = useState(false);
-    const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState(false);
     const [desktopCalculatorsDropdownOpen, setDesktopCalculatorsDropdownOpen] = useState(false);
     const [mobileCalculatorsSubmenuOpen, setMobileCalculatorsSubmenuOpen] = useState(false);
+    const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState(false);
+    const [desktopSettingsOpen, setDesktopSettingsOpen] = useState(false);
+    const [userData, setUserData] = useState<{ username: string; role: string } | null>(null);
+
+    useEffect(() => {
+        if (!user) {
+            setUserData(null);
+            return;
+        }
+        async function fetchUser() {
+            const { data, error } = await supabase
+                .from('members')
+                .select('username, role')
+                .eq('user_id', user!.id)
+                .single();
+            if (data && !error) setUserData(data);
+        }
+        fetchUser();
+    }, [user]);
 
     const NavLink = ({ href, label, isActive }: { href: string, label: string, isActive: boolean }) => (
         <Link href={href} onClick={() => { setMobileMenuOpen(false); setMobileSubmenuOpen(false); setMobileCalculatorsSubmenuOpen(false); }}>
-            <button className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border w-full sm:w-auto ${isActive
+            <button className={`px-2 xl:px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border w-full sm:w-auto ${isActive
                 ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white border-transparent scale-105 shadow-[0_4px_20px_rgba(236,72,153,0.5)]'
                 : 'bg-transparent text-slate-300 border-transparent hover:bg-slate-800 hover:text-white'
                 }`}>
@@ -39,122 +58,156 @@ export default function MenuBar() {
                 className="flex items-center justify-between px-4 sm:px-6 py-3 bg-slate-900 border-b border-slate-700 shadow-2xl"
             >
                 {/* Logo Section */}
-                <Link href="/" className="font-black text-xl sm:text-2xl italic tracking-tighter hover:scale-105 transition-transform flex-shrink-0">
-                    <span className="text-white">020</span>
-                    <span className="text-pink-500">ALLIANCE</span>
+                <Link href="/" className="flex flex-col items-start leading-none group transition-transform hover:scale-105 flex-shrink-0">
+                    <span className="text-white font-black text-[10px] uppercase tracking-[0.2em] mb-0.5">020</span>
+                    <span className="text-pink-500 font-black text-lg italic tracking-tighter">ALLIANCE</span>
                 </Link>
 
-                {/* Middle Action Bar - Desktop Only */}
-                <div className="hidden md:flex items-center gap-1 p-1 bg-slate-800 rounded-2xl shadow-inner relative">
-                    <NavLink href="/" label={t('homePage')} isActive={pathname === '/'} />
-                    {user ? (
-                        <>
-                            <NavLink href="/hub" label={t('hubTitle')} isActive={pathname === '/hub'} />
+                            {/* Conditional Navigation for Guests */}
+                            {!user ? (
+                                <div className="flex items-center gap-1 p-1 bg-slate-800 rounded-2xl shadow-inner">
+                                    <NavLink href="/" label={t('homePage')} isActive={pathname === '/'} />
+                                    <NavLink href="/about" label={t('aboutUs')} isActive={pathname === '/about'} />
+                                    <NavLink href="/contact" label={t('contactUs')} isActive={pathname === '/contact'} />
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Desktop Navigation for Authenticated Users */}
+                                    <div className="hidden xl:flex items-center gap-1 p-1 bg-slate-800 rounded-2xl shadow-inner relative">
+                                        <NavLink href="/" label={t('homePage')} isActive={pathname === '/'} />
+                                        <NavLink href="/hub" label={t('hubTitle')} isActive={pathname === '/hub'} />
+                                        
+                                        <div className="relative group" onMouseEnter={() => setDesktopDropdownOpen(true)} onMouseLeave={() => setDesktopDropdownOpen(false)}>
+                                            <button className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border flex items-center gap-2 ${isActivityActive ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+                                                {t('allianceActivity')}
+                                                <svg className={`w-3 h-3 transition-transform duration-300 ${desktopDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                            {desktopDropdownOpen && (
+                                                <div className="absolute top-full left-0 pt-2 w-48 z-50">
+                                                    <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-2 animate-in fade-in slide-in-from-top-2 ring-1 ring-white/5">
+                                                        <Link href="/desert-storm" className="block w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white">{t('desertStorm')}</Link>
+                                                        <Link href="/canyon-storm" className="block w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white">{t('canyonStorm')}</Link>
+                                                        <Link href="/alliance-duel" className="block w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white">{t('allianceDuel')}</Link>
+                                                        <Link href="/train" className="block w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white">{t('train')}</Link>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
 
-                            {/* Desktop Dropdown */}
-                            <div
-                                className="relative group"
-                                onMouseEnter={() => setDesktopDropdownOpen(true)}
-                                onMouseLeave={() => setDesktopDropdownOpen(false)}
-                            >
-                                <button className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border flex items-center gap-2 ${isActivityActive
-                                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white border-transparent'
-                                    : 'bg-transparent text-slate-300 border-transparent hover:bg-slate-800 hover:text-white'
-                                    }`}>
-                                    {t('allianceActivity')}
-                                    <svg className={`w-3 h-3 transition-transform duration-300 ${desktopDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
+                                        <div className="relative group" onMouseEnter={() => setDesktopCalculatorsDropdownOpen(true)} onMouseLeave={() => setDesktopCalculatorsDropdownOpen(false)}>
+                                            <button className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border flex items-center gap-2 ${isCalculatorsActive ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
+                                                {t('calculators')}
+                                                <svg className={`w-3 h-3 transition-transform duration-300 ${desktopCalculatorsDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                            {desktopCalculatorsDropdownOpen && (
+                                                <div className="absolute top-full left-0 pt-2 w-48 z-50">
+                                                    <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-2 animate-in fade-in slide-in-from-top-2 ring-1 ring-white/5">
+                                                        <Link href="/calculators/drone" className="block w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white">{t('droneCalculator')}</Link>
+                                                        <Link href="/calculators/t11" className="block w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white">{t('t11Calculator')}</Link>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <NavLink href="/guide" label={t('guide')} isActive={pathname === '/guide'} />
+                                        <NavLink href="/about" label={t('aboutUs')} isActive={pathname === '/about'} />
+                                        <NavLink href="/contact" label={t('contactUs')} isActive={pathname === '/contact'} />
+                                    </div>
 
-                                {desktopDropdownOpen && (
-                                    <div className="absolute top-full left-0 pt-2 w-48 z-50">
-                                        <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-2 animate-in fade-in slide-in-from-top-2">
-                                            <Link href="/desert-storm" onClick={() => setDesktopDropdownOpen(false)}>
-                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/desert-storm' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                                                    {t('desertStorm')}
-                                                </button>
-                                            </Link>
-                                            <Link href="/canyon-storm" onClick={() => setDesktopDropdownOpen(false)}>
-                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/canyon-storm' ? 'bg-orange-500/10 text-orange-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                                                    {t('canyonStorm')}
-                                                </button>
-                                            </Link>
-                                            <Link href="/alliance-duel" onClick={() => setDesktopDropdownOpen(false)}>
-                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/alliance-duel' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                                                    {t('allianceDuel')}
-                                                </button>
-                                            </Link>
-                                            <Link href="/train" onClick={() => setDesktopDropdownOpen(false)}>
-                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/train' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                                                    {t('train')}
-                                                </button>
-                                            </Link>
+                                    {/* "More" dropdown for screens below xl (1280px) */}
+                                    <div className="xl:hidden flex items-center gap-1 p-1 bg-slate-800 rounded-2xl shadow-inner relative">
+                                        <div className="flex items-center gap-1">
+                                            <NavLink href="/" label={t('homePage')} isActive={pathname === '/'} />
+                                            <NavLink href="/hub" label={t('hubTitle')} isActive={pathname === '/hub'} />
+                                        </div>
+                                        <div className="relative group" 
+                                            onMouseEnter={() => setDesktopDropdownOpen(true)}
+                                            onMouseLeave={() => setDesktopDropdownOpen(false)}
+                                        >
+                                            <button 
+                                                onClick={() => setDesktopDropdownOpen(!desktopDropdownOpen)}
+                                                className="px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-slate-800 hover:text-white transition-all flex items-center gap-2"
+                                            >
+                                                {t('more')}
+                                                <div className="flex flex-col gap-0.5 items-center">
+                                                    <span className="w-3.5 h-0.5 bg-current rounded-full" />
+                                                    <span className="w-3.5 h-0.5 bg-current rounded-full" />
+                                                    <span className="w-3.5 h-0.5 bg-current rounded-full" />
+                                                </div>
+                                            </button>
+                                            {desktopDropdownOpen && (
+                                                <div className="absolute top-full right-0 pt-2 w-56 z-50">
+                                                    <div className="bg-slate-900/98 backdrop-blur-2xl border border-slate-700/60 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-3 animate-in fade-in slide-in-from-top-3 ring-1 ring-white/10">
+                                                        {user && userData && (
+                                                            <div className="mb-3 px-4 py-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                                                                <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('loggedInAs')}</div>
+                                                                <div className="text-pink-400 font-black text-[10px] uppercase truncate">{userData.username}</div>
+                                                                <div className="text-slate-500 font-bold text-[8px] uppercase">({userData.role || 'Member'})</div>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="border-b border-slate-700/50 pb-2 mb-2 px-4 pt-1 text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">{t('allianceActivity')}</div>
+                                                        <Link href="/desert-storm" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('desertStorm')}</Link>
+                                                        <Link href="/canyon-storm" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('canyonStorm')}</Link>
+                                                        
+                                                        <div className="border-b border-slate-700/50 pb-2 my-2 px-4 text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">{t('calculators')}</div>
+                                                        <Link href="/calculators/drone" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('droneCalculator')}</Link>
+                                                        <Link href="/calculators/t11" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('t11Calculator')}</Link>
+                                                        
+                                                        <div className="border-b border-slate-700/50 pb-2 my-2 px-4 text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Info</div>
+                                                        <Link href="/guide" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('guide')}</Link>
+                                                        <Link href="/about" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('aboutUs')}</Link>
+                                                        <Link href="/contact" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('contactUs')}</Link>
+                                                        
+                                                        {user && (
+                                                            <div className="mt-3 pt-3 border-t border-slate-700/80 space-y-2">
+                                                                <button 
+                                                                    onClick={() => { window.dispatchEvent(new Event('open-settings')); setDesktopDropdownOpen(false); }} 
+                                                                    className="w-full text-left px-4 py-2.5 bg-slate-800/30 hover:bg-slate-800 text-[9px] font-black uppercase text-slate-300 hover:text-white rounded-xl transition-all border border-transparent hover:border-slate-700"
+                                                                >
+                                                                    ⚙️ {t('settings')}
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => { stack.signOut(); setDesktopDropdownOpen(false); }} 
+                                                                    className="w-full text-center px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-[9px] font-black uppercase text-red-500 rounded-xl transition-all border border-red-500/20 hover:border-red-500/40"
+                                                                >
+                                                                    {t('logout')}
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                )}
-                            </div>
-
-                            {/* Desktop Calculators Dropdown */}
-                            <div
-                                className="relative group"
-                                onMouseEnter={() => setDesktopCalculatorsDropdownOpen(true)}
-                                onMouseLeave={() => setDesktopCalculatorsDropdownOpen(false)}
-                            >
-                                <button className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border flex items-center gap-2 ${isCalculatorsActive
-                                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white border-transparent'
-                                    : 'bg-transparent text-slate-300 border-transparent hover:bg-slate-800 hover:text-white'
-                                    }`}>
-                                    {t('calculators')}
-                                    <svg className={`w-3 h-3 transition-transform duration-300 ${desktopCalculatorsDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-
-                                {desktopCalculatorsDropdownOpen && (
-                                    <div className="absolute top-full left-0 pt-2 w-48 z-50">
-                                        <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-2 animate-in fade-in slide-in-from-top-2">
-                                            <Link href="/calculators/drone" onClick={() => setDesktopCalculatorsDropdownOpen(false)}>
-                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/calculators/drone' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                                                    {t('droneCalculator') || "Drone Calculator"}
-                                                </button>
-                                            </Link>
-                                            <Link href="/calculators/t11" onClick={() => setDesktopCalculatorsDropdownOpen(false)}>
-                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/calculators/t11' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
-                                                    {t('t11Calculator') || "T11 Armament"}
-                                                </button>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <NavLink href="/guide" label={t('guide')} isActive={pathname === '/guide'} />
-                            <NavLink href="/about" label={t('aboutUs')} isActive={pathname === '/about'} />
-                            <NavLink href="/contact" label={t('contactUs')} isActive={pathname === '/contact'} />
-                        </>
-                    ) : (
-                        <NavLink href="/about" label={t('aboutUs')} isActive={pathname === '/about'} />
-                    )}
-                </div>
+                                </>
+                            )}
 
                 {/* Desktop Auth Section */}
-                <div className="hidden sm:flex items-center gap-3 flex-shrink-0">
-                    {/* Language Selector (Visible to All) */}
-                    <div className="relative group mr-1">
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    {/* Global Language Selector (Globe Icon) */}
+                    <div className="relative group p-1 bg-slate-800 rounded-2xl shadow-inner flex items-center gap-1 border border-slate-700/50">
+                        <div className="pl-3 pr-1 text-slate-400">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9-3-9m-9 9a9 9 0 019-9" />
+                            </svg>
+                        </div>
                         <select
                             value={language}
                             onChange={(e) => setLanguage(e.target.value as any)}
-                            className="bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-700 outline-none cursor-pointer hover:bg-slate-700 hover:text-white transition-all appearance-none pr-8"
+                            className="bg-transparent text-slate-300 px-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer hover:text-white transition-all appearance-none pr-6 font-mono"
                         >
-                            <option value="en">EN</option>
-                            <option value="zh">ZH</option>
-                            <option value="ja">JA</option>
-                            <option value="th">TH</option>
-                            <option value="vi">VI</option>
+                            <option className="bg-slate-900" value="en">EN</option>
+                            <option className="bg-slate-900" value="zh">ZH</option>
+                            <option className="bg-slate-900" value="ja">JA</option>
+                            <option className="bg-slate-900" value="th">TH</option>
+                            <option className="bg-slate-900" value="vi">VI</option>
                         </select>
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                             </svg>
                         </div>
@@ -162,138 +215,58 @@ export default function MenuBar() {
 
                     {user ? (
                         <>
-                            {pathname === '/hub' ? (
-                                <button onClick={() => window.dispatchEvent(new Event('open-settings'))} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest shadow-sm border border-slate-700 whitespace-nowrap">
-                                    ⚙️ {t('settings')}
-                                </button>
-                            ) : (
-                                <Link href="/hub?settings=true">
-                                    <button className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest shadow-sm border border-slate-700 whitespace-nowrap">
-                                        ⚙️ {t('settings')}
+                            <div className="hidden xl:flex items-center gap-2">
+                                <UserStatusButton />
+                                <div className="relative group" 
+                                    onMouseEnter={() => setDesktopSettingsOpen(true)}
+                                    onMouseLeave={() => setDesktopSettingsOpen(false)}
+                                >
+                                    <button 
+                                        className="p-2.5 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 hover:text-white transition-all shadow-sm border border-slate-700 active:scale-95"
+                                    >
+                                        ⚙️
                                     </button>
-                                </Link>
-                            )}
-                            <UserStatusButton />
-                            <button onClick={() => stack.signOut()} className="px-4 py-2 bg-red-500/10 text-red-500 border border-red-500/30 rounded-xl hover:bg-red-500 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest shadow-lg whitespace-nowrap">
-                                {t('logout')}
-                            </button>
+                                    {desktopSettingsOpen && (
+                                        <div className="absolute top-full right-0 pt-2 w-48 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-2 ring-1 ring-white/5 overflow-hidden">
+                                                {pathname === '/hub' ? (
+                                                    <button 
+                                                        onClick={() => { window.dispatchEvent(new Event('open-settings')); setDesktopSettingsOpen(false); }} 
+                                                        className="block w-full text-left px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
+                                                    >
+                                                        {t('settings')}
+                                                    </button>
+                                                ) : (
+                                                    <Link href="/hub?settings=true" className="block" onClick={() => setDesktopSettingsOpen(false)}>
+                                                        <button className="block w-full text-left px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                                                            {t('settings')}
+                                                        </button>
+                                                    </Link>
+                                                )}
+                                                <div className="h-px bg-slate-700/50 my-1 mx-2" />
+                                                <button 
+                                                    onClick={() => { stack.signOut(); setDesktopSettingsOpen(false); }} 
+                                                    className="block w-full text-left px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500/80 hover:bg-red-500/10 hover:text-red-500 transition-all font-black"
+                                                >
+                                                    {t('logout')}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </>
                     ) : (
                         <Link href="/signin">
-                            <button className="px-6 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl hover:scale-105 transition-all font-black text-[10px] uppercase tracking-widest shadow-xl whitespace-nowrap">
+                            <button className="px-5 sm:px-8 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl hover:scale-105 transition-all font-black text-[10px] uppercase tracking-widest shadow-xl whitespace-nowrap ring-2 ring-pink-500/20 active:scale-95">
                                 {t('signIn')}
                             </button>
                         </Link>
                     )}
                 </div>
 
-                {/* Mobile Hamburger Button */}
-                <button
-                    onClick={() => { setMobileMenuOpen(!mobileMenuOpen); setMobileSubmenuOpen(false); }}
-                    className="sm:hidden flex flex-col gap-1.5 p-2 rounded-xl bg-slate-800 border border-slate-700"
-                    aria-label="Toggle menu"
-                >
-                    <span className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-                    <span className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
-                    <span className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
-                </button>
             </nav>
 
-            {/* Mobile Slide-Down Menu */}
-            {mobileMenuOpen && (
-                <div
-                    style={{ position: 'fixed', top: '56px', left: 0, width: '100%', zIndex: 99998 }}
-                    className="sm:hidden bg-slate-900/98 backdrop-blur-xl border-b border-slate-700 shadow-2xl animate-in slide-in-from-top overflow-y-auto max-h-[calc(100vh-56px)]"
-                >
-                    <div className="flex flex-col gap-2 p-4">
-                        {/* Mobile Language Selector */}
-                        <div className="flex items-center justify-between gap-1 mb-2 bg-slate-800 p-1 rounded-xl border border-slate-700">
-                            {['en', 'zh', 'ja', 'th', 'vi'].map((lang) => (
-                                <button
-                                    key={lang}
-                                    onClick={() => setLanguage(lang as any)}
-                                    className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${language === lang ? 'bg-pink-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
-                                >
-                                    {lang}
-                                </button>
-                            ))}
-                        </div>
-                        <NavLink href="/" label={t('homePage')} isActive={pathname === '/'} />
-                        {user ? (
-                            <>
-                                <NavLink href="/hub" label={t('hubTitle')} isActive={pathname === '/hub'} />
-
-                                {/* Mobile Alliance Activity Submenu */}
-                                <div className="flex flex-col gap-1">
-                                    <button
-                                        onClick={() => setMobileSubmenuOpen(!mobileSubmenuOpen)}
-                                        className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border flex justify-between items-center transition-all ${isActivityActive ? 'bg-pink-500/10 border-pink-500/50 text-pink-400' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
-                                    >
-                                        {t('allianceActivity')}
-                                        <svg className={`w-4 h-4 transition-transform duration-300 ${mobileSubmenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-
-                                    {mobileSubmenuOpen && (
-                                        <div className="flex flex-col gap-1 pl-4 mt-1 border-l-2 border-slate-700 ml-5 animate-in slide-in-from-top-2">
-                                            <NavLink href="/desert-storm" label={t('desertStorm')} isActive={pathname === '/desert-storm'} />
-                                            <NavLink href="/canyon-storm" label={t('canyonStorm')} isActive={pathname === '/canyon-storm'} />
-                                            <NavLink href="/alliance-duel" label={t('allianceDuel')} isActive={pathname === '/alliance-duel'} />
-                                            <NavLink href="/train" label={t('train')} isActive={pathname === '/train'} />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Mobile Calculators Submenu */}
-                                <div className="flex flex-col gap-1">
-                                    <button
-                                        onClick={() => setMobileCalculatorsSubmenuOpen(!mobileCalculatorsSubmenuOpen)}
-                                        className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border flex justify-between items-center transition-all ${isCalculatorsActive ? 'bg-pink-500/10 border-pink-500/50 text-pink-400' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
-                                    >
-                                        {t('calculators') || "Calculators"}
-                                        <svg className={`w-4 h-4 transition-transform duration-300 ${mobileCalculatorsSubmenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-
-                                    {mobileCalculatorsSubmenuOpen && (
-                                        <div className="flex flex-col gap-1 pl-4 mt-1 border-l-2 border-slate-700 ml-5 animate-in slide-in-from-top-2">
-                                            <NavLink href="/calculators/drone" label={t('droneCalculator') || "Drone Calculator"} isActive={pathname === '/calculators/drone'} />
-                                            <NavLink href="/calculators/t11" label={t('t11Calculator') || "T11 Armament"} isActive={pathname === '/calculators/t11'} />
-                                        </div>
-                                    )}
-                                </div>
-
-                                <NavLink href="/guide" label={t('guide')} isActive={pathname === '/guide'} />
-                                <NavLink href="/about" label={t('aboutUs')} isActive={pathname === '/about'} />
-                                <NavLink href="/contact" label={t('contactUs')} isActive={pathname === '/contact'} />
-                                <div className="border-t border-slate-700 my-2" />
-                                {pathname === '/hub' ? (
-                                    <button onClick={() => { window.dispatchEvent(new Event('open-settings')); setMobileMenuOpen(false); }} className="px-5 py-3 bg-slate-800 text-slate-300 rounded-xl font-black text-[10px] uppercase tracking-widest border border-slate-700 w-full">
-                                        ⚙️ {t('settings')}
-                                    </button>
-                                ) : (
-                                    <Link href="/hub?settings=true" onClick={() => setMobileMenuOpen(false)}>
-                                        <button className="px-5 py-3 bg-slate-800 text-slate-300 rounded-xl font-black text-[10px] uppercase tracking-widest border border-slate-700 w-full">
-                                            ⚙️ {t('settings')}
-                                        </button>
-                                    </Link>
-                                )}
-                                <button onClick={() => { stack.signOut(); setMobileMenuOpen(false); }} className="px-5 py-3 bg-red-500/10 text-red-500 border border-red-500/30 rounded-xl font-black text-[10px] uppercase tracking-widest w-full">
-                                    {t('logout')}
-                                </button>
-                            </>
-                        ) : (
-                            <Link href="/signin" onClick={() => setMobileMenuOpen(false)}>
-                                <button className="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl w-full">
-                                    {t('signIn')}
-                                </button>
-                            </Link>
-                        )}
-                    </div>
-                </div>
-            )}
         </>
     );
 }

@@ -291,24 +291,24 @@ export default function HubPage() {
                                     <Link href="/desert-storm" className="group">
                                         <button className="w-full flex items-center gap-3 p-3 bg-slate-900 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-slate-800">
                                             <div className="w-12 h-12 shrink-0 rounded-xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">✨</div>
-                                            <div className="min-w-0">
-                                                <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('joinDesertStorm')}</div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="text-sm font-black uppercase tracking-tight whitespace-normal leading-tight">{t('joinDesertStorm')}</div>
                                             </div>
                                         </button>
                                     </Link>
                                     <Link href="/canyon-storm" className="group">
                                         <button className="w-full flex items-center gap-3 p-3 bg-orange-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-orange-500">
                                             <div className="w-12 h-12 shrink-0 rounded-xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">🔥</div>
-                                            <div className="min-w-0">
-                                                <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('joinCanyonStorm')}</div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="text-sm font-black uppercase tracking-tight whitespace-normal leading-tight">{t('joinCanyonStorm')}</div>
                                             </div>
                                         </button>
                                     </Link>
                                     <Link href="/alliance-duel" className="group">
                                         <button className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-pink-400/30">
                                             <div className="w-12 h-12 shrink-0 rounded-xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">⚔️</div>
-                                            <div className="min-w-0">
-                                                <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('enterVsScores')}</div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="text-sm font-black uppercase tracking-tight whitespace-normal leading-tight">{t('enterVsScores')}</div>
                                             </div>
                                         </button>
                                     </Link>
@@ -327,16 +327,16 @@ export default function HubPage() {
                                         <Link href="/train" className="group">
                                             <button className="w-full flex items-center gap-3 p-3 bg-amber-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-amber-500">
                                                 <div className="w-12 h-12 shrink-0 rounded-xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">🚂</div>
-                                                <div className="min-w-0">
-                                                    <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('trainConductor')}</div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-sm font-black uppercase tracking-tight whitespace-normal leading-tight">{t('trainConductor')}</div>
                                                 </div>
                                             </button>
                                         </Link>
                                         <Link href="/guide" className="group">
                                             <button className="w-full flex items-center gap-3 p-3 bg-indigo-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-indigo-500">
                                                 <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">📖</div>
-                                                <div className="min-w-0">
-                                                    <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('guide')}</div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-sm font-black uppercase tracking-tight whitespace-normal leading-tight">{t('guide')}</div>
                                                 </div>
                                             </button>
                                         </Link>
@@ -353,16 +353,16 @@ export default function HubPage() {
                                         <Link href="/calculators/drone" className="group">
                                             <button className="w-full flex items-center gap-3 p-3 bg-teal-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-teal-500">
                                                 <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">🧮</div>
-                                                <div className="min-w-0">
-                                                    <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('droneCalculator')}</div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-sm font-black uppercase tracking-tight whitespace-normal leading-tight">{t('droneCalculator')}</div>
                                                 </div>
                                             </button>
                                         </Link>
                                         <Link href="/calculators/t11" className="group">
                                             <button className="w-full flex items-center gap-3 p-3 bg-blue-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-blue-500">
                                                 <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">🚀</div>
-                                                <div className="min-w-0">
-                                                    <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('t11Calculator')}</div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-sm font-black uppercase tracking-tight whitespace-normal leading-tight">{t('t11Calculator')}</div>
                                                 </div>
                                             </button>
                                         </Link>
@@ -382,8 +382,8 @@ export default function HubPage() {
                                         <Link href="/tactical-dashboard" className="group">
                                             <button className="w-full flex items-center gap-3 p-3 bg-red-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-red-500">
                                                 <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">📊</div>
-                                                <div className="min-w-0">
-                                                    <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('tacticalDashboard')}</div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-sm font-black uppercase tracking-tight whitespace-normal leading-tight">{t('tacticalDashboard')}</div>
                                                 </div>
                                             </button>
                                         </Link>
@@ -392,8 +392,8 @@ export default function HubPage() {
                                             className="group w-full flex items-center gap-3 p-3 bg-blue-700 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-blue-600"
                                         >
                                             <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">⭐</div>
-                                            <div className="min-w-0">
-                                                <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('manageRanks')}</div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="text-sm font-black uppercase tracking-tight whitespace-normal leading-tight">{t('manageRanks')}</div>
                                             </div>
                                         </button>
                                     </div>
