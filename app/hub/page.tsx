@@ -185,291 +185,282 @@ export default function HubPage() {
     return (
         <div className="min-h-[calc(100vh-72px)] px-4 md:px-8 pb-8 bg-pink-50/50 text-slate-900 overflow-x-hidden pt-8">
 
-            {/* 🛡️ R4 Command Panel */}
+            {/* 🛡️ Command Center (R4/R5) */}
             {(currentUser?.role === 'R4' || currentUser?.role === 'R5') && (
-                <div className="max-w-7xl mx-auto mb-10 p-4 sm:p-6 bg-slate-900 rounded-2xl sm:rounded-[2.5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-2xl border border-slate-800 animate-in fade-in slide-in-from-top-4">
-                    <div>
-                        <p className="text-pink-400 font-black uppercase text-[10px] tracking-[0.3em]">Desert Storm Command</p>
-                        <p className="text-slate-400 text-[9px] font-bold uppercase mt-1">{t('status')}: {registrationOpen ? t('statusOpen') : t('statusLocked')}</p>
+                <div className="max-w-7xl mx-auto mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4">
+                    {/* DS Command */}
+                    <div className="p-4 bg-slate-800 rounded-3xl flex items-center justify-between gap-4 border border-pink-500/20 shadow-xl">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center text-xl">🛡️</div>
+                            <div>
+                                <p className="text-white font-black text-xs uppercase tracking-tight">{t('desertStorm')} {t('status')}</p>
+                                <p className="text-pink-400 text-[10px] font-bold uppercase">{registrationOpen ? t('statusOpen') : t('statusLocked')}</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={async () => {
+                                    const newStatus = !registrationOpen;
+                                    const { error } = await supabase.from('settings').update({ registration_open: newStatus }).eq('id', 1);
+                                    if (error) alert("Error: " + error.message);
+                                    else {
+                                        setRegistrationOpen(newStatus);
+                                        await supabase.from('audit_logs').insert({ user_id: user?.id, username: currentUser?.username, action: newStatus ? "OPEN_SIGNUPS" : "CLOSE_SIGNUPS", details: { context: "R4/R5 Hub" } });
+                                    }
+                                }}
+                                className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md ${registrationOpen ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}
+                            >
+                                {registrationOpen ? t('closeSignups') : t('openSignups')}
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (!window.confirm("⚠️ Clear ALL DS signups?")) return;
+                                    const { error } = await supabase.from('members').update({ ds_choice: null, ds_team: null, ds_signup_time: null, team_assignment: null }).not('user_id', 'is', null);
+                                    if (error) alert("Error: " + error.message);
+                                    else {
+                                        await supabase.from('audit_logs').insert({ user_id: user?.id, username: currentUser?.username, action: "CLEAR_ALL_SIGNUPS", details: { context: "R4/R5 Hub" } });
+                                        window.location.reload();
+                                    }
+                                }}
+                                className="px-4 py-2 bg-slate-700 hover:bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md"
+                            >
+                                {t('clearSignups')}
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                        {!registrationOpen && !attendanceMarked && hasAttendanceColumn && (
-                            <p className="text-orange-400 text-[9px] font-black uppercase tracking-widest animate-pulse text-center sm:text-right max-w-[200px]">
-                                ⚠️ {t('attendanceNotMarked')}
-                            </p>
-                        )}
-                        <button
-                            onClick={async () => {
-                                if (hasAttendanceColumn && !registrationOpen && !attendanceMarked) {
-                                    alert(t('attendanceNotMarked'));
-                                    return;
-                                }
 
-                                const newStatus = !registrationOpen;
-                                if (newStatus) {
-                                    if (!window.confirm("Are you sure you want to OPEN the registration window?")) return;
-                                } else {
-                                    if (!window.confirm("Are you sure you want to CLOSE signups and lock currently registered members?")) return;
-                                }
-                                const updateData: any = { registration_open: newStatus };
-                                if (hasAttendanceColumn && newStatus === true) {
-                                    updateData.attendance_marked = false;
-                                }
-
-                                const { error } = await supabase.from('settings').update(updateData).eq('id', 1);
-                                if (error) {
-                                    console.error("Update Registration Error:", error.message);
-                                    // Fallback if attendance column is actually missing despite our detection
-                                    if (error.message.includes('attendance_marked')) {
-                                        const { error: fallbackError } = await supabase.from('settings').update({ registration_open: newStatus }).eq('id', 1);
-                                        if (!fallbackError) {
-                                            setRegistrationOpen(newStatus);
-                                            setHasAttendanceColumn(false);
-                                        } else {
-                                            alert("Database Error: " + fallbackError.message);
-                                        }
-                                    } else {
-                                        alert("Error: " + error.message);
+                    {/* CS Command */}
+                    <div className="p-4 bg-slate-800 rounded-3xl flex items-center justify-between gap-4 border border-orange-500/20 shadow-xl">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-xl">🔥</div>
+                            <div>
+                                <p className="text-white font-black text-xs uppercase tracking-tight">{t('canyonStorm')} {t('status')}</p>
+                                <p className="text-orange-400 text-[10px] font-bold uppercase">{csRegistrationOpen ? t('statusOpen') : t('statusLocked')}</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={async () => {
+                                    const newStatus = !csRegistrationOpen;
+                                    const { error } = await supabase.from('settings').update({ cs_registration_open: newStatus }).eq('id', 1);
+                                    if (error) alert("Error: " + error.message);
+                                    else {
+                                        setCsRegistrationOpen(newStatus);
+                                        await supabase.from('audit_logs').insert({ user_id: user?.id, username: currentUser?.username, action: newStatus ? "OPEN_CS_SIGNUPS" : "CLOSE_CS_SIGNUPS", details: { context: "R4/R5 Hub" } });
                                     }
-                                } else {
-                                    setRegistrationOpen(newStatus);
-
-                                    // 📝 COMMAND AUDIT LOG
-                                    await supabase.from('audit_logs').insert({
-                                        user_id: user?.id,
-                                        username: currentUser?.username,
-                                        action: newStatus ? "OPEN_DS_SIGNUPS" : "CLOSE_DS_SIGNUPS",
-                                        details: { context: "R4/R5 Hub Control Panel" }
-                                    });
-
-                                    if (hasAttendanceColumn && newStatus === true) {
-                                        setAttendanceMarked(false);
+                                }}
+                                className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md ${csRegistrationOpen ? 'bg-orange-600 text-white' : 'bg-green-600 text-white'}`}
+                            >
+                                {csRegistrationOpen ? t('closeSignups') : t('openSignups')}
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (!window.confirm("⚠️ Clear ALL CS signups?")) return;
+                                    const { error } = await supabase.from('members').update({ cs_choice: null, cs_team: null, cs_team_assignment: null, cs_signup_time: null }).not('user_id', 'is', null);
+                                    if (error) alert("Error: " + error.message);
+                                    else {
+                                        await supabase.from('audit_logs').insert({ user_id: user?.id, username: currentUser?.username, action: "CLEAR_ALL_CS_SIGNUPS", details: { context: "R4/R5 Hub" } });
+                                        window.location.reload();
                                     }
-                                }
-                            }}
-                            className={`px-6 sm:px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center ${registrationOpen ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : ((attendanceMarked || !hasAttendanceColumn) ? 'bg-green-600 text-white shadow-[0_0_20px_rgba(22,163,74,0.4)]' : 'bg-slate-700 text-slate-400 cursor-not-allowed')}`}
-                        >
-                            {registrationOpen ? t('closeSignups') : t('openSignups')}
-                        </button>
-                        <button
-                            onClick={async () => {
-                                if (!window.confirm("⚠️ WARNING: This will CLEAR ALL signups, choices, and team assignments for the entire alliance! Proceed?")) return;
-
-                                const { error } = await supabase.from('members').update({
-                                    ds_choice: null,
-                                    ds_team: null,
-                                    ds_signup_time: null,
-                                    team_assignment: null
-                                }).not('user_id', 'is', null);
-
-                                if (error) {
-                                    alert("Database Error: " + error.message);
-                                } else {
-                                    await supabase.from('audit_logs').insert({
-                                        user_id: user?.id,
-                                        username: currentUser?.username,
-                                        action: "CLEAR_ALL_SIGNUPS",
-                                        details: { context: "R4/R5 Hub Control Panel" }
-                                    });
-                                    window.location.reload();
-                                }
-                            }}
-                            className="px-6 sm:px-8 py-3 bg-slate-700 hover:bg-red-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center shadow-lg"
-                        >
-                            Clear Signups
-                        </button>
+                                }}
+                                className="px-4 py-2 bg-slate-700 hover:bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md"
+                            >
+                                {t('clearCsSignups')}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* 🛡️ Canyon Storm Command Panel */}
-            {(currentUser?.role === 'R4' || currentUser?.role === 'R5') && (
-                <div className="max-w-7xl mx-auto mb-10 p-4 sm:p-6 bg-slate-800 rounded-2xl sm:rounded-[2.5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-2xl border border-orange-500/30 animate-in fade-in slide-in-from-top-4">
-                    <div>
-                        <p className="text-orange-400 font-black uppercase text-[10px] tracking-[0.3em]">{t('canyonStorm')} Command</p>
-                        <p className="text-slate-400 text-[9px] font-bold uppercase mt-1">{t('status')}: {csRegistrationOpen ? t('statusOpen') : t('statusLocked')}</p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                        <button
-                            onClick={async () => {
-                                const newStatus = !csRegistrationOpen;
-                                if (newStatus) {
-                                    if (!window.confirm("Are you sure you want to OPEN the Canyon Storm registration window?")) return;
-                                } else {
-                                    if (!window.confirm("Are you sure you want to CLOSE CS signups and lock currently registered members?")) return;
-                                }
-
-                                const { error } = await supabase.from('settings').update({ cs_registration_open: newStatus }).eq('id', 1);
-                                if (error) {
-                                    console.error("Update CS Registration Error:", error.message);
-                                    alert("Error: " + error.message);
-                                } else {
-                                    setCsRegistrationOpen(newStatus);
-
-                                    // 📝 COMMAND AUDIT LOG
-                                    await supabase.from('audit_logs').insert({
-                                        user_id: user?.id,
-                                        username: currentUser?.username,
-                                        action: newStatus ? "OPEN_CS_SIGNUPS" : "CLOSE_CS_SIGNUPS",
-                                        details: { context: "R4/R5 Hub Control Panel" }
-                                    });
-                                }
-                            }}
-                            className={`px-6 sm:px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center ${csRegistrationOpen ? 'bg-orange-600 text-white shadow-[0_0_20px_rgba(234,88,12,0.4)]' : 'bg-green-600 text-white shadow-[0_0_20px_rgba(22,163,74,0.4)]'}`}
-                        >
-                            {csRegistrationOpen ? t('closeSignups') : t('openSignups')}
-                        </button>
-                        <button
-                            onClick={async () => {
-                                if (!window.confirm("⚠️ WARNING: This will CLEAR ALL Canyon Storm signups, choices, and team assignments for the entire alliance! Proceed?")) return;
-
-                                const { error } = await supabase.from('members').update({
-                                    cs_choice: null,
-                                    cs_team: null,
-                                    cs_team_assignment: null,
-                                    cs_signup_time: null
-                                }).not('user_id', 'is', null);
-
-                                if (error) {
-                                    alert("Database Error: " + error.message);
-                                } else {
-                                    await supabase.from('audit_logs').insert({
-                                        user_id: user?.id,
-                                        username: currentUser?.username,
-                                        action: "CLEAR_ALL_CS_SIGNUPS",
-                                        details: { context: "R4/R5 Hub Control Panel" }
-                                    });
-                                    window.location.reload();
-                                }
-                            }}
-                            className="px-6 sm:px-8 py-3 bg-slate-700 hover:bg-red-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer w-full sm:w-auto text-center shadow-lg"
-                        >
-                            Clear CS Signups
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <section className="text-center mb-20">
-                <h2 className="text-4xl sm:text-7xl md:text-9xl font-black mb-6 tracking-tighter text-slate-900 leading-none uppercase italic">
+            <section className="text-center mb-16">
+                <h2 className="text-4xl sm:text-7xl md:text-9xl font-black mb-10 tracking-tighter text-slate-900 leading-none uppercase italic">
                     {t('allianceName')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 italic">020</span>
                 </h2>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                
+                <div className="max-w-6xl mx-auto space-y-6">
                     {user ? (
                         <>
-                            <Link href="/desert-storm">
-                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-slate-900 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">{t('joinDesertStorm')}</button>
-                            </Link>
-                            <Link href="/canyon-storm">
-                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-orange-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">{t('joinCanyonStorm')}</button>
-                            </Link>
-                            <Link href="/alliance-duel">
-                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">{t('enterVsScores')}</button>
-                            </Link>
-                            <Link href="/train">
-                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-amber-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">🚂 {t('trainConductor')}</button>
-                            </Link>
-                            <Link href="/guide">
-                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-indigo-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">📖 {t('guide')}</button>
-                            </Link>
-                            <Link href="/calculators/drone">
-                                <button className="px-6 sm:px-10 py-3 sm:py-4 bg-teal-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">🧮 {t('droneCalculator')}</button>
-                            </Link>
-                            {(currentUser?.role === 'R4' || currentUser?.role === 'R5') && (
-                                <>
-                                    <Link href="/tactical-dashboard">
-                                        <button className="px-6 sm:px-10 py-3 sm:py-4 bg-red-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">📊 {t('tacticalDashboard')}</button>
+                            {/* Section 1: Battlefront Operations */}
+                            <div className="space-y-2">
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-4">
+                                    <span className="h-px bg-slate-200 flex-1"></span>
+                                    {t('battlefrontOperations')}
+                                    <span className="h-px bg-slate-200 flex-1"></span>
+                                </h3>
+                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                                    <Link href="/desert-storm" className="group">
+                                        <button className="w-full flex items-center gap-3 p-3 bg-slate-900 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-slate-800">
+                                            <div className="w-12 h-12 shrink-0 rounded-xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">✨</div>
+                                            <div className="min-w-0">
+                                                <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('joinDesertStorm')}</div>
+                                            </div>
+                                        </button>
                                     </Link>
-                                    <button onClick={() => setShowRankModal(true)} className="px-6 sm:px-10 py-3 sm:py-4 bg-blue-600 text-white rounded-full font-black text-sm sm:text-lg hover:scale-105 transition-all shadow-xl uppercase tracking-widest cursor-pointer w-full sm:w-auto">⭐ Manage Ranks</button>
-                                </>
+                                    <Link href="/canyon-storm" className="group">
+                                        <button className="w-full flex items-center gap-3 p-3 bg-orange-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-orange-500">
+                                            <div className="w-12 h-12 shrink-0 rounded-xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">🔥</div>
+                                            <div className="min-w-0">
+                                                <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('joinCanyonStorm')}</div>
+                                            </div>
+                                        </button>
+                                    </Link>
+                                    <Link href="/alliance-duel" className="group">
+                                        <button className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-pink-400/30">
+                                            <div className="w-12 h-12 shrink-0 rounded-xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">⚔️</div>
+                                            <div className="min-w-0">
+                                                <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('enterVsScores')}</div>
+                                            </div>
+                                        </button>
+                                    </Link>
+                                </div>
+                            </div>
+
+                            {/* Section 2 & 3: Logistics & Calculators Row on Desktop */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Logistics */}
+                                <div className="space-y-2">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-4">
+                                        {t('allianceLogistics')}
+                                        <span className="h-px bg-slate-200 flex-1"></span>
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Link href="/train" className="group">
+                                            <button className="w-full flex items-center gap-3 p-3 bg-amber-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-amber-500">
+                                                <div className="w-12 h-12 shrink-0 rounded-xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">🚂</div>
+                                                <div className="min-w-0">
+                                                    <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('trainConductor')}</div>
+                                                </div>
+                                            </button>
+                                        </Link>
+                                        <Link href="/guide" className="group">
+                                            <button className="w-full flex items-center gap-3 p-3 bg-indigo-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-indigo-500">
+                                                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">📖</div>
+                                                <div className="min-w-0">
+                                                    <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('guide')}</div>
+                                                </div>
+                                            </button>
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                {/* Calculators */}
+                                <div className="space-y-2">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-4">
+                                        {t('strategicCalculators')}
+                                        <span className="h-px bg-slate-200 flex-1"></span>
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Link href="/calculators/drone" className="group">
+                                            <button className="w-full flex items-center gap-3 p-3 bg-teal-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-teal-500">
+                                                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">🧮</div>
+                                                <div className="min-w-0">
+                                                    <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('droneCalculator')}</div>
+                                                </div>
+                                            </button>
+                                        </Link>
+                                        <Link href="/calculators/t11" className="group">
+                                            <button className="w-full flex items-center gap-3 p-3 bg-blue-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-blue-500">
+                                                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">🚀</div>
+                                                <div className="min-w-0">
+                                                    <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('t11Calculator')}</div>
+                                                </div>
+                                            </button>
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 4: Commander Tools (R4/R5) */}
+                            {(currentUser?.role === 'R4' || currentUser?.role === 'R5') && (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4">
+                                    <h3 className="text-[10px] font-black text-red-400 uppercase tracking-[0.3em] flex items-center gap-4">
+                                        <span className="h-px bg-red-100 flex-1"></span>
+                                        {t('commanderTools')}
+                                        <span className="h-px bg-red-100 flex-1"></span>
+                                    </h3>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                        <Link href="/tactical-dashboard" className="group">
+                                            <button className="w-full flex items-center gap-3 p-3 bg-red-600 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-red-500">
+                                                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">📊</div>
+                                                <div className="min-w-0">
+                                                    <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('tacticalDashboard')}</div>
+                                                </div>
+                                            </button>
+                                        </Link>
+                                        <button 
+                                            onClick={() => setShowRankModal(true)} 
+                                            className="group w-full flex items-center gap-3 p-3 bg-blue-700 text-white rounded-2xl hover:scale-[1.02] transition-all shadow-lg text-left border border-blue-600"
+                                        >
+                                            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">⭐</div>
+                                            <div className="min-w-0">
+                                                <div className="text-sm font-black uppercase tracking-tight truncate leading-tight">{t('manageRanks')}</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                         </>
                     ) : (
-                        <p className="text-slate-400 font-bold uppercase text-xs tracking-[0.3em]">{t('signInPrompt')}</p>
+                        <div className="py-20 bg-white/50 backdrop-blur-md rounded-[3rem] border border-white shadow-2xl">
+                            <h3 className="text-2xl font-black text-slate-800 mb-4 uppercase italic">{t('signInPrompt')}</h3>
+                            <Link href="/">
+                                <button className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl">
+                                    {t('signIn')}
+                                </button>
+                            </Link>
+                        </div>
                     )}
                 </div>
 
-                {/* ✅ Individual Tactical Status */}
-                <div className="mt-12 max-w-xl mx-auto bg-white/50 backdrop-blur-md rounded-[2rem] p-6 border border-white shadow-lg animate-in fade-in zoom-in slide-in-from-top-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('dsMobilization')} - {t('status').toUpperCase()}</h3>
-                        <span className={`flex h-2 w-2 rounded-full ${registrationOpen ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></span>
-                    </div>
-
-                    {!registrationOpen ? (
-                        <div className="text-center py-2">
-                            <p className="text-sm font-black text-slate-400 uppercase tracking-widest">{t('mobilizationInactive')}</p>
-                            {currentUser?.team_assignment && currentUser.team_assignment !== "None" && (
-                                <div className="mt-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                    <p className="text-[10px] text-blue-400 font-black uppercase mb-1">{t('finalAssignment')}</p>
-                                    <p className="text-xl font-black text-blue-600 uppercase italic">{t('team')} {currentUser.team_assignment}</p>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* ✅ Condensed Mobilization Status Panels */}
+                <div className="mt-8 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* DS Status */}
+                    <div className="bg-white/50 backdrop-blur-md rounded-3xl p-4 border border-white shadow-lg flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-slate-900/5 flex items-center justify-center text-xl">✨</div>
                             <div className="text-left">
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('dsMobilization')}</h3>
                                 {currentUser?.ds_choice ? (
-                                    <>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('registered')}</p>
-                                        <p className="text-xl font-black text-slate-800 uppercase italic leading-tight mb-2">{currentUser.ds_choice}</p>
-
-                                        {currentUser.team_assignment && currentUser.team_assignment !== "None" ? (
-                                            <p className="text-[10px] font-black text-blue-600 uppercase mt-1 tracking-widest">
-                                                ✅ {t('assignedTo')} {t('team')} {currentUser.team_assignment}
-                                            </p>
-                                        ) : (
-                                            <p className="text-[10px] font-black text-pink-500 uppercase mt-1 tracking-widest">
-                                                ⏳ {t('awaitingAssignment')}
-                                            </p>
-                                        )}
-                                    </>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm font-black text-slate-800 uppercase italic leading-none">{currentUser.ds_choice}</p>
+                                        <span className="text-[10px] text-blue-500 font-bold leading-none">
+                                            {currentUser.team_assignment && currentUser.team_assignment !== "None" ? `✅ ${t('team')} ${currentUser.team_assignment}` : `⏳ ${t('awaitingAssignment')}`}
+                                        </span>
+                                    </div>
                                 ) : (
-                                    <p className="text-lg font-black text-slate-400 uppercase italic leading-tight">{t('notRegistered')}</p>
+                                    <p className="text-sm font-black text-slate-400 uppercase italic">{t('notRegistered')}</p>
                                 )}
                             </div>
-                            <Link href="/desert-storm">
-                                <button className="px-6 py-3 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md">
-                                    {currentUser?.ds_choice ? t('edit') : t('joinDesertStorm')}
-                                </button>
-                            </Link>
                         </div>
-                    )}
-                </div>
-
-                {/* ✅ Individual Tactical Status - Canyon Storm */}
-                <div className="mt-8 max-w-xl mx-auto bg-orange-50/50 backdrop-blur-md rounded-[2rem] p-6 border border-orange-100 shadow-lg animate-in fade-in zoom-in slide-in-from-top-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em]">{t('csMobilization')}</h3>
-                        <span className={`flex h-2 w-2 rounded-full ${csRegistrationOpen ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></span>
+                        <Link href="/desert-storm">
+                            <button className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md">
+                                {currentUser?.ds_choice ? t('edit') : t('join')}
+                            </button>
+                        </Link>
                     </div>
 
-                    {!csRegistrationOpen ? (
-                        <div className="text-center py-2">
-                            <p className="text-sm font-black text-slate-400 uppercase tracking-widest">{t('mobilizationInactive')}</p>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {/* CS Status */}
+                    <div className="bg-orange-50/50 backdrop-blur-md rounded-3xl p-4 border border-orange-100 shadow-lg flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-orange-500/5 flex items-center justify-center text-xl">🔥</div>
                             <div className="text-left">
+                                <h3 className="text-[10px] font-black text-orange-600 uppercase tracking-widest">{t('csMobilization')}</h3>
                                 {currentUser?.cs_choice ? (
-                                    <>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('registered')}</p>
-                                        <p className="text-xl font-black text-slate-800 uppercase italic leading-tight mb-2">{currentUser.cs_choice}</p>
-                                        <p className="text-[10px] font-black text-orange-500 uppercase mt-1 tracking-widest">
-                                            ⏳ {t('awaitingAssignment')}
-                                        </p>
-                                    </>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm font-black text-slate-800 uppercase italic leading-none">{currentUser.cs_choice}</p>
+                                        <span className="text-[10px] text-orange-500 font-bold leading-none">⏳ {t('awaitingAssignment')}</span>
+                                    </div>
                                 ) : (
-                                    <p className="text-lg font-black text-slate-400 uppercase italic leading-tight">{t('notRegistered')}</p>
+                                    <p className="text-sm font-black text-slate-400 uppercase italic">{t('notRegistered')}</p>
                                 )}
                             </div>
-                            <Link href="/canyon-storm">
-                                <button className="px-6 py-3 bg-orange-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md">
-                                    {currentUser?.cs_choice ? t('edit') : t('joinCanyonStorm')}
-                                </button>
-                            </Link>
                         </div>
-                    )}
+                        <Link href="/canyon-storm">
+                            <button className="px-4 py-2 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md">
+                                {currentUser?.cs_choice ? t('edit') : t('join')}
+                            </button>
+                        </Link>
+                    </div>
                 </div>
             </section>
 
@@ -478,7 +469,7 @@ export default function HubPage() {
                 {[
                     { title: t('power'), data: members, val: (m: Member) => displayPower(m.total_hero_power) },
                     { title: t('squad1Power'), data: [...members].sort((a, b) => (b.squad_1_power || 0) - (a.squad_1_power || 0)), val: (m: Member) => displayPower(m.squad_1_power) },
-                    { title: 'Upcoming Birthdays 🎂', data: [...members].filter(m => {
+                    { title: `${t('upcomingBirthdays')} 🎂`, data: [...members].filter(m => {
                         if (!m.birthday) return false;
                         const today = new Date();
                         const bday = new Date(m.birthday);

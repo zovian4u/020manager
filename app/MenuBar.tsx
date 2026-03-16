@@ -30,7 +30,7 @@ export default function MenuBar() {
     );
 
     const isActivityActive = ['/desert-storm', '/canyon-storm', '/alliance-duel', '/train'].includes(pathname);
-    const isCalculatorsActive = ['/calculators/drone'].includes(pathname);
+    const isCalculatorsActive = ['/calculators/drone', '/calculators/t11'].includes(pathname);
 
     return (
         <>
@@ -117,6 +117,11 @@ export default function MenuBar() {
                                             <Link href="/calculators/drone" onClick={() => setDesktopCalculatorsDropdownOpen(false)}>
                                                 <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/calculators/drone' ? 'bg-pink-500/10 text-pink-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
                                                     {t('droneCalculator') || "Drone Calculator"}
+                                                </button>
+                                            </Link>
+                                            <Link href="/calculators/t11" onClick={() => setDesktopCalculatorsDropdownOpen(false)}>
+                                                <button className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${pathname === '/calculators/t11' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-slate-700 hover:text-white'}`}>
+                                                    {t('t11Calculator') || "T11 Armament"}
                                                 </button>
                                             </Link>
                                         </div>
@@ -255,6 +260,7 @@ export default function MenuBar() {
                                     {mobileCalculatorsSubmenuOpen && (
                                         <div className="flex flex-col gap-1 pl-4 mt-1 border-l-2 border-slate-700 ml-5 animate-in slide-in-from-top-2">
                                             <NavLink href="/calculators/drone" label={t('droneCalculator') || "Drone Calculator"} isActive={pathname === '/calculators/drone'} />
+                                            <NavLink href="/calculators/t11" label={t('t11Calculator') || "T11 Armament"} isActive={pathname === '/calculators/t11'} />
                                         </div>
                                     )}
                                 </div>
