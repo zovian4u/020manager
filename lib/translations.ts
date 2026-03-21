@@ -242,7 +242,7 @@ const enBase = {
         clearCsSignups: "Clear CS Signups",
         upcomingBirthdays: "Upcoming Birthdays",
         allianceTrain: "Alliance Train",
-        selectMember: "Select Member",
+
 };
 
 export type TranslationKey = keyof typeof enBase;
@@ -491,7 +491,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
         clearCsSignups: "清除 CS 报名",
         upcomingBirthdays: "即将到来的生日",
         allianceTrain: "联盟列车",
-        selectMember: "选择成员",
+
     },
     ja: {
         hubTitle: "戦略ハブ",
@@ -735,7 +735,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
         clearCsSignups: "CS 登録解除",
         upcomingBirthdays: "近日中の誕生日",
         allianceTrain: "アライアンス列車",
-        selectMember: "メンバーを選択",
+
     },
     th: {
         hubTitle: "ศูนย์ยุทธศาสตร์",
@@ -979,7 +979,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
         clearCsSignups: "ล้างการลงทะเบียน CS",
         upcomingBirthdays: "วันเกิดที่กำลังจะถึง",
         allianceTrain: "รถไฟกิลด์",
-        selectMember: "เลือกสมาชิก",
+
     },
     vi: {
         hubTitle: "Trung tâm Chiến lược",
@@ -1223,6 +1223,6 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
         clearCsSignups: "Xóa Đăng ký CS",
         upcomingBirthdays: "Sinh nhật Sắp tới",
         allianceTrain: "Đoàn tàu Liên minh",
-        selectMember: "Chọn thành viên",
+
     },
 };
