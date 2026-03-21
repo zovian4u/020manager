@@ -53,9 +53,10 @@ export default function MenuBar() {
 
     return (
         <>
+            {/* Desktop Navigation Bar - Hidden on Mobile */}
             <nav
                 style={{ position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 99999 }}
-                className="flex items-center justify-between px-4 sm:px-6 py-3 bg-slate-900 border-b border-slate-700 shadow-2xl"
+                className="hidden xl:flex items-center justify-between px-6 py-3 bg-slate-900 border-b border-slate-700 shadow-2xl"
             >
                 {/* Logo Section */}
                 <Link href="/" className="flex flex-col items-start leading-none group transition-transform hover:scale-105 flex-shrink-0">
@@ -143,6 +144,9 @@ export default function MenuBar() {
                                             )}
                                         </div>
                                         <NavLink href="/guide" label={t('guide')} isActive={pathname === '/guide'} />
+                                         {(userData?.role === 'R4' || userData?.role === 'R5') && (
+                                             <NavLink href="/tactical-dashboard" label={t('r4')} isActive={pathname === '/tactical-dashboard'} />
+                                         )}
                                         <NavLink href="/about" label={t('aboutUs')} isActive={pathname === '/about'} />
                                         <NavLink href="/contact" label={t('contactUs')} isActive={pathname === '/contact'} />
                                     </div>
@@ -194,12 +198,11 @@ export default function MenuBar() {
                                                         
                                                         {user && (
                                                             <div className="mt-3 pt-3 border-t border-slate-700/80 space-y-2">
-                                                                <button 
-                                                                    onClick={() => { window.dispatchEvent(new Event('open-settings')); setDesktopDropdownOpen(false); }} 
-                                                                    className="w-full text-left px-4 py-2.5 bg-slate-800/30 hover:bg-slate-800 text-[9px] font-black uppercase text-slate-300 hover:text-white rounded-xl transition-all border border-transparent hover:border-slate-700"
-                                                                >
-                                                                    ⚙️ {t('settings')}
-                                                                </button>
+                                                                <Link href="/settings" onClick={() => setDesktopDropdownOpen(false)}>
+                                                                    <button className="w-full text-left px-4 py-2.5 bg-slate-800/30 hover:bg-slate-800 text-[9px] font-black uppercase text-slate-300 hover:text-white rounded-xl transition-all border border-transparent hover:border-slate-700">
+                                                                        ⚙️ {t('settings')}
+                                                                    </button>
+                                                                </Link>
                                                                 <button 
                                                                     onClick={() => { stack.signOut(); setDesktopDropdownOpen(false); }} 
                                                                     className="w-full text-center px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-[9px] font-black uppercase text-red-500 rounded-xl transition-all border border-red-500/20 hover:border-red-500/40"
@@ -259,20 +262,11 @@ export default function MenuBar() {
                                     {desktopSettingsOpen && (
                                         <div className="absolute top-full right-0 pt-2 w-48 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                                             <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-2 ring-1 ring-white/5 overflow-hidden">
-                                                {pathname === '/hub' ? (
-                                                    <button 
-                                                        onClick={() => { window.dispatchEvent(new Event('open-settings')); setDesktopSettingsOpen(false); }} 
-                                                        className="block w-full text-left px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
-                                                    >
+                                                <Link href="/settings" onClick={() => setDesktopSettingsOpen(false)}>
+                                                    <button className="block w-full text-left px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
                                                         {t('settings')}
                                                     </button>
-                                                ) : (
-                                                    <Link href="/hub?settings=true" className="block" onClick={() => setDesktopSettingsOpen(false)}>
-                                                        <button className="block w-full text-left px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                                                            {t('settings')}
-                                                        </button>
-                                                    </Link>
-                                                )}
+                                                </Link>
                                                 <div className="h-px bg-slate-700/50 my-1 mx-2" />
                                                 <button 
                                                     onClick={() => { stack.signOut(); setDesktopSettingsOpen(false); }} 
@@ -297,6 +291,298 @@ export default function MenuBar() {
 
             </nav>
 
+            {/* Mobile Header - Logo & Auth Only */}
+            <div className="xl:hidden fixed top-0 left-0 right-0 z-[99999] bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 px-4 py-3 flex items-center justify-between">
+                <Link href="/" className="flex flex-col items-start leading-none group transition-transform hover:scale-105 flex-shrink-0">
+                    <span className="text-white font-black text-[10px] uppercase tracking-[0.2em] mb-0.5">020</span>
+                    <span className="text-pink-500 font-black text-lg italic tracking-tighter">ALLIANCE</span>
+                </Link>
+                <div className="flex items-center gap-2">
+                    <UserStatusButton />
+                </div>
+            </div>
+
+            <MobileDock />
         </>
+    )
+}
+
+function MobileDock() {
+    const pathname = usePathname();
+    const { language, setLanguage, t } = useLanguage();
+    const stack = useStackApp();
+    const user = stack.useUser();
+    const [userData, setUserData] = useState<{ username: string; role: string } | null>(null);
+    const [registrationOpen, setRegistrationOpen] = useState(false);
+    const [csRegistrationOpen, setCsRegistrationOpen] = useState(false);
+    const [showMore, setShowMore] = useState(false);
+    const [showCalcs, setShowCalcs] = useState(false);
+    const [showBattle, setShowBattle] = useState(false);
+    const [showR4Menu, setShowR4Menu] = useState(false);
+    const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+
+    useEffect(() => {
+        async function fetchSettings() {
+            const { data } = await supabase.from('settings').select('*').eq('id', 1).single();
+            if (data) {
+                setRegistrationOpen(data.registration_open);
+                setCsRegistrationOpen(data.cs_registration_open);
+            }
+        }
+        fetchSettings();
+
+        if (!user) {
+            setUserData(null);
+            return;
+        }
+        async function fetchUser() {
+            const { data } = await supabase.from('members').select('username, role').eq('user_id', user!.id).single();
+            if (data) setUserData(data);
+        }
+        fetchUser();
+    }, [user]);
+
+    const NavIcon = ({ href, icon, label, isActive }: { href: string; icon: React.ReactNode; label: string; isActive: boolean }) => (
+        <Link href={href} className="flex flex-col items-center justify-center gap-1 flex-1 min-w-0" onClick={() => { closeAll(); }}>
+            <div className={`p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)] scale-110' : 'text-slate-500 hover:text-slate-300'}`}>
+                {icon}
+            </div>
+            <span className={`text-[8px] font-black uppercase tracking-tighter truncate w-full text-center ${isActive ? 'text-pink-500' : 'text-slate-500'}`}>
+                {label}
+            </span>
+        </Link>
+    );
+
+    const closeAll = () => {
+        setShowMore(false);
+        setShowCalcs(false);
+        setShowBattle(false);
+        setShowR4Menu(false);
+        setShowLanguageMenu(false);
+    };
+
+    const toggleStatus = async (type: 'ds' | 'cs') => {
+        const isDS = type === 'ds';
+        const currentStatus = isDS ? registrationOpen : csRegistrationOpen;
+        const newStatus = !currentStatus;
+        const column = isDS ? 'registration_open' : 'cs_registration_open';
+        
+        const { error } = await supabase.from('settings').update({ [column]: newStatus }).eq('id', 1);
+        if (!error) {
+            if (isDS) setRegistrationOpen(newStatus);
+            else setCsRegistrationOpen(newStatus);
+            
+            await supabase.from('audit_logs').insert({ 
+                user_id: user?.id, 
+                username: userData?.username, 
+                action: newStatus ? `OPEN_${type.toUpperCase()}_SIGNUPS` : `CLOSE_${type.toUpperCase()}_SIGNUPS`,
+                details: { context: "Mobile Command Dock" } 
+            });
+        }
+    };
+
+    const languages: { id: string; label: string; icon: string }[] = [
+        { id: 'en', label: 'English', icon: '🇺🇸' },
+        { id: 'zh', label: '中文', icon: '🇨🇳' },
+        { id: 'ja', label: '日本語', icon: '🇯🇵' },
+        { id: 'th', label: 'ไทย', icon: '🇹🇭' },
+        { id: 'vi', label: 'Tiếng Việt', icon: '🇻🇳' }
+    ];
+
+    const isR4 = userData?.role === 'R4' || userData?.role === 'R5';
+
+    return (
+        <div className="xl:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-slate-900/95 backdrop-blur-2xl border-t border-slate-700/50 pb-safe-area-inset-bottom ring-1 ring-white/5">
+            {/* Battle Menu Popup */}
+            {showBattle && (
+                <div className="absolute bottom-full left-[35%] -translate-x-1/2 mb-4 w-48 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="bg-slate-900/98 backdrop-blur-3xl border border-slate-700/60 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 ring-1 ring-white/10">
+                        <Link href="/desert-storm" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-pink-500/10 hover:text-pink-500 transition-all font-black">
+                            <span>🏜️</span> {t('desertStorm')}
+                        </Link>
+                        <Link href="/canyon-storm" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-orange-500/10 hover:text-orange-500 transition-all font-black">
+                            <span>🔥</span> {t('canyonStorm')}
+                        </Link>
+                        <div className="h-px bg-slate-800/50 my-1 mx-2" />
+                        <Link href="/alliance-duel" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-blue-500/10 hover:text-blue-500 transition-all font-black">
+                            <span>⚔️</span> {t('allianceDuel')}
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* R4 Menu Popup */}
+            {showR4Menu && (
+                <div className="absolute bottom-full left-[50%] -translate-x-1/2 mb-4 w-56 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="bg-slate-900/98 backdrop-blur-3xl border border-slate-700/60 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 ring-1 ring-white/10 flex flex-col gap-1">
+                        <Link href="/command-center" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-purple-500/10 hover:text-purple-500 transition-all font-black">
+                            <span>🛡️</span> {t('commandCenter')}
+                        </Link>
+                        <Link href="/tactical-dashboard" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-all font-black">
+                            <span>📊</span> {t('tacticalDashboard')}
+                        </Link>
+                        <Link href="/tactical-dashboard/manage-ranks" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-blue-500/10 hover:text-blue-500 transition-all font-black">
+                            <span>⭐</span> {t('manageRanks')}
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* Calculators Menu Popup */}
+            {showCalcs && (
+                <div className="absolute bottom-full left-[65%] -translate-x-1/2 mb-4 w-48 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="bg-slate-900/98 backdrop-blur-3xl border border-slate-700/60 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 ring-1 ring-white/10">
+                        <Link href="/calculators/drone" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-teal-500/10 hover:text-teal-500 transition-all font-black">
+                            <span>🧮</span> {t('droneCalculator').replace('Calculator', 'Calc')}
+                        </Link>
+                        <Link href="/calculators/t11" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-blue-500/10 hover:text-blue-500 transition-all font-black">
+                            <span>🚀</span> {t('t11Calculator').replace('Calculator', 'Calc')}
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* More Menu Popup */}
+            {showMore && (
+                <div className="absolute bottom-full right-10 mb-4 w-48 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="bg-slate-900/98 backdrop-blur-3xl border border-slate-700/60 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 ring-1 ring-white/10">
+                        <Link href="/guide" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white transition-all font-black">
+                            <span>📖</span> {t('guide')}
+                        </Link>
+                        <Link href="/about" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-pink-500/10 hover:text-pink-500 transition-all font-black">
+                            <span>👥</span> {t('aboutUs')}
+                        </Link>
+                        <Link href="/contact" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-pink-500/10 hover:text-pink-500 transition-all font-black">
+                            <span>📧</span> {t('contactUs')}
+                        </Link>
+                        <div className="h-px bg-slate-800 my-1 mx-2" />
+                        <Link href="/settings" onClick={closeAll}>
+                            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-800 hover:text-white transition-all text-left font-black">
+                                <span>⚙️</span> {t('settings')}
+                            </button>
+                        </Link>
+                        <button 
+                            onClick={() => { stack.signOut(); closeAll(); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500/80 hover:bg-red-500/10 hover:text-red-500 transition-all text-left font-black"
+                        >
+                            <span>🚪</span> {t('logout')}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Language Menu Popup */}
+            {showLanguageMenu && (
+                <div className="absolute bottom-full right-1 mb-4 w-40 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="bg-slate-900/98 backdrop-blur-3xl border border-slate-700/60 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 ring-1 ring-white/10">
+                        <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest px-3 py-1 mb-1">{t('language')}</div>
+                        {languages.map(lang => (
+                            <button 
+                                key={lang.id}
+                                onClick={() => { setLanguage(lang.id as any); closeAll(); }}
+                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${language === lang.id ? 'bg-pink-500/10 text-pink-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                            >
+                                <span>{lang.label}</span>
+                                <span className="text-sm">{lang.icon}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <div className="flex items-center justify-between h-16 px-0.5">
+                <NavIcon 
+                    href="/" 
+                    label={t('home')} 
+                    isActive={pathname === '/'}
+                    icon={<svg className="w-5 h-5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>}
+                />
+
+                {user ? (
+                    <>
+                        <NavIcon 
+                            href="/hub" 
+                            label={t('hubTitle')} 
+                            isActive={pathname === '/hub'}
+                            icon={<svg className="w-5 h-5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>}
+                        />
+
+                        <button 
+                            onClick={() => { const newState = !showBattle; closeAll(); setShowBattle(newState); }}
+                            className="flex flex-col items-center justify-center gap-1 flex-1 min-w-0"
+                        >
+                            <div className={`p-1.5 rounded-lg md:rounded-xl transition-all duration-300 ${showBattle || (pathname === '/desert-storm' || pathname === '/canyon-storm') ? 'bg-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)]' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <svg className="w-5 h-5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                            </div>
+                            <span className={`text-[7px] md:text-[8px] font-black uppercase tracking-tighter ${showBattle || (pathname === '/desert-storm' || pathname === '/canyon-storm') ? 'text-pink-500' : 'text-slate-500'}`}>{t('battle')}</span>
+                        </button>
+
+                        {isR4 && (
+                            <button 
+                                onClick={() => { const newState = !showR4Menu; closeAll(); setShowR4Menu(newState); }}
+                                className="flex flex-col items-center justify-center gap-1 flex-1 min-w-0"
+                            >
+                                <div className={`p-1.5 rounded-lg md:rounded-xl transition-all duration-300 ${showR4Menu || pathname === '/tactical-dashboard' ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'text-slate-500 hover:text-slate-300'}`}>
+                                    <svg className="w-5 h-5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                </div>
+                                <span className={`text-[7px] md:text-[8px] font-black uppercase tracking-tighter ${showR4Menu || pathname === '/tactical-dashboard' ? 'text-red-500' : 'text-slate-500'}`}>{t('r4')}</span>
+                            </button>
+                        )}
+                        
+                        <button 
+                            onClick={() => { const newState = !showCalcs; closeAll(); setShowCalcs(newState); }}
+                            className="flex flex-col items-center justify-center gap-1 flex-1 min-w-0"
+                        >
+                            <div className={`p-1.5 rounded-lg md:rounded-xl transition-all duration-300 ${showCalcs || pathname.startsWith('/calculators') ? 'bg-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)]' : 'text-slate-500 hover:text-slate-300'}`}>
+                                <svg className="w-5 h-5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                            </div>
+                            <span className={`text-[7px] md:text-[8px] font-black uppercase tracking-tighter ${showCalcs || pathname.startsWith('/calculators') ? 'text-pink-500' : 'text-slate-500'}`}>{t('calcs')}</span>
+                        </button>
+
+                        <NavIcon 
+                            href="/train" 
+                            label={t('train')} 
+                            isActive={pathname === '/train'}
+                            icon={<span className="text-lg md:text-xl">🚂</span>}
+                        />
+                    </>
+                ) : (
+                    <>
+                        <NavIcon 
+                            href="/about" 
+                            label={t('aboutUs')} 
+                            isActive={pathname === '/about'}
+                            icon={<svg className="w-5 h-5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
+                        />
+                        <NavIcon 
+                            href="/contact" 
+                            label={t('contactUs')} 
+                            isActive={pathname === '/contact'}
+                            icon={<svg className="w-5 h-5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+                        />
+                    </>
+                )}
+
+                <button 
+                    onClick={() => { const newState = !showMore; closeAll(); setShowMore(newState); }}
+                    className="flex flex-col items-center justify-center gap-1 flex-1 min-w-0"
+                >
+                    <div className={`p-1.5 rounded-lg md:rounded-xl transition-all duration-300 ${showMore ? 'bg-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)]' : 'text-slate-500 hover:text-slate-300'}`}>
+                        <svg className="w-5 h-5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                    </div>
+                    <span className={`text-[7px] md:text-[8px] font-black uppercase tracking-tighter ${showMore ? 'text-pink-500' : 'text-slate-500'}`}>{t('more')}</span>
+                </button>
+
+                <button 
+                    onClick={() => { const newState = !showLanguageMenu; closeAll(); setShowLanguageMenu(newState); }}
+                    className="flex flex-col items-center justify-center gap-1 flex-1 min-w-0 group"
+                >
+                    <div className={`p-1.5 rounded-lg md:rounded-xl transition-all border ${showLanguageMenu ? 'bg-pink-500 text-white border-transparent' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                        <svg className="w-5 h-5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s-1.343-9-3-9m-9 9a9 9 0 019-9" /></svg>
+                    </div>
+                    <span className={`text-[7px] md:text-[8px] font-black uppercase tracking-tighter ${showLanguageMenu ? 'text-pink-500' : 'text-slate-500'}`}>{language}</span>
+                </button>
+            </div>
+        </div>
     );
 }

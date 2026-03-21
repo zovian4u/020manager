@@ -8,7 +8,7 @@ export default function MainContent({ children }: { children: React.ReactNode })
     const isFullscreenPage = pathname === '/' || pathname === '/signin' || pathname === '/signup' || pathname === '/welcome';
 
     return (
-        <main className={isFullscreenPage ? "min-h-screen" : "pt-[140px] md:pt-[160px] min-h-screen"}>
+        <main className={isFullscreenPage ? "min-h-screen" : "pt-[80px] min-h-screen"}>
             {children}
         </main>
     );

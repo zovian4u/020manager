@@ -59,7 +59,7 @@ export default function AboutUs() {
     const orderedRoles = ["R5", "R4", "R3", "R2", "R1", "Member"].filter(r => groupedMembers[r]?.length > 0);
 
     return (
-        <main className="min-h-screen bg-slate-900 px-4 sm:px-6 pb-20 relative overflow-hidden">
+        <main className="min-h-screen bg-slate-900 px-4 sm:px-6 pt-12 md:pt-20 pb-20 relative overflow-hidden">
             {/* Ambient Background Effects */}
             <div className="absolute top-[-10%] right-[20%] w-[40rem] h-[40rem] bg-pink-600/10 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
             <div className="absolute bottom-[20%] left-[-10%] w-[30rem] h-[30rem] bg-purple-600/20 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
@@ -67,7 +67,7 @@ export default function AboutUs() {
 
             <div className="relative z-10 max-w-6xl mx-auto">
                 <header className="text-center mb-24">
-                    <h1 className="text-3xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 uppercase italic tracking-tighter drop-shadow-2xl">
+                    <h1 className="text-3xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 uppercase italic tracking-tighter drop-shadow-2xl py-2">
                         {t('aboutUs')}
                     </h1>
                     <p className="text-slate-400 font-bold uppercase text-xs tracking-[0.5em] mt-6">
@@ -76,55 +76,55 @@ export default function AboutUs() {
                 </header>
 
                 {/* Season Gallery Section */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16 group">
+                <div className="grid grid-cols-2 gap-4 md:gap-8 mb-16 group">
                     <div className="relative group/season">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-[3rem] blur opacity-25 group-hover/season:opacity-50 transition duration-1000"></div>
-                        <div className="relative bg-slate-900 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-3xl md:rounded-[3rem] blur opacity-25 group-hover/season:opacity-50 transition duration-1000"></div>
+                        <div className="relative bg-slate-900 rounded-3xl md:rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
                             <img
                                 src="/images/about/season 3.jpg"
                                 alt="020 Season 3"
-                                className="w-full h-[400px] object-cover hover:scale-110 transition-transform duration-[2s] cursor-zoom-in"
+                                className="w-full h-[180px] sm:h-[250px] md:h-[300px] object-cover hover:scale-110 transition-transform duration-[2s] cursor-zoom-in"
                             />
-                            <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent">
-                                <span className="text-pink-500 font-black text-[10px] uppercase tracking-[0.4em] mb-2 block">Legacy Operations</span>
-                                <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Season 3 Campaign</h3>
+                            <div className="absolute bottom-0 left-0 right-0 p-3 md:p-6 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent">
+                                <span className="text-pink-500 font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] mb-1 block">Legacy</span>
+                                <h3 className="text-xs md:text-xl font-black text-white italic uppercase tracking-tighter">Season 3</h3>
                             </div>
                         </div>
                     </div>
 
                     <div className="relative group/season">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-blue-600 rounded-[3rem] blur opacity-25 group-hover/season:opacity-50 transition duration-1000"></div>
-                        <div className="relative bg-slate-900 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-blue-600 rounded-3xl md:rounded-[3rem] blur opacity-25 group-hover/season:opacity-50 transition duration-1000"></div>
+                        <div className="relative bg-slate-900 rounded-3xl md:rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
                             <img
                                 src="/images/about/season 4.jpg"
                                 alt="020 Season 4"
-                                className="w-full h-[400px] object-cover hover:scale-110 transition-transform duration-[2s] cursor-zoom-in"
+                                className="w-full h-[180px] sm:h-[250px] md:h-[300px] object-cover hover:scale-110 transition-transform duration-[2s] cursor-zoom-in"
                             />
-                            <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent">
-                                <span className="text-blue-500 font-black text-[10px] uppercase tracking-[0.4em] mb-2 block">Active Deployment</span>
-                                <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Season 4 Vanguard</h3>
+                            <div className="absolute bottom-0 left-0 right-0 p-3 md:p-6 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent">
+                                <span className="text-blue-500 font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] mb-1 block">Active</span>
+                                <h3 className="text-xs md:text-xl font-black text-white italic uppercase tracking-tighter">Season 4</h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Localized Description Section */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-all duration-500">
-                        <div className="text-pink-500 mb-4 text-2xl">🌍</div>
-                        <p className="text-slate-200 font-medium leading-relaxed">{t('aboutIntro')}</p>
+                <div className="grid grid-cols-2 gap-3 md:gap-6 mb-16">
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-4 md:p-6 rounded-2xl hover:bg-white/10 transition-all duration-500">
+                        <div className="text-emerald-500 mb-2 text-xl">🌍</div>
+                        <p className="text-slate-200 font-medium leading-normal text-[11px] md:text-sm">{t('aboutIntro')}</p>
                     </div>
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-all duration-500">
-                        <div className="text-purple-500 mb-4 text-2xl">💬</div>
-                        <p className="text-slate-200 font-medium leading-relaxed">{t('aboutGroups')}</p>
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-4 md:p-6 rounded-2xl hover:bg-white/10 transition-all duration-500">
+                        <div className="text-purple-500 mb-2 text-xl">💬</div>
+                        <p className="text-slate-200 font-medium leading-normal text-[11px] md:text-sm">{t('aboutGroups')}</p>
                     </div>
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-all duration-500">
-                        <div className="text-blue-500 mb-4 text-2xl">⚡</div>
-                        <p className="text-slate-200 font-medium leading-relaxed">{t('aboutInactive')}</p>
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-4 md:p-6 rounded-2xl hover:bg-white/10 transition-all duration-500">
+                        <div className="text-pink-500 mb-2 text-xl">⚡</div>
+                        <p className="text-slate-200 font-medium leading-normal text-[11px] md:text-sm">{t('aboutInactive')}</p>
                     </div>
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] hover:bg-white/10 transition-all duration-500">
-                        <div className="text-emerald-500 mb-4 text-2xl">🤝</div>
-                        <p className="text-slate-200 font-medium leading-relaxed">{t('aboutSpirit')}</p>
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-4 md:p-6 rounded-2xl hover:bg-white/10 transition-all duration-500">
+                        <div className="text-sky-500 mb-2 text-xl">🤝</div>
+                        <p className="text-slate-200 font-medium leading-normal text-[11px] md:text-sm">{t('aboutSpirit')}</p>
                     </div>
                 </div>
 

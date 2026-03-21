@@ -1,14 +1,52 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../lib/LanguageContext';
+import { useStackApp } from "@stackframe/stack";
 
 export default function LandingPage() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [images, setImages] = useState<HTMLImageElement[]>([]);
     const [progress, setProgress] = useState(0);
     const { t } = useLanguage();
+    
+    const stack = useStackApp();
+    const user = stack.useUser();
+
+    // Auto-scroll logic: If idle for 3 seconds, scroll to next section
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+
+        const startTimer = () => {
+            timer = setTimeout(() => {
+                const currentScroll = window.scrollY;
+                const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+                
+                if (currentScroll < maxScroll - 10) {
+                    window.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+                }
+            }, 3000);
+        };
+
+        const resetTimer = () => {
+            clearTimeout(timer);
+            startTimer();
+        };
+
+        window.addEventListener('scroll', resetTimer);
+        window.addEventListener('mousedown', resetTimer);
+        window.addEventListener('touchstart', resetTimer);
+        
+        startTimer();
+
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('scroll', resetTimer);
+            window.removeEventListener('mousedown', resetTimer);
+            window.removeEventListener('touchstart', resetTimer);
+        };
+    }, []);
 
     // 1. Preload 162 Frames
     useEffect(() => {
@@ -129,7 +167,7 @@ export default function LandingPage() {
             {/* MenuBar handles the header now */}
             {/* Sticky Pill Animation */}
             <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-10 bg-[radial-gradient(circle_at_center,#ffffff_0%,#cbd5e1_100%)]">
-                <div className="relative w-[85vw] max-w-[950px] aspect-video rounded-[40px] bg-black overflow-hidden border-8 border-white/50 shadow-2xl">
+                <div className="relative w-[85vw] max-w-[950px] aspect-video rounded-[20px] md:rounded-[40px] bg-black overflow-hidden border-8 border-white/50 shadow-2xl">
                     <canvas ref={canvasRef} className="w-full h-full object-contain" />
                     <div className="absolute bottom-[-15px] right-[-15px] bg-[#f472b6] px-12 py-5 rounded-tl-[40px] text-white font-black text-xl shadow-2xl z-50">
                         ᴬᴶ ThinkK ʚଓ
@@ -138,12 +176,12 @@ export default function LandingPage() {
             </div>
 
             {/* Scrolling Content Overlays */}
-            <main className="relative z-[100]">
+            <div className="relative z-[100]">
                 <section className="h-screen flex flex-col items-center justify-center text-center px-[10%]">
                     <div className="bg-slate-900/95 border-2 border-[#f472b6] backdrop-blur-md px-8 py-3 rounded-full mb-6 shadow-2xl">
                         <span className="text-white font-black tracking-widest text-lg">ᴬᴶ ThinkK ʚଓ</span>
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('incubateVictory')}</h1>
+                    <h1 className="text-3xl sm:text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('incubateVictory')}</h1>
                     <p className="text-xl text-slate-900 font-bold max-w-[500px] leading-relaxed drop-shadow-[0_1px_5px_rgba(255,255,255,0.9)]">
                         {t('experiencePowerBody')}
                     </p>
@@ -153,7 +191,7 @@ export default function LandingPage() {
                     <div className="bg-slate-900/95 border-2 border-[#f472b6] backdrop-blur-md px-8 py-3 rounded-full mb-6 shadow-2xl">
                         <span className="text-white font-black tracking-widest text-lg">ᴬᴶ ThinkK ʚଓ</span>
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('beyondBoundaries')}</h1>
+                    <h1 className="text-3xl sm:text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('beyondBoundaries')}</h1>
                     <p className="text-xl text-slate-900 font-bold max-w-[500px] leading-relaxed drop-shadow-[0_1px_5px_rgba(255,255,255,0.9)]">
                         {t('realStrength')}
                     </p>
@@ -163,12 +201,20 @@ export default function LandingPage() {
                     <div className="bg-slate-900/95 border-4 border-[#f472b6] backdrop-blur-md px-10 py-4 rounded-full mb-8 shadow-2xl">
                         <span className="text-white font-black tracking-widest text-xl uppercase italic">{t('breakthroughCompleted')}</span>
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-10 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('theArrival')}</h1>
-                    <Link href="/hub" className="px-12 py-5 bg-gradient-to-r from-pink-400 to-purple-600 text-white font-black rounded-full hover:scale-110 transition-transform shadow-[0_20px_40px_rgba(236,72,153,0.3)] no-underline text-lg tracking-widest pointer-events-auto">
-                        {t('enterStrategicHub')}
-                    </Link>
+                    <h1 className="text-3xl sm:text-6xl md:text-8xl font-black text-slate-900 leading-[1.1] mb-10 drop-shadow-[0_2px_10px_rgba(255,255,255,0.8)]">{t('theArrival')}</h1>
+                    
+                    <div className="flex flex-col sm:flex-row gap-4 items-center scale-90 md:scale-100">
+                        {!user && (
+                            <Link href="/signin" className="px-12 py-5 bg-white border-2 border-[#f472b6] text-[#f472b6] font-black rounded-full hover:bg-slate-50 transition-all shadow-[0_10px_20px_rgba(0,0,0,0.05)] no-underline text-lg tracking-widest pointer-events-auto">
+                                {t('signIn')}
+                            </Link>
+                        )}
+                        <Link href="/hub" className="px-12 py-5 bg-gradient-to-r from-pink-400 to-purple-600 text-white font-black rounded-full hover:scale-110 transition-all shadow-[0_20px_40px_rgba(236,72,153,0.3)] no-underline text-lg tracking-widest pointer-events-auto">
+                            {t('enterStrategicHub')}
+                        </Link>
+                    </div>
                 </section>
-            </main>
+            </div>
         </div>
     );
 }

@@ -62,104 +62,108 @@ export default function DroneCalculatorPage() {
         if (val <= fromVal && val > 1) {
             setFromLevelInputValue((val - 1).toString());
         }
-        setToLevelInputValue(val.toString());
+        // setToLevelInputValue(val.toString()); // This line was removed as per the new structure
     };
 
     return (
-        <div className="bg-slate-50 pt-0 pb-4">
-            <div className="max-w-2xl mx-auto px-4">
-                <div className="mb-2 text-center animate-in slide-in-from-bottom border-b border-pink-100 pb-2">
-                    <h1 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic tracking-tighter mb-0.5">
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
-                            {t('droneCalculator') || "Drone Calculator"}
-                        </span>
-                    </h1>
-                    <p className="text-slate-500 font-bold text-[10px] max-w-2xl mx-auto hidden md:block">
-                        {t('droneCalcDesc') || "Calculate the exact Drone Parts and Battle Data required for your next upgrade target."}
-                    </p>
-                </div>
+        <div className="min-h-screen bg-[#0a0f1d] text-white flex flex-col relative font-sans pt-12 md:pt-20">
+            {/* Dynamic Background Blobs */}
+            <div className="fixed inset-0 pointer-events-none opacity-20 z-0">
+                <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[40%] bg-pink-500/15 rounded-full blur-[100px]" />
+                <div className="absolute bottom-[-5%] right-[-5%] w-[40%] h-[40%] bg-purple-500/15 rounded-full blur-[100px]" />
+            </div>
 
-                <div className="bg-white/70 backdrop-blur-xl border border-white p-3 rounded-[1.5rem] shadow-lg hover:shadow-xl transition-all relative overflow-hidden group">
-                    {/* Decorative Background Element */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 group-hover:opacity-50 transition-opacity duration-700 pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
-
-                    <div className="relative z-10">
-                        {/* Inputs Section */}
-                        <div className="grid grid-cols-2 gap-3 mb-3">
-                            <div className="flex flex-col">
-                                <label className="text-[9px] text-slate-400 font-black uppercase mb-1 tracking-widest">{t('currentLevel') || "Current Level"}</label>
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    value={fromLevelInputValue}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/\D/g, '');
-                                        setFromLevelInputValue(val);
-                                    }}
-                                    onBlur={handleFromLevelBlur}
-                                    className="bg-slate-50 border border-slate-200 p-2 rounded-lg text-slate-800 font-bold text-sm outline-none focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 transition-all shadow-inner"
-                                />
-                            </div>
-                            <div className="flex flex-col">
-                                <label className="text-[9px] text-slate-400 font-black uppercase mb-1 tracking-widest">{t('targetLevel') || "Target Level"}</label>
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    value={toLevelInputValue}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/\D/g, '');
-                                        setToLevelInputValue(val);
-                                    }}
-                                    onBlur={handleToLevelBlur}
-                                    className="bg-slate-50 border border-slate-200 p-2 rounded-lg text-slate-800 font-bold text-sm outline-none focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 transition-all shadow-inner"
-                                />
+            <main className="flex-1 flex flex-col max-w-5xl mx-auto w-full relative z-10 p-1 md:p-6 pb-32 md:pb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 flex-1">
+                    {/* Control Panel */}
+                    <div className="md:col-span-1 bg-slate-900/40 backdrop-blur-3xl border border-white/5 p-3 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl space-y-3 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                        
+                        <div className="flex items-center justify-between mb-1">
+                            <h1 className="text-sm md:text-2xl font-black text-white italic tracking-tighter uppercase leading-none">
+                                {t('droneCalculator').toUpperCase()}
+                            </h1>
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-400 text-[8px] font-black uppercase tracking-[0.2em] border border-pink-500/20">
+                                <span className="w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse" />
+                                020 TACTICAL
                             </div>
                         </div>
 
-                        {/* Results Section */}
-                        <div className="bg-slate-900 rounded-[1rem] p-3 shadow-inner border border-slate-800 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500"></div>
-
-                            <h3 className="text-center text-[8px] text-slate-400 font-black uppercase mb-2 tracking-widest">
-                                {t('requiredResources') || "Required Resources"}
-                            </h3>
-
-                            <div className="grid grid-cols-1 gap-2">
-                                <div className="flex items-center justify-center p-2.5 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-pink-500/30 transition-colors gap-3 pointer-events-auto group/item relative">
-                                    <div className="w-10 h-10 flex-shrink-0 animate-in zoom-in spin-in-12 duration-700 pointer-events-none">
-                                        <img src="/images/resources/drone-part.png" alt="Drone Parts" className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(236,72,153,0.3)]" />
-                                    </div>
-                                    <div className="flex flex-col text-left">
-                                        <div className="text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 mb-0 font-mono cursor-help line-height-none" title={totals.totalParts.toLocaleString()}>
-                                            {formatNumber(totals.totalParts, true)}
-                                        </div>
-                                        <div className="text-[11px] text-pink-400 font-black uppercase tracking-widest">
-                                            {t('droneParts') || "Drone Parts"}
-                                        </div>
-                                    </div>
+                        <div className="space-y-3">
+                            {/* Level Inputs */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                    <label className="text-[8px] text-slate-500 font-black uppercase tracking-widest pl-1">{t('currentLevel')}</label>
+                                    <input 
+                                        type="text" 
+                                        inputMode="numeric" 
+                                        value={fromLevelInputValue} 
+                                        onChange={(e) => setFromLevelInputValue(e.target.value.replace(/\D/g, ''))} 
+                                        onBlur={handleFromLevelBlur}
+                                        className="w-full bg-black/40 border border-white/10 p-2 rounded-xl text-white font-black text-xl text-center outline-none focus:border-pink-500/50 transition-all shadow-inner"
+                                    />
                                 </div>
-
-                                <div className="flex items-center justify-center p-2.5 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-blue-500/30 transition-colors gap-3 pointer-events-auto group/item relative">
-                                    <div className="w-10 h-10 flex-shrink-0 animate-in zoom-in spin-in-12 duration-700 pointer-events-none">
-                                        <img src="/images/resources/battle-data.png" alt="Battle Data" className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(59,130,246,0.3)]" />
-                                    </div>
-                                    <div className="flex flex-col text-left">
-                                        <div className="text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 mb-0 font-mono cursor-help line-height-none" title={totals.totalData.toLocaleString()}>
-                                            {formatNumber(totals.totalData, true)}
-                                        </div>
-                                        <div className="text-[11px] text-blue-400 font-black uppercase tracking-widest">
-                                            {t('battleData') || "Battle Data"}
-                                        </div>
-                                    </div>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] text-slate-500 font-black uppercase tracking-widest pl-1">{t('targetLevel')}</label>
+                                    <input 
+                                        type="text" 
+                                        inputMode="numeric" 
+                                        value={toLevelInputValue} 
+                                        onChange={(e) => setToLevelInputValue(e.target.value.replace(/\D/g, ''))} 
+                                        onBlur={handleToLevelBlur}
+                                        className="w-full bg-black/40 border border-white/10 p-2 rounded-xl text-white font-black text-xl text-center outline-none focus:border-purple-500/50 transition-all shadow-inner"
+                                    />
                                 </div>
                             </div>
+
+                            {/* Quick Selectors */}
+                            <div className="grid grid-cols-4 gap-1">
+                                {[50, 100, 150, 300].map(val => (
+                                    <button 
+                                        key={val} 
+                                        onClick={() => { setToLevelInputValue(val.toString()); handleToLevelBlur(); }} 
+                                        className={`px-1 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all bg-white/5 border border-transparent hover:bg-white/10 ${toLevelInputValue === val.toString() ? 'text-pink-400 border-pink-500/30 bg-pink-500/5' : 'text-slate-500'}`}
+                                    > 
+                                        Lv. {val} 
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="p-2 rounded-xl bg-white/[0.02] border border-white/5 flex items-start gap-2">
+                                <span className="text-[10px] opacity-30">ℹ️</span>
+                                <p className="text-[7px] text-slate-500 font-bold uppercase italic leading-tight">{t('orderMessage')}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Results Panel */}
+                    <div className="md:col-span-1 bg-slate-900/40 backdrop-blur-3xl border border-white/5 p-3 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-purple-500/5 opacity-50" />
+                        <h3 className="text-[8px] text-slate-500 font-black uppercase tracking-[0.3em] mb-4 text-center italic opacity-60">
+                            {t('requiredResources')}
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-2 w-full">
+                            {[
+                                { label: t('droneParts'), img: 'drone-part.png', val: totals.totalParts, color: 'pink', iconColor: 'text-pink-500/80' },
+                                { label: t('battleData'), img: 'battle-data.png', val: totals.totalData, color: 'blue', iconColor: 'text-blue-400/80' }
+                            ].map((res, idx) => (
+                                <div key={idx} className="bg-black/40 border border-white/5 rounded-xl p-2.5 md:p-6 flex flex-col items-center justify-center group overflow-hidden relative">
+                                    <div className="w-8 h-8 md:w-16 md:h-16 mb-1 relative shrink-0">
+                                        <img src={`/images/resources/${res.img}`} alt={res.label} className="w-full h-full object-contain relative z-20 group-hover:scale-110 transition-transform" />
+                                    </div>
+                                    <div className={`text-[7px] md:text-[9px] font-black ${res.iconColor} uppercase tracking-tighter mb-0.5 truncate max-w-full`}>{res.label}</div>
+                                    <div className="text-sm md:text-2xl font-black text-white font-mono tracking-tighter tabular-nums leading-none">
+                                        {formatNumber(res.val)}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
+                        <p className="mt-4 text-[6px] font-black text-slate-800 uppercase tracking-widest opacity-50">020 Alliance Est. 2024</p>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

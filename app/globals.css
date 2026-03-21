@@ -5,6 +5,11 @@
     --war-black: #050505;
 }
 
+body {
+    background-color: #020617;
+    color: #e2e8f0;
+}
+
 
 /* Tactical Scanning Line */
 @keyframes scan {

@@ -1,19 +1,27 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, Suspense } from 'react';
+import React, { createContext, useContext, useState, useEffect, Suspense, useRef } from 'react';
 import { translations, Language, TranslationKey } from './translations';
 import { useUser } from "@stackframe/stack";
 import { supabase } from './supabase';
 
 interface LanguageContextType {
     language: Language;
-    setLanguage: (lang: Language) => void;
+    setLanguage: (lang: string) => void;
     t: (key: TranslationKey) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Separate component to handle database sync, wrapped in Suspense
+// 🛡️ Strategic Map: Normalize all variants of Chinese/Other to supported codes
+const normalizeLanguage = (lang: string | null | undefined): Language => {
+    if (!lang) return 'en';
+    const clean = lang.toLowerCase().split('-')[0]; // Handle 'zh-CN', 'zh-TW', 'en-US'
+    if (clean === 'cn' || clean === 'zh') return 'zh';
+    if (['en', 'ja', 'th', 'vi'].includes(clean)) return clean as Language;
+    return 'en';
+};
+
 function LanguageSync({
     language,
     setLanguageState
@@ -22,9 +30,9 @@ function LanguageSync({
     setLanguageState: (lang: Language) => void
 }) {
     const user = useUser();
-    const isInitialMount = React.useRef(true);
+    const isInitialMount = useRef(true);
 
-    // 1. Initial Sync: Pull from Database when User logs in
+    // 🌐 Initial Sync: Pull from Database ONLY if local device has no preference
     useEffect(() => {
         const syncLanguage = async () => {
             if (user) {
@@ -34,16 +42,29 @@ function LanguageSync({
                     .eq('user_id', user.id)
                     .single();
 
-                if (data?.language && data.language !== language) {
-                    setLanguageState(data.language as Language);
-                    localStorage.setItem('preferred_language', data.language);
+                if (data?.language) {
+                    const normalized = normalizeLanguage(data.language);
+                    const localPref = localStorage.getItem('preferred_language');
+                    
+                    // Only apply database language if we don't have a firm local choice.
+                    // This prevents the "split-second Chinese then reverts to English" race condition.
+                    if (!localPref && normalized !== language) {
+                        setLanguageState(normalized);
+                        localStorage.setItem('preferred_language', normalized);
+                    } else if (localPref && localPref !== normalized) {
+                        // If local preference exists and differs from DB, sync local TO DB
+                        await supabase
+                            .from('members')
+                            .update({ language: localPref })
+                            .eq('user_id', user.id);
+                    }
                 }
             }
         };
         syncLanguage();
-    }, [user?.id]); // Only run on login change
+    }, [user?.id]); // Only run on login/user change
 
-    // 2. Persistent Sync: Push to Database when language state changes
+    // 🚀 Persistent Sync: Push to Database
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
@@ -65,50 +86,49 @@ function LanguageSync({
 }
 
 export function LanguageProvider({ children, initialLanguage = 'en' }: { children: React.ReactNode, initialLanguage?: Language }) {
-    const [language, setLanguageState] = useState<Language>(initialLanguage);
+    const [language, setLanguageState] = useState<Language>(normalizeLanguage(initialLanguage));
 
-    const setLanguage = async (lang: Language) => {
-        setLanguageState(lang);
+    const setLanguage = (lang: string) => {
+        const normalized = normalizeLanguage(lang);
+        setLanguageState(normalized);
         if (typeof window !== 'undefined') {
-            localStorage.setItem('preferred_language', lang);
+            localStorage.setItem('preferred_language', normalized);
         }
-
-        // We'll handle database update here if possible, but we don't have 'user' here to avoid suspense
-        // Instead, we can use a separate mechanism or just let the Sync component handle it if it was a "push"
-        // But the user might want immediate sync on change.
-        // We can try to fetch the user session manually via Supabase or handle it in a way that doesn't suspend.
     };
 
-    // 1. Initial Load from LocalStorage or URL (Immediate)
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const urlParams = new URLSearchParams(window.location.search);
-            const langParam = urlParams.get('lang') as Language;
+            const langParam = urlParams.get('lang');
 
-            if (langParam && (['en', 'zh', 'ja', 'th', 'vi'].includes(langParam))) {
-                setLanguageState(langParam);
-                localStorage.setItem('preferred_language', langParam);
-                // Clean URL
+            if (langParam) {
+                const normalized = normalizeLanguage(langParam);
+                setLanguageState(normalized);
+                localStorage.setItem('preferred_language', normalized);
                 const newUrl = window.location.pathname;
                 window.history.replaceState({}, '', newUrl);
             } else {
-                const saved = localStorage.getItem('preferred_language') as Language;
-                if (saved && (saved === 'en' || saved === 'zh' || saved === 'ja' || saved === 'th' || saved === 'vi')) {
-                    setLanguageState(saved);
+                const saved = localStorage.getItem('preferred_language');
+                if (saved) {
+                    setLanguageState(normalizeLanguage(saved));
                 }
             }
         }
     }, []);
 
     const t = (key: TranslationKey): string => {
-        return translations[language][key] || translations['en'][key] || key;
+        const langPack = translations[language] || translations['en'];
+        return langPack[key] || translations['en'][key] || key;
     };
 
     return (
         <LanguageContext.Provider value={{ language, setLanguage, t }}>
             {/* Database sync is isolated in a Suspense-friendly component */}
             <Suspense fallback={null}>
-                <LanguageSync language={language} setLanguageState={setLanguageState} />
+                <LanguageSync 
+                    language={language} 
+                    setLanguageState={setLanguageState} 
+                />
             </Suspense>
             {children}
         </LanguageContext.Provider>

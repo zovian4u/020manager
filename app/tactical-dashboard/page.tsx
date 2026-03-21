@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import { useStackApp } from "@stackframe/stack";
@@ -253,7 +253,7 @@ export default function TacticalDashboard() {
     };
 
     return (
-        <div className="min-h-[calc(100vh-72px)] px-4 md:px-8 pb-8 bg-slate-50 text-slate-900 pt-8">
+        <div className="min-h-[calc(100vh-72px)] px-4 md:px-8 pb-32 md:pb-8 bg-slate-50 text-slate-900 pt-8">
             <div className="max-w-7xl mx-auto">
                 <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 border-b border-slate-200 pb-6 gap-2">
                     <div>
@@ -277,15 +277,20 @@ export default function TacticalDashboard() {
                         <p className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase">{t('allianceName')} 020 Strategic Board — {activeEvent === 'DS' ? t('desertStorm') : t('canyonStorm')}</p>
                     </div>
                     <div className="flex gap-2">
+                        <Link href="/tactical-dashboard/manage-ranks">
+                            <button className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-blue-700 text-white hover:bg-blue-800 shadow-md whitespace-nowrap">
+                                ⭐ {t('manageRanks')}
+                            </button>
+                        </Link>
                         <button
                             onClick={() => { setAttendanceMode(!attendanceMode); setHistoryMode(false); }}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${attendanceMode ? 'bg-orange-600 text-white' : 'bg-slate-200 text-slate-600'}`}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${attendanceMode ? 'bg-orange-600 text-white shadow-lg' : 'bg-slate-200 text-slate-600'}`}
                         >
                             📋 {t('markAttendance')}
                         </button>
                         <button
                             onClick={() => { setHistoryMode(!historyMode); setAttendanceMode(false); }}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${historyMode ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-600'}`}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${historyMode ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-200 text-slate-600'}`}
                         >
                             📜 {t('pastMisses')}
                         </button>
@@ -294,117 +299,119 @@ export default function TacticalDashboard() {
 
                 {!attendanceMode && !historyMode && (
                     <>
-                        <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-8 items-stretch sm:items-center">
-                            <div className="flex flex-wrap gap-2">
-                                <button onClick={() => handleMassAction('A')} className="flex-1 sm:flex-none px-4 py-2.5 bg-blue-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md whitespace-nowrap">{t('assignTeamA')} ({teamACount}/30)</button>
-                                <button onClick={() => handleMassAction('B')} className="flex-1 sm:flex-none px-4 py-2.5 bg-green-600 text-white text-[10px] font-black rounded-xl cursor-pointer hover:scale-105 transition-all shadow-md whitespace-nowrap">{t('assignTeamB')} ({teamBCount}/30)</button>
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-6 items-stretch sm:items-center">
+                            <div className="flex gap-2 w-full sm:w-auto">
+                                <button onClick={() => handleMassAction('A')} className="flex-1 px-3 py-2 bg-blue-600 text-white text-[9px] font-black rounded-lg cursor-pointer hover:scale-105 transition-all shadow-md whitespace-nowrap">{t('assignTeamA')} ({teamACount}/30)</button>
+                                <button onClick={() => handleMassAction('B')} className="flex-1 px-3 py-2 bg-green-600 text-white text-[9px] font-black rounded-lg cursor-pointer hover:scale-105 transition-all shadow-md whitespace-nowrap">{t('assignTeamB')} ({teamBCount}/30)</button>
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                                <button onClick={() => handleMassAction(null)} className="flex-1 sm:flex-none px-4 py-2.5 bg-slate-300 text-slate-700 text-[10px] font-black rounded-xl cursor-pointer hover:bg-slate-400 whitespace-nowrap">{t('removeFromTeams')}</button>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                                <button onClick={() => handleMassAction(null)} className="flex-1 px-3 py-2 bg-slate-300 text-slate-700 text-[9px] font-black rounded-lg cursor-pointer hover:bg-slate-400 whitespace-nowrap uppercase">{t('removeFromTeams')}</button>
                                 <button
                                     onClick={() => setUseAttendancePreference(!useAttendancePreference)}
-                                    className={`flex-1 sm:flex-none px-4 py-2.5 text-[10px] whitespace-nowrap font-black rounded-xl cursor-pointer shadow-md transition-all ${useAttendancePreference ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
+                                    className={`flex-1 px-3 py-2 text-[9px] whitespace-nowrap font-black rounded-lg cursor-pointer shadow-md transition-all ${useAttendancePreference ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
                                 >
                                     PRIORITY: {useAttendancePreference ? 'ON' : 'OFF'}
                                 </button>
                             </div>
-                            <div className="w-full sm:w-auto flex-1 min-w-[150px]">
+                            <div className="w-full sm:w-auto flex-1 min-w-[120px]">
                                 <input
                                     type="text"
-                                    placeholder={t('searchPlayer') || "Search Player..."}
+                                    placeholder={t('searchPlayer') || "Search..."}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full px-4 py-2.5 outline-none text-[10px] font-black rounded-xl bg-white border border-slate-200 text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all shadow-sm"
+                                    className="w-full px-3 py-2 outline-none text-[9px] font-black rounded-lg bg-white border border-slate-200 text-slate-700 placeholder:text-slate-400 focus:border-blue-500 transition-all shadow-sm h-[34px]"
                                 />
                             </div>
-                            <select
-                                value={magicFilterMode}
-                                onChange={(e) => setMagicFilterMode(e.target.value as any)}
-                                className={`w-full sm:w-auto px-4 py-2.5 outline-none appearance-none text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${magicFilterMode !== 'off' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-purple-600 hover:bg-purple-700'}`}
-                            >
-                                <option value="off" className="bg-slate-800">MAGIC FILTER: OFF</option>
-                                <option value="hero" className="bg-slate-800">MAGIC FILTER: HERO</option>
-                                <option value="squad" className="bg-slate-800">MAGIC FILTER: SQUAD 1</option>
-                                <option value="arena" className="bg-slate-800">MAGIC FILTER: ARENA</option>
-                            </select>
-                            <select
-                                value={requestedTeamFilter}
-                                onChange={(e) => setRequestedTeamFilter(e.target.value as any)}
-                                className={`w-full sm:w-auto px-4 py-2.5 outline-none appearance-none text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${requestedTeamFilter !== 'All' ? 'bg-pink-600 hover:bg-pink-700' : 'bg-slate-500 hover:bg-slate-600'}`}
-                            >
-                                <option value="All" className="bg-slate-800">RQ TEAM: ALL</option>
-                                <option value="Team A" className="bg-slate-800">RQ TEAM: A (+ BOTH)</option>
-                                <option value="Team B" className="bg-slate-800">RQ TEAM: B (+ BOTH)</option>
-                                <option value="Both" className="bg-slate-800">RQ TEAM: STRICTLY BOTH</option>
-                            </select>
-                            <select
-                                value={assignedTeamFilter}
-                                onChange={(e) => setAssignedTeamFilter(e.target.value as any)}
-                                className={`w-full sm:w-auto px-4 py-2.5 outline-none appearance-none text-[10px] font-black rounded-xl text-white cursor-pointer shadow-md transition-all ${assignedTeamFilter !== 'All' ? 'bg-teal-600 hover:bg-teal-700' : 'bg-slate-500 hover:bg-slate-600'}`}
-                            >
-                                <option value="All" className="bg-slate-800">ASSIGNED: ALL</option>
-                                <option value="Team A" className="bg-slate-800">ASSIGNED: TEAM A</option>
-                                <option value="Team B" className="bg-slate-800">ASSIGNED: TEAM B</option>
-                                <option value="Unassigned" className="bg-slate-800">ASSIGNED: NONE</option>
-                            </select>
-                            <div className="w-full sm:w-auto sm:ml-auto flex justify-between sm:justify-end gap-4 text-[10px] font-black text-blue-600 uppercase underline cursor-pointer mt-2 sm:mt-0">
+                            <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+                                <select
+                                    value={magicFilterMode}
+                                    onChange={(e) => setMagicFilterMode(e.target.value as any)}
+                                    className={`px-3 py-2 outline-none appearance-none text-[8px] font-black rounded-lg text-white cursor-pointer shadow-sm transition-all h-[34px] ${magicFilterMode !== 'off' ? 'bg-orange-500' : 'bg-purple-600'}`}
+                                >
+                                    <option value="off">MAGIC: OFF</option>
+                                    <option value="hero">MAGIC: HERO</option>
+                                    <option value="squad">MAGIC: SQUAD 1</option>
+                                    <option value="arena">MAGIC: ARENA</option>
+                                </select>
+                                <select
+                                    value={requestedTeamFilter}
+                                    onChange={(e) => setRequestedTeamFilter(e.target.value as any)}
+                                    className={`px-3 py-2 outline-none appearance-none text-[8px] font-black rounded-lg text-white cursor-pointer shadow-sm transition-all h-[34px] ${requestedTeamFilter !== 'All' ? 'bg-pink-600' : 'bg-slate-500'}`}
+                                >
+                                    <option value="All">REQ: ALL</option>
+                                    <option value="Team A">REQ: A/BOTH</option>
+                                    <option value="Team B">REQ: B/BOTH</option>
+                                    <option value="Both">REQ: ONLY BOTH</option>
+                                </select>
+                                <select
+                                    value={assignedTeamFilter}
+                                    onChange={(e) => setAssignedTeamFilter(e.target.value as any)}
+                                    className={`px-3 py-2 outline-none appearance-none text-[8px] font-black rounded-lg text-white cursor-pointer shadow-sm transition-all h-[34px] ${assignedTeamFilter !== 'All' ? 'bg-teal-600' : 'bg-slate-500'}`}
+                                >
+                                    <option value="All">ASSGN: ALL</option>
+                                    <option value="Team A">ASSGN: A</option>
+                                    <option value="Team B">ASSGN: B</option>
+                                    <option value="Unassigned">ASSGN: NONE</option>
+                                </select>
+                            </div>
+                            <div className="w-full sm:w-auto sm:ml-auto flex justify-between gap-4 text-[9px] font-black text-blue-600 uppercase underline cursor-pointer">
                                 <span onClick={() => setSelectedUsers(members.map(m => m.user_id))}>{t('selectAll')}</span>
                                 <span onClick={() => setSelectedUsers([])} className="text-red-500">{t('uncheckAll')}</span>
                             </div>
                         </div>
 
-                        <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.05)] overflow-hidden">
+                        <div className="bg-white border border-slate-200 rounded-2xl md:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
                             <div className="overflow-x-auto w-full">
-                                <table className="w-full text-left border-collapse min-w-max">
+                                <table className="w-full text-left border-collapse table-auto">
                                     <thead className="bg-slate-50/80 border-b border-slate-100">
-                                        <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
-                                            <th className="px-4 py-4 sm:p-6 w-12 text-center">{t('select')}</th>
-                                            <th className="px-4 py-4 sm:p-6 w-12 text-center">S.No.</th>
-                                            <th className="px-4 py-4 sm:p-6">{t('finalAssignment')}</th>
-                                            <th className="px-4 py-4 sm:p-6">{t('memberName')}</th>
-                                            <th className="px-4 py-4 sm:p-6">HERO (M)</th>
-                                            <th className="px-4 py-4 sm:p-6">SQUAD 1 (M)</th>
-                                            <th className="px-4 py-4 sm:p-6">ARENA (M)</th>
-                                            <th className="px-4 py-4 sm:p-6">{t('attendance')}</th>
-                                            <th className="px-4 py-4 sm:p-6">{t('requestedTeam')}</th>
+                                        <tr className="text-[9px] font-black text-slate-400 uppercase tracking-tight whitespace-nowrap">
+                                            <th className="px-3 py-3 w-10 text-center">{t('select')}</th>
+                                            <th className="px-3 py-3 w-10 text-center hidden md:table-cell">S.No.</th>
+                                            <th className="px-3 py-3 w-28">{t('finalAssignment')}</th>
+                                            <th className="px-3 py-3">{t('memberName')}</th>
+                                            <th className={`px-3 py-3 ${magicFilterMode === 'hero' ? 'table-cell' : 'hidden lg:table-cell'}`}>HERO (M)</th>
+                                            <th className={`px-3 py-3 ${magicFilterMode === 'squad' || magicFilterMode === 'off' ? 'table-cell' : 'hidden sm:table-cell'}`}>SQUAD 1 (M)</th>
+                                            <th className={`px-3 py-3 ${magicFilterMode === 'arena' ? 'table-cell' : 'hidden xl:table-cell'}`}>ARENA (M)</th>
+                                            <th className="px-3 py-3 hidden sm:table-cell">{t('attendance')}</th>
+                                            <th className="px-3 py-3 hidden md:table-cell">{t('requestedTeam')}</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="text-sm font-bold text-slate-700">
+                                    <tbody className="text-xs font-bold text-slate-700">
                                         {sortedMembers.map((m, index) => {
                                             const heroPower = Number(m.total_hero_power || 0);
                                             const squadPower = Number(m.squad_1_power || 0);
                                             const arenaPower = Number(m.arena_power || 0);
                                             return (
                                                 <tr key={m.user_id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors whitespace-nowrap">
-                                                    <td className="px-4 py-4 sm:p-6 text-center">
+                                                    <td className="px-3 py-3 text-center">
                                                         <input type="checkbox" className={`cursor-pointer w-4 h-4 rounded border-slate-300 ${activeEvent === 'DS' ? 'accent-pink-600' : 'accent-orange-600'}`} checked={selectedUsers.includes(m.user_id)} onChange={(e) => e.target.checked ? setSelectedUsers([...selectedUsers, m.user_id]) : setSelectedUsers(selectedUsers.filter(id => id !== m.user_id))} />
                                                     </td>
-                                                    <td className="px-4 py-4 sm:p-6 text-center text-slate-400 text-[10px] font-black">{index + 1}</td>
-                                                    <td className="px-4 py-4 sm:p-6">
-                                                        <span className={`px-3 py-1 rounded-full text-[9px] font-black text-white ${getAssignment(m) === 'A' ? 'bg-blue-600 shadow-[0_4px_10px_rgba(37,99,235,0.3)]' : getAssignment(m) === 'B' ? 'bg-green-600 shadow-[0_4px_10px_rgba(22,163,74,0.3)]' : 'bg-slate-700'}`}>
+                                                    <td className="px-3 py-3 text-center text-slate-400 text-[9px] font-black hidden md:table-cell">{index + 1}</td>
+                                                    <td className="px-3 py-3">
+                                                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black text-white ${getAssignment(m) === 'A' ? 'bg-blue-600' : getAssignment(m) === 'B' ? 'bg-green-600' : 'bg-slate-700'}`}>
                                                             {getAssignment(m) && getAssignment(m) !== 'None' ? `${t('team')} ${getAssignment(m)}` : t('pending')}
                                                         </span>
                                                     </td>
-                                                    <td className="px-4 py-4 sm:p-6">
-                                                        <div className="uppercase tracking-tighter text-slate-900 font-bold">{m.username}</div>
-                                                        <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mt-1">({m.role || 'R1'})</div>
+                                                    <td className="px-3 py-3 max-w-[100px] truncate">
+                                                        <div className="uppercase tracking-tighter text-slate-900 font-bold truncate">{m.username}</div>
+                                                        <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">({m.role || 'R1'})</div>
                                                     </td>
-                                                    <td className={`px-4 py-4 sm:p-6 font-mono ${magicFilterMode === 'hero' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{heroPower.toFixed(2)}M</td>
-                                                    <td className={`px-4 py-4 sm:p-6 font-mono ${magicFilterMode === 'squad' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{squadPower.toFixed(2)}M</td>
-                                                    <td className={`px-4 py-4 sm:p-6 font-mono ${magicFilterMode === 'arena' ? 'text-pink-600 font-extrabold text-base' : 'text-slate-500'}`}>{arenaPower.toFixed(2)}M</td>
-                                                    <td className="px-4 py-4 sm:p-6 text-[10px] uppercase font-black text-slate-500">
+                                                    <td className={`px-3 py-3 font-mono ${magicFilterMode === 'hero' ? 'text-pink-600 font-extrabold table-cell' : 'text-slate-500 hidden lg:table-cell'}`}>{heroPower.toFixed(2)}M</td>
+                                                    <td className={`px-3 py-3 font-mono ${magicFilterMode === 'squad' || magicFilterMode === 'off' ? 'table-cell' : 'hidden sm:table-cell'} ${magicFilterMode === 'squad' ? 'text-pink-600 font-extrabold sm:text-sm' : 'text-slate-500'}`}>{squadPower.toFixed(2)}M</td>
+                                                    <td className={`px-3 py-3 font-mono ${magicFilterMode === 'arena' ? 'text-pink-600 font-extrabold table-cell' : 'text-slate-500 hidden xl:table-cell'}`}>{arenaPower.toFixed(2)}M</td>
+                                                    <td className="px-3 py-3 text-[9px] uppercase font-black text-slate-500 hidden sm:table-cell">
                                                         {getChoice(m) ? getChoice(m)?.split(' ')[0] : '---'}
                                                     </td>
-                                                    <td className="px-4 py-4 sm:p-6">
+                                                    <td className="px-3 py-3 hidden md:table-cell">
                                                         {getTeam(m) ? (
-                                                            <span className={`px-3 py-1 rounded-lg text-[9px] font-black border ${getTeam(m) === 'Team A' ? 'border-blue-200 text-blue-500 bg-blue-50' :
+                                                            <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black border ${getTeam(m) === 'Team A' ? 'border-blue-200 text-blue-500 bg-blue-50' :
                                                                 getTeam(m) === 'Team B' ? 'border-green-200 text-green-600 bg-green-50' :
                                                                     'border-purple-200 text-purple-600 bg-purple-50'
                                                                 }`}>
                                                                 {getTeam(m)?.toUpperCase()}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-slate-300 text-[10px]">{t('noPreference')}</span>
+                                                            <span className="text-slate-300 text-[9px]">{t('noPreference')}</span>
                                                         )}
                                                     </td>
                                                 </tr>

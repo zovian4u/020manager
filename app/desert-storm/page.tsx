@@ -76,7 +76,7 @@ export default function DesertStormSignup() {
 
     if (!isWindowOpen) {
         return (
-            <div className="flex flex-col items-center justify-start bg-slate-900 px-6 pb-12 pt-8">
+            <div className="min-h-[calc(100vh-72px)] px-4 md:px-8 pb-32 md:pb-8 bg-slate-50 text-slate-900 pt-8">
                 <div className="w-full max-w-md bg-white p-10 rounded-[3rem] text-center shadow-2xl z-10">
                     <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">🚫</div>
                     <h2 className="text-2xl font-black text-slate-800 uppercase italic">{t('windowLocked')}</h2>
@@ -99,61 +99,61 @@ export default function DesertStormSignup() {
     ];
 
     return (
-        <div className="relative flex flex-col items-center justify-start px-4 sm:px-6 pb-12 pt-4 sm:pt-8 overflow-y-auto w-full">
+        <div className="relative flex flex-col items-center justify-start px-4 sm:px-6 pb-20 sm:pb-12 pt-2 sm:pt-6 overflow-y-auto w-full">
             <div className="absolute inset-0 bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200" />
 
-            <div className="relative w-full max-w-lg bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-[3rem] shadow-2xl p-6 sm:p-10 border border-white/50 z-10 mt-4 sm:mt-8">
-                <header className="text-center mb-10">
-                    <h1 className="text-2xl sm:text-4xl font-black text-slate-800 italic uppercase tracking-tighter">{t('desertStorm')}</h1>
-                    <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.4em] mt-2">{t('mobilizationProtocol')}</p>
+            <div className="relative w-full max-w-lg bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-[3rem] shadow-2xl p-4 sm:p-10 border border-white/50 z-10 mt-2 sm:mt-8">
+                <header className="text-center mb-4 md:mb-10">
+                    <h1 className="text-xl sm:text-4xl font-black text-slate-800 italic uppercase tracking-tighter">{t('desertStorm')}</h1>
+                    <p className="text-slate-500 font-bold uppercase text-[8px] md:text-[10px] tracking-[0.4em] mt-1">{t('mobilizationProtocol')}</p>
                 </header>
 
                 {isSuccess ? (
-                    <div className="text-center py-10 animate-in fade-in zoom-in duration-500">
-                        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-5xl shadow-lg border-4 border-white animate-bounce">✅</div>
-                        <h2 className="text-3xl font-black text-slate-800 uppercase italic mb-4">{t('registered')}!</h2>
-                        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 mb-8 text-left">
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">{t('status')}</p>
-                            <p className="font-bold text-slate-700 uppercase mb-4">
+                    <div className="text-center py-4 md:py-10 animate-in fade-in zoom-in duration-500">
+                        <div className="w-16 h-16 md:w-24 md:h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6 text-3xl md:text-5xl shadow-lg border-4 border-white animate-bounce">✅</div>
+                        <h2 className="text-lg sm:text-3xl font-black text-slate-800 uppercase italic mb-2 md:mb-4">{t('registered')}!</h2>
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl md:rounded-3xl p-4 md:p-6 mb-4 md:mb-8 text-left">
+                            <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">{t('status')}</p>
+                            <p className="font-bold text-slate-700 uppercase mb-2 md:mb-4 text-xs md:text-base">
                                 {selectedChoice === choices[0] ? t('yesBeThere') : selectedChoice === choices[1] ? t('maybeSub') : t('sorryCantMakeIt')}
                             </p>
 
                             {selectedTeam && selectedChoice.startsWith("Yes") && (
                                 <>
-                                    <p className="text-[10px] text-pink-500 font-black uppercase tracking-widest mb-2">{t('requestedTeam')}</p>
-                                    <p className="font-bold text-pink-600 uppercase">
+                                    <p className="text-[8px] md:text-[10px] text-pink-500 font-black uppercase tracking-widest mb-1">{t('requestedTeam')}</p>
+                                    <p className="font-bold text-pink-600 uppercase text-xs md:text-base">
                                         {selectedTeam === "Team A" ? t('teamALabel') : selectedTeam === "Team B" ? t('teamBLabel') : "Both Teams (Any)"}
                                     </p>
                                 </>
                             )}
                         </div>
-                        <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest mb-8 leading-relaxed">
-                            Your orders have been logged in the Strategic Hub. <br />R4 Command will finalize team assignments soon.
+                        <p className="text-slate-500 font-bold text-[8px] md:text-[10px] uppercase tracking-widest mb-4 md:mb-8 leading-relaxed">
+                            Orders logged. <br />R4 Command will finalize soon.
                         </p>
-                        <Link href="/hub" className="block w-full py-5 bg-slate-900 text-white rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:scale-105 transition-all">
+                        <Link href="/hub" className="block w-full py-4 md:py-5 bg-slate-900 text-white rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:scale-105 transition-all text-center">
                             {t('backToHub')}
                         </Link>
                     </div>
                 ) : !showPreview ? (
-                    <div className="space-y-6">
-                        <section className="space-y-3">
-                            <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] text-center mb-2">{t('step1Availability')}</p>
+                    <div className="space-y-2.5 md:space-y-6">
+                        <section className="space-y-2">
+                            <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em] text-center mb-1">{t('step1Availability')}</p>
                             {choices.map((choice) => (
                                 <button key={choice} onClick={() => setSelectedChoice(choice)}
-                                    className={`w-full py-5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2
-                                    ${selectedChoice === choice ? "bg-slate-900 text-white border-transparent" : "bg-white border-slate-100 text-slate-400"}`}>
+                                    className={`w-full py-2.5 md:py-5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border-2
+                                    ${selectedChoice === choice ? "bg-slate-900 text-white border-transparent shadow-lg" : "bg-white border-slate-100 text-slate-400"}`}>
                                     {choice === choices[0] ? t('yesBeThere') : choice === choices[1] ? t('maybeSub') : t('sorryCantMakeIt')}
                                 </button>
                             ))}
                         </section>
 
                         {selectedChoice.startsWith("Yes") && (
-                            <section className="space-y-3 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2">
-                                <p className="text-[9px] text-pink-500 font-black uppercase tracking-[0.2em] text-center mb-2">{t('step2Priority')}</p>
+                            <section className="space-y-2 pt-2 md:pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2">
+                                <p className="text-[8px] text-pink-500 font-black uppercase tracking-[0.2em] text-center mb-1">{t('step2Priority')}</p>
                                 {teams.map((team) => (
                                     <button key={team.id} onClick={() => setSelectedTeam(team.id)}
-                                        className={`w-full py-5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border-2
-                                        ${selectedTeam === team.id ? "bg-pink-600 text-white border-transparent" : "bg-white border-slate-100 text-slate-400"}`}>
+                                        className={`w-full py-2.5 md:py-5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border-2
+                                        ${selectedTeam === team.id ? "bg-pink-600 text-white border-transparent shadow-lg" : "bg-white border-slate-100 text-slate-400"}`}>
                                         {team.id === "Team A" ? t('teamALabel') : team.id === "Team B" ? t('teamBLabel') : "Both Teams (Any)"}
                                     </button>
                                 ))}
@@ -163,72 +163,77 @@ export default function DesertStormSignup() {
                         <button
                             disabled={!selectedChoice || (selectedChoice.startsWith("Yes") && !selectedTeam)}
                             onClick={() => setShowPreview(true)}
-                            className="w-full mt-6 py-6 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black uppercase tracking-widest shadow-xl disabled:opacity-30 transition-all hover:scale-[1.02]"
+                            className="w-full mt-4 py-4 md:py-6 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black uppercase tracking-widest shadow-xl disabled:opacity-30 transition-all hover:scale-[1.02]"
                         >
                             {t('submitIntel')}
                         </button>
                     </div>
                 ) : (
-                    <div className="text-center">
-                        <div className="bg-white border border-pink-100 rounded-[2.5rem] p-10 mb-8 space-y-4 text-left">
-                            <div>
-                                <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('ign')}</span>
-                                <p className="text-xl font-black text-slate-800 uppercase italic">
-                                    {userData?.username || "Commander"}
-                                </p>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center space-y-4">
+                        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 md:p-10 space-y-4 text-left">
+                            <div className="flex justify-between items-end">
                                 <div>
-                                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('totalPower')}</span>
+                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('ign')}</span>
+                                    <p className="text-lg font-black text-slate-800 uppercase italic">
+                                        {userData?.username || "Commander"}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[8px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('status')}</span>
+                                    <p className="text-[10px] font-black text-slate-800 uppercase italic">
+                                        {selectedChoice === choices[0] ? "Attending" : selectedChoice === choices[1] ? "Sub" : "Absent"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2">
+                                <div>
+                                    <span className="text-[7px] md:text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-0.5">{t('totalPower').split(' ')[0]}</span>
                                     <input
                                         type="number"
                                         step="0.1"
                                         value={statsData.total_hero_power === 0 ? "" : statsData.total_hero_power}
                                         placeholder="0.0"
-                                        className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-800 font-bold outline-none w-full"
+                                        className="bg-slate-50 border border-slate-200 p-2 rounded-lg text-slate-800 font-bold outline-none w-full text-xs"
                                         onChange={e => setStatsData({ ...statsData, total_hero_power: parseFloat(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div>
-                                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('squad1Power')}</span>
+                                    <span className="text-[7px] md:text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-0.5">S1 Power</span>
                                     <input
                                         type="number"
                                         step="0.1"
                                         value={statsData.squad_1_power === 0 ? "" : statsData.squad_1_power}
                                         placeholder="0.0"
-                                        className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-800 font-bold outline-none w-full"
+                                        className="bg-slate-50 border border-slate-200 p-2 rounded-lg text-slate-800 font-bold outline-none w-full text-xs"
                                         onChange={e => setStatsData({ ...statsData, squad_1_power: parseFloat(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div>
-                                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('arenaPower')}</span>
+                                    <span className="text-[7px] md:text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-0.5">Arena</span>
                                     <input
                                         type="number"
                                         step="0.1"
                                         value={statsData.arena_power === 0 ? "" : statsData.arena_power}
                                         placeholder="0.0"
-                                        className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-800 font-bold outline-none w-full"
+                                        className="bg-slate-50 border border-slate-200 p-2 rounded-lg text-slate-800 font-bold outline-none w-full text-xs"
                                         onChange={e => setStatsData({ ...statsData, arena_power: parseFloat(e.target.value) || 0 })}
                                     />
                                 </div>
                             </div>
-                            <div className="pt-4 border-t border-slate-100">
-                                <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('status')}</span>
-                                <p className="text-xl font-black text-slate-800 uppercase italic">
-                                    {selectedChoice === choices[0] ? t('yesBeThere') : selectedChoice === choices[1] ? t('maybeSub') : t('sorryCantMakeIt')}
-                                </p>
-                            </div>
+
                             {selectedTeam && selectedChoice.startsWith("Yes") && (
-                                <div>
-                                    <span className="text-[9px] text-pink-500 uppercase font-black tracking-widest block mb-1">{t('requestedTeam')}</span>
-                                    <p className="text-xl font-black text-pink-600 uppercase italic">
-                                        {selectedTeam === "Team A" ? t('teamALabel') : selectedTeam === "Team B" ? t('teamBLabel') : "Both Teams (Any)"}
+                                <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
+                                    <span className="text-[8px] text-pink-500 uppercase font-black tracking-widest">{t('requestedTeam')}</span>
+                                    <p className="text-[10px] font-black text-pink-600 uppercase">
+                                        {selectedTeam === "Both" ? "Any Team" : selectedTeam}
                                     </p>
                                 </div>
                             )}
                         </div>
-                        <div className="flex gap-4">
-                            <button onClick={() => setShowPreview(false)} className="flex-1 py-5 rounded-full bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">{t('edit')}</button>
+
+                        <div className="flex gap-2">
+                            <button onClick={() => setShowPreview(false)} className="flex-1 py-3 rounded-full bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]">{t('edit')}</button>
                             <button
                                 onClick={async () => {
                                     setLoading(true);
@@ -254,7 +259,7 @@ export default function DesertStormSignup() {
                                     if (error) { setLoading(false); console.error(error.message); }
                                     else { setIsSuccess(true); }
                                 }}
-                                className="flex-1 py-5 rounded-full bg-slate-900 text-white font-black uppercase text-[10px]"
+                                className="flex-1 py-3 rounded-full bg-slate-900 text-white font-black uppercase text-[9px] md:text-[10px]"
                             >
                                 {loading ? t('syncing') : t('confirmDeployment')}
                             </button>

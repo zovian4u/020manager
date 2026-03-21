@@ -181,12 +181,12 @@ export default function AllianceDuelPage() {
     const isR4 = currentUserRole === 'R4';
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 pb-12 pt-8 px-4 md:px-8">
+        <div className="min-h-screen bg-slate-50 text-slate-900 pb-32 pt-8 px-4 md:px-8">
             <div className="max-w-7xl mx-auto">
 
                 <header className="mb-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-200 pb-10">
                     <div>
-                        <h1 className="text-4xl font-black text-slate-900 italic tracking-tighter uppercase leading-none">
+                        <h1 className="text-2xl sm:text-4xl font-black text-slate-900 italic tracking-tighter uppercase leading-none">
                             <span className="text-pink-600">020</span> VS {t('allianceDuel')}
                         </h1>
                         <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mt-3">
@@ -244,7 +244,7 @@ export default function AllianceDuelPage() {
                     {/* Left Sidebar: Score Input + Strategy Info + Rules */}
                     <div className="lg:col-span-4 space-y-6">
                         {/* Score Submission */}
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden relative">
+                        <div className="bg-white p-5 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden relative">
                             {saving && <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-center justify-center animate-pulse"><div className="w-8 h-8 border-4 border-pink-600 border-t-transparent rounded-full animate-spin"></div></div>}
                             <h2 className="text-xs font-black text-pink-600 uppercase tracking-widest mb-6 italic border-b border-pink-50 pb-2">{t('submitDailyScore')}</h2>
                             <div className="space-y-6">
@@ -261,7 +261,7 @@ export default function AllianceDuelPage() {
                                     <label className="text-[10px] text-slate-400 font-black uppercase mb-3 block">
                                         {selectedDay === 6 ? t('totalWeekly') : t('score')}
                                     </label>
-                                    <input type="text" value={scoreInput} onChange={(e) => setScoreInput(e.target.value)} placeholder="0" className="w-full bg-slate-50 p-4 rounded-xl border border-slate-200 focus:border-pink-500 outline-none text-xl font-black text-slate-800" />
+                                    <input type="text" value={scoreInput} onChange={(e) => setScoreInput(e.target.value)} placeholder="0" className="w-full bg-slate-50 p-4 rounded-xl border border-slate-200 focus:border-pink-500 outline-none text-lg md:text-xl font-black text-slate-800" />
                                     {selectedDay === 6 && (
                                         <p className="text-[9px] text-blue-500 font-bold uppercase mt-2 italic">
                                             ⚠️ {t('autoCalculateD6')}
@@ -273,7 +273,7 @@ export default function AllianceDuelPage() {
                         </div>
 
                         {/* Strategy Info Box */}
-                        <div className="bg-gradient-to-br from-pink-500 to-purple-600 p-8 rounded-[2.5rem] shadow-2xl text-white">
+                        <div className="bg-gradient-to-br from-pink-500 to-purple-600 p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] shadow-2xl text-white">
                             <h3 className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">{t('strategyReport')}</h3>
                             <p className="text-sm font-bold leading-relaxed">
                                 {settings.vs_strategy === 'save'
@@ -283,7 +283,7 @@ export default function AllianceDuelPage() {
                         </div>
 
                         {/* Tactical Protocol Section (Rules) */}
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl">
+                        <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-slate-200 shadow-xl">
                             <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-6 italic border-b border-slate-100 pb-2">{t('tacticalProtocol')}</h3>
 
                             <div className="space-y-6">
@@ -312,9 +312,9 @@ export default function AllianceDuelPage() {
                     </div>
 
                     {/* Right Side: Leaderboard */}
-                    <div className="lg:col-span-8 bg-white rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden flex flex-col min-h-[600px]">
+                    <div className="lg:col-span-8 bg-white rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden flex flex-col min-h-[600px]">
                         <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                            <h2 className="font-black text-slate-900 uppercase tracking-tight text-xl italic">{t('priority')} {t('rank')}</h2>
+                            <h2 className="font-black text-slate-900 uppercase tracking-tight text-lg md:text-xl italic">{t('priority')} {t('rank')}</h2>
                             <p className="text-[10px] text-slate-400 uppercase font-black">{allScores.length} {t('commandersActive')}</p>
                         </div>
                         <div className="overflow-x-auto">
@@ -347,7 +347,7 @@ export default function AllianceDuelPage() {
                                                 </div>
                                                 <div className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">TOTAL</div>
                                             </td>
-                                            <td className="px-8 py-6 text-right font-black text-pink-600 text-3xl italic">{m.totalPriority.toFixed(3)}</td>
+                                            <td className="px-4 md:px-8 py-6 text-right font-black text-pink-600 text-2xl md:text-3xl italic">{m.totalPriority.toFixed(3)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
