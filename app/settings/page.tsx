@@ -85,8 +85,10 @@ export default function SettingsPage() {
 
             const { error } = await supabase
                 .from('members')
-                .update(dataToUpdate)
-                .eq('user_id', user.id);
+                .upsert(
+                    { user_id: user.id, role: 'Guest', ...dataToUpdate },
+                    { onConflict: 'user_id' }
+                );
 
             if (!error) {
                 window.location.href = '/hub';
@@ -115,6 +117,14 @@ export default function SettingsPage() {
         );
     }
 
+    // Compute missing fields live from form state
+    const missingFields: string[] = [];
+    if (!formData.username.trim()) missingFields.push(t('fieldIGN'));
+    if (!formData.gender) missingFields.push(t('fieldGender'));
+    if (!formData.birthday) missingFields.push(t('fieldBirthday'));
+    if (!formData.bio.trim()) missingFields.push(t('fieldBio'));
+    if ((formData.total_hero_power || 0) === 0) missingFields.push(t('fieldTotalPower'));
+
     return (
         <div className="h-screen bg-[#0a0f1d] text-white flex flex-col items-center justify-start p-4 overflow-hidden pt-16 pb-20 md:p-8 md:justify-center lg:pb-8 lg:pt-8">
             <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,#0f172a_0%,#020617_100%)] pointer-events-none" />
@@ -131,6 +141,21 @@ export default function SettingsPage() {
                         </button>
                     </Link>
                 </header>
+
+                {/* Missing fields banner — disappears as user fills fields */}
+                {missingFields.length > 0 && (
+                    <div className="shrink-0 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2.5 flex items-start gap-3 animate-in fade-in duration-300">
+                        <span className="text-lg shrink-0 mt-0.5">⚠️</span>
+                        <div className="min-w-0">
+                            <p className="text-[9px] text-amber-400 font-black uppercase tracking-widest mb-1">{t('completeProfileBanner')}</p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {missingFields.map(f => (
+                                    <span key={f} className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[8px] font-black uppercase rounded-md tracking-wide">{f}</span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="bg-slate-900/60 backdrop-blur-3xl border border-white/10 rounded-[1.25rem] md:rounded-[2rem] p-4 md:p-8 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-500">
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">

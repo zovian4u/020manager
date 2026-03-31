@@ -53,6 +53,8 @@ export default function HubPage() {
     const [registrationOpen, setRegistrationOpen] = useState(false);
     const [csRegistrationOpen, setCsRegistrationOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [missingFields, setMissingFields] = useState<string[]>([]);
+    const [showIncompleteWarning, setShowIncompleteWarning] = useState(false);
 
     useEffect(() => {
         setHasMounted(true);
@@ -102,16 +104,18 @@ export default function HubPage() {
     useEffect(() => {
         if (!hasMounted || !user || isLoading) return;
         const current = members.find(m => m.user_id === user.id);
-        
-        // Redirect to settings if profile is incomplete
-        if (!current || !current.username || !current.bio || !current.gender || (current.total_hero_power || 0) === 0) {
-            window.location.href = "/settings";
-        }
-        
-        // Handle explicit settings redirect from other pages if needed
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('settings') === 'true') {
-            window.location.href = "/settings";
+
+        // Check for missing mandatory profile fields and warn the user instead of redirecting
+        const missing: string[] = [];
+        if (!current || !current.username) missing.push(t('fieldIGN'));
+        if (!current?.gender) missing.push(t('fieldGender'));
+        if (!current?.birthday) missing.push(t('fieldBirthday'));
+        if (!current?.bio) missing.push(t('fieldBio'));
+        if ((current?.total_hero_power || 0) === 0) missing.push(t('fieldTotalPower'));
+
+        if (missing.length > 0) {
+            setMissingFields(missing);
+            setShowIncompleteWarning(true);
         }
     }, [hasMounted, user, members, isLoading]);
 
@@ -151,6 +155,58 @@ export default function HubPage() {
 
     return (
         <div className="min-h-screen bg-[#0a0f1d] text-white overflow-hidden pb-32">
+
+            {/* ===== Incomplete Profile Warning Modal ===== */}
+            {showIncompleteWarning && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="relative w-full max-w-md bg-slate-900 border border-amber-500/30 rounded-[2rem] p-6 shadow-[0_32px_80px_-10px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-300">
+                        {/* Glow */}
+                        <div className="absolute inset-0 bg-amber-500/5 rounded-[2rem] pointer-events-none" />
+
+                        {/* Icon + Title */}
+                        <div className="flex flex-col items-center text-center mb-5">
+                            <div className="w-16 h-16 bg-amber-500/10 border-2 border-amber-500/30 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-inner">
+                                ⚠️
+                            </div>
+                            <h2 className="text-xl font-black text-white uppercase italic tracking-tighter leading-tight">{t('profileIncomplete')}</h2>
+                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">{t('actionRequired')}</p>
+                        </div>
+
+                        {/* Explanation */}
+                        <p className="text-slate-300 text-xs font-bold text-center mb-4 leading-relaxed">
+                            {t('profileIncompleteDesc')}
+                        </p>
+
+                        {/* Missing Fields List */}
+                        <div className="bg-black/30 border border-white/5 rounded-xl p-4 mb-5 space-y-2">
+                            <p className="text-[9px] text-amber-400 font-black uppercase tracking-widest mb-3">{t('missingFields')}</p>
+                            {missingFields.map((field) => (
+                                <div key={field} className="flex items-center gap-2.5">
+                                    <div className="w-4 h-4 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
+                                        <div className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+                                    </div>
+                                    <span className="text-[11px] font-black text-white uppercase tracking-wide">{field}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowIncompleteWarning(false)}
+                                className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-black rounded-xl uppercase text-[9px] tracking-widest border border-white/5 transition-all"
+                            >
+                                {t('laterBtn')}
+                            </button>
+                            <Link href="/settings" className="flex-2">
+                                <button className="w-full px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black rounded-xl uppercase text-[9px] tracking-widest shadow-[0_8px_24px_-4px_rgba(245,158,11,0.4)] hover:scale-[1.02] active:scale-95 transition-all">
+                                    {t('completeProfileBtn')}
+                                </button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="fixed top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-blue-600/5 via-transparent to-transparent pointer-events-none" />
             <div className="fixed -top-20 -right-20 w-96 h-96 bg-pink-600/10 blur-[100px] rounded-full pointer-events-none" />
 
@@ -159,11 +215,19 @@ export default function HubPage() {
                     <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 mb-2 md:mb-6">
                         <div className="animate-in slide-in-from-left-8 duration-700">
                             <div className="flex items-center gap-2 mb-1 md:mb-3 text-left">
-                                <span className="px-2 py-0.5 md:px-3 md:py-1 bg-red-600 text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.2em] rounded-md leading-none">LIVE OPS</span>
+                                <span className="px-2 py-0.5 md:px-3 md:py-1 bg-red-600 text-white text-[7px] md:text-[9px] font-black uppercase tracking-[0.2em] rounded-md leading-none">{t('liveOps')}</span>
                                 <span className="text-slate-500 text-[7px] md:text-[9px] font-black uppercase tracking-widest leading-none truncate max-w-[150px] md:max-w-none">{t('allianceName')} 020 UNIT</span>
                             </div>
                             <h1 className="text-4xl md:text-8xl font-black uppercase italic tracking-tighter leading-none text-white text-left break-tight">
-                                STRATEGIC <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-pink-500 to-purple-600">HUB</span>
+                                {t('hubTitle').includes(' ') ? (
+                                    <>
+                                        {t('hubTitle').split(' ')[0]} <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-pink-500 to-purple-600">{t('hubTitle').split(' ')[1]}</span>
+                                    </>
+                                ) : (
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-pink-500 to-purple-600">
+                                        {t('hubTitle')}
+                                    </span>
+                                )}
                             </h1>
                         </div>
                     </header>
@@ -184,7 +248,7 @@ export default function HubPage() {
                                             </Link>
                                         </div>
                                         <div className="text-[7px] md:text-[9px] font-black text-red-500 uppercase flex items-center gap-1">
-                                            <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse" /> {currentUser?.role || 'R1'} Officer
+                                            <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse" /> {currentUser?.role || 'R1'} {t('officerLabel')}
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -198,22 +262,22 @@ export default function HubPage() {
                                     {/* Desert Storm Details */}
                                     <div className="space-y-2 text-left bg-black/20 p-2 rounded-xl border border-white/5">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[7px] font-black text-pink-500 uppercase tracking-widest leading-none">DESERT STORM</span>
+                                            <span className="text-[7px] font-black text-pink-500 uppercase tracking-widest leading-none">{t('dsLabel')}</span>
                                             <div className="w-1.5 h-1.5 rounded-full bg-pink-500/30" />
                                         </div>
                                         <div className="space-y-1">
                                             <div className="flex justify-between items-center bg-white/[0.02] p-1 rounded">
-                                                <span className="text-[6px] text-slate-500 font-bold uppercase">Assigned:</span>
-                                                <span className="text-[8px] font-black text-white uppercase">{currentUser?.team_assignment || 'NONE'}</span>
+                                                <span className="text-[6px] text-slate-500 font-bold uppercase">{t('assignedLabel')}</span>
+                                                <span className="text-[8px] font-black text-white uppercase">{currentUser?.team_assignment || t('noData')}</span>
                                             </div>
                                             <div className="flex justify-between items-center bg-white/[0.02] p-1 rounded">
-                                                <span className="text-[6px] text-slate-500 font-bold uppercase">Request:</span>
-                                                <span className="text-[8px] font-black text-slate-300 uppercase truncate max-w-[40px]">{currentUser?.ds_team || 'NONE'}</span>
+                                                <span className="text-[6px] text-slate-500 font-bold uppercase">{t('requestLabel')}</span>
+                                                <span className="text-[8px] font-black text-slate-300 uppercase truncate max-w-[40px]">{currentUser?.ds_team || t('noData')}</span>
                                             </div>
                                             <div className="mt-1">
-                                                <span className="text-[6px] text-slate-600 font-black uppercase block leading-none">LAST ACTION:</span>
+                                                <span className="text-[6px] text-slate-600 font-black uppercase block leading-none">{t('lastActionLabel')}</span>
                                                 <span className="text-[7px] font-bold text-slate-400 uppercase tracking-tight">
-                                                    {currentUser?.ds_signup_time ? `${new Date(currentUser.ds_signup_time).toLocaleDateString()} @ ${new Date(currentUser.ds_signup_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 'NONE RECORDED'}
+                                                    {currentUser?.ds_signup_time ? `${new Date(currentUser.ds_signup_time).toLocaleDateString()} @ ${new Date(currentUser.ds_signup_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : t('noneRecorded')}
                                                 </span>
                                             </div>
                                         </div>
@@ -222,22 +286,22 @@ export default function HubPage() {
                                     {/* Canyon Storm Details */}
                                     <div className="space-y-2 text-left bg-black/20 p-2 rounded-xl border border-white/5">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[7px] font-black text-orange-500 uppercase tracking-widest leading-none">CANYON STORM</span>
+                                            <span className="text-[7px] font-black text-orange-500 uppercase tracking-widest leading-none">{t('csLabel')}</span>
                                             <div className="w-1.5 h-1.5 rounded-full bg-orange-500/30" />
                                         </div>
                                         <div className="space-y-1">
                                             <div className="flex justify-between items-center bg-white/[0.02] p-1 rounded">
-                                                <span className="text-[6px] text-slate-500 font-bold uppercase">Assigned:</span>
-                                                <span className="text-[8px] font-black text-white uppercase">{currentUser?.cs_team_assignment || 'NONE'}</span>
+                                                <span className="text-[6px] text-slate-500 font-bold uppercase">{t('assignedLabel')}</span>
+                                                <span className="text-[8px] font-black text-white uppercase">{currentUser?.cs_team_assignment || t('noData')}</span>
                                             </div>
                                             <div className="flex justify-between items-center bg-white/[0.02] p-1 rounded">
-                                                <span className="text-[6px] text-slate-500 font-bold uppercase">Request:</span>
-                                                <span className="text-[8px] font-black text-slate-300 uppercase truncate max-w-[40px]">{currentUser?.cs_team || 'NONE'}</span>
+                                                <span className="text-[6px] text-slate-500 font-bold uppercase">{t('requestLabel')}</span>
+                                                <span className="text-[8px] font-black text-slate-300 uppercase truncate max-w-[40px]">{currentUser?.cs_team || t('noData')}</span>
                                             </div>
                                             <div className="mt-1">
-                                                <span className="text-[6px] text-slate-600 font-black uppercase block leading-none">LAST ACTION:</span>
+                                                <span className="text-[6px] text-slate-600 font-black uppercase block leading-none">{t('lastActionLabel')}</span>
                                                 <span className="text-[7px] font-bold text-slate-400 uppercase tracking-tight">
-                                                    {currentUser?.cs_signup_time ? `${new Date(currentUser.cs_signup_time).toLocaleDateString()} @ ${new Date(currentUser.cs_signup_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 'NONE RECORDED'}
+                                                    {currentUser?.cs_signup_time ? `${new Date(currentUser.cs_signup_time).toLocaleDateString()} @ ${new Date(currentUser.cs_signup_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : t('noneRecorded')}
                                                 </span>
                                             </div>
                                         </div>
@@ -247,11 +311,11 @@ export default function HubPage() {
 
                             <div className="mt-4 flex gap-4 md:gap-8 justify-start">
                                 <div className="text-left">
-                                    <p className="text-[7px] md:text-[8px] font-black text-slate-600 uppercase tracking-tighter mb-0.5 italic leading-none">Squad 1 Unit</p>
+                                    <p className="text-[7px] md:text-[8px] font-black text-slate-600 uppercase tracking-tighter mb-0.5 italic leading-none">{t('squad1PowerLabel')}</p>
                                     <p className="text-sm md:text-lg font-black text-white leading-none tracking-tight">{displayPower(currentUser?.squad_1_power || 0)}</p>
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-[7px] md:text-[8px] font-black text-slate-600 uppercase tracking-tighter mb-0.5 italic leading-none">Arena Tactical</p>
+                                    <p className="text-[7px] md:text-[8px] font-black text-slate-600 uppercase tracking-tighter mb-0.5 italic leading-none">{t('arenaPowerLabel')}</p>
                                     <p className="text-sm md:text-lg font-black text-white leading-none tracking-tight">{displayPower(currentUser?.arena_power || 0)}</p>
                                 </div>
                             </div>
@@ -261,14 +325,14 @@ export default function HubPage() {
                         <div className="hidden md:flex flex-1 items-stretch">
                             <div className="w-full bg-gradient-to-br from-white/[0.02] to-transparent rounded-[2rem] border border-white/5 flex flex-col items-center justify-center p-8 text-center opacity-40">
                                 <div className="text-4xl mb-4 grayscale">🏛️</div>
-                                <h3 className="text-xs font-black uppercase tracking-[0.4em] text-white/50">{t('allianceName')} STRATEGIC ASSET</h3>
+                                <h3 className="text-xs font-black uppercase tracking-[0.4em] text-white/50">{t('allianceName')} {t('strategicAssetLabel')}</h3>
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-4 md:space-y-6 pt-2 md:pt-8 animate-in slide-in-from-bottom-12 duration-1000 delay-500">
                         <div className="flex items-center gap-2 md:gap-4">
-                            <h2 className="text-sm md:text-xl font-black uppercase italic tracking-tighter text-white">RANKINGS</h2>
+                            <h2 className="text-sm md:text-xl font-black uppercase italic tracking-tighter text-white">{t('rankingsLabel')}</h2>
                             <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
                         </div>
 
@@ -276,9 +340,9 @@ export default function HubPage() {
                             <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-xl md:rounded-[2rem] p-2 md:p-6 flex flex-col min-w-0">
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-1.5 md:mb-3">
                                     <h3 className="text-[7px] md:text-[10px] font-black text-slate-500 uppercase tracking-tighter flex items-center gap-1">
-                                        <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-red-500 rounded-full" /> HERO
+                                        <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-red-500 rounded-full" /> {t('heroRanking')}
                                     </h3>
-                                    <span className="hidden md:inline text-[8px] font-bold text-slate-600 uppercase">UNIT</span>
+                                    <span className="hidden md:inline text-[8px] font-bold text-slate-600 uppercase">{t('power')}</span>
                                 </div>
                                 <div className="space-y-0.5 h-48 md:h-64 overflow-y-auto custom-scrollbar pr-0.5">
                                     {members.map((m, i) => (
@@ -296,9 +360,9 @@ export default function HubPage() {
                             <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-xl md:rounded-[2rem] p-2 md:p-6 flex flex-col min-w-0 text-left">
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-1.5 md:mb-3">
                                     <h3 className="text-[7px] md:text-[10px] font-black text-slate-500 uppercase tracking-tighter flex items-center gap-1">
-                                        <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-pink-500 rounded-full" /> SQUAD
+                                        <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-pink-500 rounded-full" /> {t('squadRanking')}
                                     </h3>
-                                    <span className="hidden md:inline text-[8px] font-bold text-slate-600 uppercase">TEAM</span>
+                                    <span className="hidden md:inline text-[8px] font-bold text-slate-600 uppercase">{t('power')}</span>
                                 </div>
                                 <div className="space-y-0.5 h-48 md:h-64 overflow-y-auto custom-scrollbar pr-0.5">
                                     {[...members].sort((a, b) => (b.squad_1_power || 0) - (a.squad_1_power || 0)).map((m, i) => (
@@ -316,9 +380,9 @@ export default function HubPage() {
                             <div className="bg-slate-900/40 backdrop-blur-2xl border border-white/5 rounded-xl md:rounded-[2rem] p-2 md:p-6 flex flex-col min-w-0 text-left">
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-1.5 md:mb-3">
                                     <h3 className="text-[7px] md:text-[10px] font-black text-slate-500 uppercase tracking-tighter flex items-center gap-1">
-                                        <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-blue-500 rounded-full" /> ARENA
+                                        <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-blue-500 rounded-full" /> {t('arenaRanking')}
                                     </h3>
-                                    <span className="hidden md:inline text-[8px] font-bold text-slate-600 uppercase">TACTICAL</span>
+                                    <span className="hidden md:inline text-[8px] font-bold text-slate-600 uppercase">{t('power')}</span>
                                 </div>
                                 <div className="space-y-0.5 h-48 md:h-64 overflow-y-auto custom-scrollbar pr-0.5">
                                     {[...members].sort((a, b) => (b.arena_power || 0) - (a.arena_power || 0)).map((m, i) => (
@@ -341,11 +405,11 @@ export default function HubPage() {
                                         <span className="text-xl">🎂</span>
                                         <div>
                                             <h3 className="text-[10px] md:text-sm font-black text-white uppercase tracking-widest">{t('upcomingBirthdays')}</h3>
-                                            <p className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest">NEXT 30 DAYS</p>
+                                            <p className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest">{t('next30Days')}</p>
                                         </div>
                                     </div>
                                     <div className="px-2 py-0.5 bg-pink-500/10 rounded-md border border-pink-500/20 text-[6px] md:text-[8px] font-black text-pink-500 uppercase">
-                                        OFFICIAL UPDATES
+                                        {t('officialUpdates')}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-1.5 md:gap-3 max-h-48 md:max-h-96 overflow-y-auto pr-1 md:pr-2 custom-scrollbar">
@@ -372,6 +436,7 @@ export default function HubPage() {
                                         const month = bDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
                                         const day = bDate.getDate();
 
+                                        const isToday = diff === 0;
                                         return (
                                             <div key={m.user_id} className="flex flex-col gap-1.5 p-1.5 md:p-2.5 bg-white/[0.03] rounded-xl border border-white/5 hover:bg-white/[0.08] transition-all group min-w-0">
                                                 <div className="flex justify-between items-start">
@@ -379,13 +444,13 @@ export default function HubPage() {
                                                         <span className="text-[5px] md:text-[6px] font-black uppercase text-pink-100/70">{month}</span>
                                                         <span className="text-[10px] md:text-sm font-black text-white leading-none">{day}</span>
                                                     </div>
-                                                    <div className={`px-1 rounded-sm text-[5px] md:text-[6px] font-black uppercase ${diff === 0 ? 'bg-pink-500 text-white animate-pulse' : 'bg-slate-800 text-slate-500'}`}>
-                                                        {diff === 0 ? "LIVE" : `${diff}D`}
+                                                    <div className={`px-1 rounded-sm text-[5px] md:text-[6px] font-black uppercase ${isToday ? 'bg-pink-500 text-white animate-pulse' : 'bg-slate-800 text-slate-500'}`}>
+                                                        {isToday ? t('today') : `${diff}D`}
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="text-[7px] md:text-[10px] font-black text-white uppercase truncate tracking-tighter">{m.username}</span>
-                                                    <span className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest truncate">{diff === 0 ? "TODAY" : `IN ${diff} DAYS`}</span>
+                                                    <span className="text-[6px] md:text-[8px] font-black text-slate-500 uppercase tracking-widest truncate">{isToday ? t('today') : t('inDays').replace('{n}', String(diff))}</span>
                                                 </div>
                                             </div>
                                         );

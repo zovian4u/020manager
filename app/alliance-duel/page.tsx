@@ -55,9 +55,15 @@ export default function AllianceDuelPage() {
 
         // 1. Fetch settings (Strategy + Active Week)
         const { data: sData } = await supabase.from('settings').select('vs_strategy, vs_active_days, current_vs_week').eq('id', 1).single();
-        let currentWeek = '2026-W08';
+        const actualWeek = getWeekKey();
+        
+        // Auto-sync global week key if out of date
+        if (sData && sData.current_vs_week !== actualWeek) {
+            await supabase.from('settings').update({ current_vs_week: actualWeek }).eq('id', 1);
+        }
+
+        const currentWeek = actualWeek;
         if (sData) {
-            currentWeek = sData.current_vs_week || '2026-W08';
             setSettings({
                 vs_strategy: sData.vs_strategy || 'save',
                 vs_active_days: sData.vs_active_days || [true, true, true, true, false, false],
@@ -196,14 +202,9 @@ export default function AllianceDuelPage() {
 
                     {isR4 && (
                         <div className="flex flex-wrap gap-4">
-                            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                                <span className="text-[10px] block text-slate-400 uppercase font-black px-1 mb-2 tracking-widest">{t('activeWeek')}</span>
-                                <input
-                                    type="text"
-                                    value={settings.current_vs_week}
-                                    onChange={(e) => updateSettings({ current_vs_week: e.target.value })}
-                                    className="bg-transparent text-sm font-black focus:outline-none text-blue-600 uppercase border-b border-slate-100"
-                                />
+                            <div className="bg-blue-50/30 p-4 rounded-2xl border border-blue-100 shadow-sm">
+                                <span className="text-[10px] block text-blue-400 uppercase font-black px-1 mb-1 tracking-widest">{t('activeWeek')}</span>
+                                <div className="text-sm font-black text-blue-600 uppercase italic">⚡ AUTO: {settings.current_vs_week}</div>
                             </div>
                             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                                 <span className="text-[10px] block text-slate-400 uppercase font-black px-1 mb-2 tracking-widest">{t('vsStrategy')}</span>

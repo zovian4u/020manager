@@ -9,6 +9,7 @@ import { useLanguage } from "../../lib/LanguageContext";
 interface MemberProfile {
     user_id: string;
     username: string;
+    role?: string;
     total_hero_power: number;
     squad_1_power: number;
     arena_power?: number;
@@ -91,11 +92,47 @@ export default function CanyonStormSignup() {
         );
     }
 
-    const choices = ["Yes, I will be there 🎉", "Maybe, sign me as sub 🤔", "Sorry, can't make it 😢"];
+    const ALLOWED_ROLES = ["R2", "R3", "R4", "R5"];
+    const userRole = userData?.role || "Guest";
+    const hasAccess = ALLOWED_ROLES.includes(userRole);
+
+    if (!hasAccess) {
+        return (
+            <div className="relative flex flex-col items-center justify-start px-4 sm:px-6 pb-20 sm:pb-12 pt-2 sm:pt-6 overflow-y-auto w-full min-h-screen">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-200 via-pink-200 to-red-200" />
+                <div className="relative w-full max-w-lg bg-white/90 backdrop-blur-xl rounded-2xl sm:rounded-[3rem] shadow-2xl p-6 sm:p-10 border border-white/50 z-10 mt-2 sm:mt-8 text-center animate-in fade-in zoom-in-95 duration-500">
+                    <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-5 text-4xl shadow-inner border-4 border-white">🔒</div>
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-800 uppercase italic tracking-tighter mb-2">{t('accessRestricted')}</h2>
+                    <p className="text-slate-500 font-bold text-[10px] uppercase tracking-[0.25em] mb-6">{t('csRegistrationLabel')}</p>
+
+                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 text-left">
+                        <p className="text-[9px] text-amber-600 font-black uppercase tracking-widest mb-1">{t('currentRoleLabel')}</p>
+                        <p className="text-base font-black text-amber-700 uppercase italic mb-3">{userRole}</p>
+                        <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                            {t('onlyR2R5Allowed')}
+                        </p>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-8 text-left">
+                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">{t('needAccessLabel')}</p>
+                        <p className="text-[10px] text-slate-600 font-bold leading-relaxed">
+                            {t('contactR4Msg')}
+                        </p>
+                    </div>
+
+                    <Link href="/hub" className="block w-full py-4 bg-slate-900 text-white rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:scale-105 transition-all">
+                        {t('returnToHub2')}
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    const choices = [t('yesBeThere'), t('maybeSub'), t('sorryCantMakeIt')];
     const teams = [
-        { id: "Team A", label: "Team A (Thu 12:00 Server)" },
-        { id: "Team B", label: "Team B (Thu 12:00 Server)" },
-        { id: "Both", label: "Both Teams (Any)" }
+        { id: "Team A", label: t('teamALabel') },
+        { id: "Team B", label: t('teamBLabel') },
+        { id: "Both", label: t('noPreference') }
     ];
 
     return (

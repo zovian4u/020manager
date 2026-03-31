@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from 'react';
 import { useStackApp } from "@stackframe/stack";
@@ -22,14 +22,32 @@ export default function SignUpPage() {
         setIsLoading(true);
 
         try {
-            // Using the credential method for signup
             const result = await stack.signUpWithCredential({ email, password });
-            if (result) {
-                router.push('/hub');
+
+            // Stack returns a result object — check status, don't just check truthiness
+            if (result && (result as any).status === 'error') {
+                const code = (result as any).error?.code || '';
+                if (code === 'USER_EMAIL_ALREADY_EXISTS' || code.includes('already_exists') || code.includes('ALREADY_EXISTS')) {
+                    setError('An account with this email already exists. Please sign in instead.');
+                } else {
+                    setError((result as any).error?.message || 'Sign up failed. Please try again.');
+                }
+                return;
             }
+
+            // Success — navigate to hub
+            router.push('/hub');
         } catch (err: any) {
             console.error("Signup Error:", err);
-            setError(err.message || t('errorAuth'));
+            // Parse known Stack error codes from thrown errors too
+            const code = err?.code || err?.error?.code || '';
+            if (code === 'USER_EMAIL_ALREADY_EXISTS' || code.includes('already_exists') || code.includes('ALREADY_EXISTS')) {
+                setError('An account with this email already exists. Please sign in instead.');
+            } else if (code === 'EMAIL_PASSWORD_MISMATCH' || code.includes('MISMATCH')) {
+                setError('Incorrect password. Please try again or reset your password.');
+            } else {
+                setError(err.message || 'Sign up failed. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
