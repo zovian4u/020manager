@@ -92,7 +92,7 @@ export default function CanyonStormSignup() {
         );
     }
 
-    const ALLOWED_ROLES = ["R2", "R3", "R4", "R5"];
+    const ALLOWED_ROLES = ["R1", "R2", "R3", "R4", "R5"];
     const userRole = userData?.role || "Guest";
     const hasAccess = ALLOWED_ROLES.includes(userRole);
 
@@ -128,7 +128,13 @@ export default function CanyonStormSignup() {
         );
     }
 
-    const choices = [t('yesBeThere'), t('maybeSub'), t('sorryCantMakeIt')];
+    const choices = ['YES', 'MAYBE', 'NO'];
+    const choiceLabels: Record<string, string> = {
+        'YES': t('yesBeThere'),
+        'MAYBE': t('maybeSub'),
+        'NO': t('sorryCantMakeIt')
+    };
+
     const teams = [
         { id: "Team A", label: t('teamALabel') },
         { id: "Team B", label: t('teamBLabel') },
@@ -152,14 +158,14 @@ export default function CanyonStormSignup() {
                         <div className="bg-slate-50 border border-slate-100 rounded-2xl md:rounded-3xl p-4 md:p-6 mb-4 md:mb-8 text-left">
                             <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">{t('status')}</p>
                             <p className="font-bold text-slate-700 uppercase mb-2 md:mb-4 text-xs md:text-base">
-                                {selectedChoice === choices[0] ? t('yesBeThere') : selectedChoice === choices[1] ? t('maybeSub') : t('sorryCantMakeIt')}
+                                {choiceLabels[selectedChoice]}
                             </p>
 
-                            {selectedTeam && selectedChoice.startsWith("Yes") && (
+                            {selectedTeam && selectedChoice === 'YES' && (
                                 <>
                                     <p className="text-[8px] md:text-[10px] text-orange-500 font-black uppercase tracking-widest mb-1">{t('requestedTeam')}</p>
                                     <p className="font-bold text-orange-600 uppercase text-xs md:text-base">
-                                        {selectedTeam === "Team A" ? "Team A (Thu 12:00 Server)" : selectedTeam === "Team B" ? "Team B (Thu 12:00 Server)" : "Both Teams (Any)"}
+                                        {selectedTeam === "Team A" ? t('teamALabel') : selectedTeam === "Team B" ? t('teamBLabel') : "Both Teams (Any)"}
                                     </p>
                                 </>
                             )}
@@ -179,26 +185,26 @@ export default function CanyonStormSignup() {
                                 <button key={choice} onClick={() => setSelectedChoice(choice)}
                                     className={`w-full py-2.5 md:py-5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border-2
                                     ${selectedChoice === choice ? "bg-slate-900 text-white border-transparent shadow-lg" : "bg-white border-slate-100 text-slate-400"}`}>
-                                    {choice === choices[0] ? t('yesBeThere') : choice === choices[1] ? t('maybeSub') : t('sorryCantMakeIt')}
+                                    {choiceLabels[choice]}
                                 </button>
                             ))}
                         </section>
 
-                        {selectedChoice.startsWith("Yes") && (
+                        {selectedChoice === 'YES' && (
                             <section className="space-y-2 pt-2 md:pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2">
                                 <p className="text-[8px] text-orange-500 font-black uppercase tracking-[0.2em] text-center mb-1">{t('step2Priority')}</p>
                                 {teams.map((team) => (
                                     <button key={team.id} onClick={() => setSelectedTeam(team.id)}
                                         className={`w-full py-2.5 md:py-5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border-2
                                         ${selectedTeam === team.id ? "bg-orange-600 text-white border-transparent shadow-lg" : "bg-white border-slate-100 text-slate-400"}`}>
-                                        {team.id === "Team A" ? "Team A (Thu 12:00 Server)" : team.id === "Team B" ? "Team B (Thu 12:00 Server)" : "Both Teams (Any)"}
+                                        {team.label}
                                     </button>
                                 ))}
                             </section>
                         )}
 
                         <button
-                            disabled={!selectedChoice || (selectedChoice.startsWith("Yes") && !selectedTeam)}
+                            disabled={!selectedChoice || (selectedChoice === 'YES' && !selectedTeam)}
                             onClick={() => setShowPreview(true)}
                             className="w-full mt-4 py-4 md:py-6 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-black uppercase tracking-widest shadow-xl disabled:opacity-30 transition-all hover:scale-[1.02]"
                         >
@@ -218,7 +224,7 @@ export default function CanyonStormSignup() {
                                 <div className="text-right">
                                     <span className="text-[8px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('status')}</span>
                                     <p className="text-[10px] font-black text-slate-800 uppercase italic">
-                                        {selectedChoice === choices[0] ? "Attending" : selectedChoice === choices[1] ? "Sub" : "Absent"}
+                                        {selectedChoice === 'YES' ? "Attending" : selectedChoice === 'MAYBE' ? "Sub" : "Absent"}
                                     </p>
                                 </div>
                             </div>
@@ -259,7 +265,7 @@ export default function CanyonStormSignup() {
                                 </div>
                             </div>
 
-                            {selectedTeam && selectedChoice.startsWith("Yes") && (
+                            {selectedTeam && selectedChoice === 'YES' && (
                                 <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
                                     <span className="text-[8px] text-orange-500 uppercase font-black tracking-widest">{t('requestedTeam')}</span>
                                     <p className="text-[10px] font-black text-orange-600 uppercase">
@@ -289,7 +295,7 @@ export default function CanyonStormSignup() {
                                         squad_1_power: finalS1P,
                                         arena_power: finalAP,
                                         cs_choice: selectedChoice,
-                                        cs_team: selectedChoice.startsWith("Yes") ? selectedTeam : null,
+                                        cs_team: selectedChoice === 'YES' ? selectedTeam : null,
                                         cs_signup_time: new Date().toISOString()
                                     }, { onConflict: "user_id" });
 

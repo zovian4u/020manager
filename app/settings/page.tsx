@@ -86,7 +86,7 @@ export default function SettingsPage() {
             const { error } = await supabase
                 .from('members')
                 .upsert(
-                    { user_id: user.id, role: 'Guest', ...dataToUpdate },
+                    { user_id: user.id, ...dataToUpdate },
                     { onConflict: 'user_id' }
                 );
 

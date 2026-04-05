@@ -144,6 +144,12 @@ export default function TacticalDashboard() {
             if (useAttendancePreference) {
                 const getP = (c?: string) => {
                     if (!c) return 0;
+                    const upper = c.toUpperCase();
+                    if (upper === 'YES') return 3;
+                    if (upper === 'MAYBE') return 2;
+                    if (upper === 'NO') return 1;
+
+                    // Fallback for old translated data
                     const lower = c.toLowerCase();
                     if (lower.includes("yes") || lower.includes("for sure")) return 3;
                     if (lower.includes("maybe") || lower.includes("sub")) return 2;
@@ -400,7 +406,14 @@ export default function TacticalDashboard() {
                                                     <td className={`px-3 py-3 font-mono ${magicFilterMode === 'squad' || magicFilterMode === 'off' ? 'table-cell' : 'hidden sm:table-cell'} ${magicFilterMode === 'squad' ? 'text-pink-600 font-extrabold sm:text-sm' : 'text-slate-500'}`}>{squadPower.toFixed(2)}M</td>
                                                     <td className={`px-3 py-3 font-mono ${magicFilterMode === 'arena' ? 'text-pink-600 font-extrabold table-cell' : 'text-slate-500 hidden xl:table-cell'}`}>{arenaPower.toFixed(2)}M</td>
                                                     <td className="px-3 py-3 text-[9px] uppercase font-black text-slate-500 hidden sm:table-cell">
-                                                        {getChoice(m) ? getChoice(m)?.split(' ')[0] : '---'}
+                                                        {(() => {
+                                                            const choice = getChoice(m);
+                                                            if (!choice) return '---';
+                                                            if (choice === 'YES') return t('yesBeThere').split(' ')[0];
+                                                            if (choice === 'MAYBE') return t('maybeSub').split(' ')[0];
+                                                            if (choice === 'NO') return (t('sorryCantMakeIt').split(' ')[0] || 'No');
+                                                            return choice.split(' ')[0];
+                                                        })()}
                                                     </td>
                                                     <td className="px-3 py-3 hidden md:table-cell">
                                                         {getTeam(m) ? (

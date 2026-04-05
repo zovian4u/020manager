@@ -165,10 +165,33 @@ export default function ManageRanksPage() {
                                                     value={m.role || 'R1'}
                                                     onChange={async (e) => {
                                                         const newRole = e.target.value;
+                                                        const oldRole = m.role || 'R1';
                                                         const oldMembers = [...members];
+                                                        
+                                                        // Optimistic update
                                                         setMembers(members.map(member => member.user_id === m.user_id ? { ...member, role: newRole } : member));
+                                                        
                                                         const { error } = await supabase.from('members').update({ role: newRole }).eq('user_id', m.user_id);
-                                                        if (error) { alert("Ops! " + error.message); setMembers(oldMembers); }
+                                                        
+                                                        if (error) { 
+                                                            alert("Ops! " + error.message); 
+                                                            setMembers(oldMembers); 
+                                                        } else {
+                                                            // Log the change
+                                                            try {
+                                                                await supabase.from('officer_logs').insert({
+                                                                    actor_id: user?.id,
+                                                                    actor_username: currentUser?.username || 'Unknown',
+                                                                    target_id: m.user_id,
+                                                                    target_username: m.username,
+                                                                    old_role: oldRole,
+                                                                    new_role: newRole,
+                                                                    action_type: 'RANK_CHANGE'
+                                                                });
+                                                            } catch (logErr) {
+                                                                console.error("Failed to log rank change:", logErr);
+                                                            }
+                                                        }
                                                     }}
                                                 >
                                                     <option value="R1">R1</option>
