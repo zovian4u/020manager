@@ -259,7 +259,7 @@ export default function TacticalDashboard() {
     };
 
     return (
-        <div className="min-h-[calc(100vh-72px)] px-4 md:px-8 pb-32 md:pb-8 bg-slate-50 text-slate-900 pt-8">
+        <div className="min-h-[calc(100vh-72px)] px-4 md:px-8 pb-36 md:pb-12 bg-slate-50 text-slate-900 pt-8">
             <div className="max-w-7xl mx-auto">
                 <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 border-b border-slate-200 pb-6 gap-2">
                     <div>
@@ -373,7 +373,7 @@ export default function TacticalDashboard() {
                                         <tr className="text-[9px] font-black text-slate-400 uppercase tracking-tight whitespace-nowrap">
                                             <th className="px-3 py-3 w-10 text-center">{t('select')}</th>
                                             <th className="px-3 py-3 w-10 text-center hidden md:table-cell">S.No.</th>
-                                            <th className="px-3 py-3 w-28">{t('finalAssignment')}</th>
+                                            <th className="px-3 py-3 w-40">{t('assignmentStatus')}</th>
                                             <th className="px-3 py-3">{t('memberName')}</th>
                                             <th className={`px-3 py-3 ${magicFilterMode === 'hero' ? 'table-cell' : 'hidden lg:table-cell'}`}>HERO (M)</th>
                                             <th className={`px-3 py-3 ${magicFilterMode === 'squad' || magicFilterMode === 'off' ? 'table-cell' : 'hidden sm:table-cell'}`}>SQUAD 1 (M)</th>
@@ -382,7 +382,7 @@ export default function TacticalDashboard() {
                                             <th className="px-3 py-3 hidden md:table-cell">{t('requestedTeam')}</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="text-xs font-bold text-slate-700">
+                                    <tbody className="text-xs font-bold text-slate-700 [&>tr:last-child]:border-b-0">
                                         {sortedMembers.map((m, index) => {
                                             const heroPower = Number(m.total_hero_power || 0);
                                             const squadPower = Number(m.squad_1_power || 0);
@@ -394,11 +394,31 @@ export default function TacticalDashboard() {
                                                     </td>
                                                     <td className="px-3 py-3 text-center text-slate-400 text-[9px] font-black hidden md:table-cell">{index + 1}</td>
                                                     <td className="px-3 py-3">
-                                                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black text-white ${getAssignment(m) === 'A' ? 'bg-blue-600' : getAssignment(m) === 'B' ? 'bg-green-600' : 'bg-slate-700'}`}>
-                                                            {getAssignment(m) && getAssignment(m) !== 'None' ? `${t('team')} ${getAssignment(m)}` : t('pending')}
-                                                        </span>
+                                                        {(() => {
+                                                            const assignment = getAssignment(m);
+                                                            const requested = getTeam(m);
+                                                            const choice = getChoice(m);
+                                                            // A user is considered "registered" if they have a choice (attendance) OR a requested team
+                                                            const hasRegistered = !!(choice || requested);
+
+                                                            // 1. Show Assigned if R4 has assigned a team
+                                                            if (assignment === 'A') return <span className="px-2 py-0.5 rounded-full text-[8px] font-black text-white bg-blue-600 uppercase italic">{t('teamAAssigned')}</span>;
+                                                            if (assignment === 'B') return <span className="px-2 py-0.5 rounded-full text-[8px] font-black text-white bg-green-600 uppercase italic">{t('teamBAssigned')}</span>;
+
+                                                            // 2. Show Requested team if user registered but not assigned yet
+                                                            if (hasRegistered) {
+                                                                if (requested === 'Team A') return <span className="px-2 py-0.5 rounded-full text-[8px] font-black text-white bg-blue-400 uppercase italic">{t('reqTeamA')}</span>;
+                                                                if (requested === 'Team B') return <span className="px-2 py-0.5 rounded-full text-[8px] font-black text-white bg-green-500 uppercase italic">{t('reqTeamB')}</span>;
+                                                                if (requested === 'Both') return <span className="px-2 py-0.5 rounded-full text-[8px] font-black text-white bg-purple-500 uppercase italic">{t('bothTeamsReq')}</span>;
+                                                                // Registered but no team preference selected (choice exists but requested is empty)
+                                                                return <span className="px-2 py-0.5 rounded-full text-[8px] font-black text-white bg-amber-500 uppercase italic">{t('registered')}</span>;
+                                                            }
+
+                                                            // 3. Fallback to Pending (not registered at all)
+                                                            return <span className="px-2 py-0.5 rounded-full text-[8px] font-black text-white bg-slate-400 uppercase italic">{t('pending')}</span>;
+                                                        })()}
                                                     </td>
-                                                    <td className="px-3 py-3 max-w-[100px] truncate">
+                                                    <td className="px-3 py-3 max-w-[120px]">
                                                         <div className="uppercase tracking-tighter text-slate-900 font-bold truncate">{m.username}</div>
                                                         <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">({m.role || 'R1'})</div>
                                                     </td>
@@ -408,11 +428,13 @@ export default function TacticalDashboard() {
                                                     <td className="px-3 py-3 text-[9px] uppercase font-black text-slate-500 hidden sm:table-cell">
                                                         {(() => {
                                                             const choice = getChoice(m);
-                                                            if (!choice) return '---';
-                                                            if (choice === 'YES') return t('yesBeThere').split(' ')[0];
-                                                            if (choice === 'MAYBE') return t('maybeSub').split(' ')[0];
-                                                            if (choice === 'NO') return (t('sorryCantMakeIt').split(' ')[0] || 'No');
-                                                            return choice.split(' ')[0];
+                                                            if (!choice) return <span className="text-slate-300">---</span>;
+                                                            const upper = choice.toUpperCase().trim();
+                                                            // DB stores canonical YES/MAYBE/NO — also handle legacy translated values
+                                                            if (upper === 'YES' || upper.startsWith('YES') || upper.includes('参加') || upper.includes('있음') || upper.includes('สมัคร')) return <span className="text-green-600 font-black">YES</span>;
+                                                            if (upper === 'MAYBE' || upper.startsWith('MAYBE') || upper.includes('也许') || upper.includes('可能') || upper.includes('อาจจะ')) return <span className="text-amber-500 font-black">MAYBE</span>;
+                                                            if (upper === 'NO' || upper.startsWith('NO') || upper.includes('抱歉') || upper.includes('参加できません') || upper.includes('ไม่')) return <span className="text-red-500 font-black">NO</span>;
+                                                            return <span className="text-slate-500">{upper.split(' ')[0]}</span>;
                                                         })()}
                                                     </td>
                                                     <td className="px-3 py-3 hidden md:table-cell">
@@ -433,6 +455,7 @@ export default function TacticalDashboard() {
                                     </tbody>
                                 </table>
                             </div>
+                            <div className="h-3 md:h-5" />{/* bottom breathing room inside the rounded card */}
                         </div>
                     </>
                 )}

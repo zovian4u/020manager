@@ -136,8 +136,8 @@ export default function CanyonStormSignup() {
     };
 
     const teams = [
-        { id: "Team A", label: t('teamALabel') },
-        { id: "Team B", label: t('teamBLabel') },
+        { id: "Team A", label: t('csTeamALabel') },
+        { id: "Team B", label: t('csTeamBLabel') },
         { id: "Both", label: t('noPreference') }
     ];
 
@@ -165,7 +165,7 @@ export default function CanyonStormSignup() {
                                 <>
                                     <p className="text-[8px] md:text-[10px] text-orange-500 font-black uppercase tracking-widest mb-1">{t('requestedTeam')}</p>
                                     <p className="font-bold text-orange-600 uppercase text-xs md:text-base">
-                                        {selectedTeam === "Team A" ? t('teamALabel') : selectedTeam === "Team B" ? t('teamBLabel') : "Both Teams (Any)"}
+                                        {selectedTeam === "Team A" ? t('csTeamALabel') : selectedTeam === "Team B" ? t('csTeamBLabel') : "Both Teams (Any)"}
                                     </p>
                                 </>
                             )}
@@ -182,9 +182,9 @@ export default function CanyonStormSignup() {
                         <section className="space-y-2">
                             <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em] text-center mb-1">{t('step1Availability')}</p>
                             {choices.map((choice) => (
-                                <button key={choice} onClick={() => setSelectedChoice(choice)}
+                                <button key={choice} onClick={() => { setSelectedChoice(choice); if (choice !== 'YES') setSelectedTeam(''); }}
                                     className={`w-full py-2.5 md:py-5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border-2
-                                    ${selectedChoice === choice ? "bg-slate-900 text-white border-transparent shadow-lg" : "bg-white border-slate-100 text-slate-400"}`}>
+                                    ${selectedChoice === choice ? "bg-slate-900 text-white border-transparent shadow-lg scale-[1.02]" : "bg-white border-slate-100 text-slate-400 hover:border-slate-300"}`}>
                                     {choiceLabels[choice]}
                                 </button>
                             ))}
@@ -196,17 +196,32 @@ export default function CanyonStormSignup() {
                                 {teams.map((team) => (
                                     <button key={team.id} onClick={() => setSelectedTeam(team.id)}
                                         className={`w-full py-2.5 md:py-5 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all border-2
-                                        ${selectedTeam === team.id ? "bg-orange-600 text-white border-transparent shadow-lg" : "bg-white border-slate-100 text-slate-400"}`}>
+                                        ${selectedTeam === team.id ? "bg-orange-600 text-white border-transparent shadow-lg scale-[1.02]" : "bg-white border-slate-100 text-slate-400 hover:border-orange-200"}`}>
                                         {team.label}
                                     </button>
                                 ))}
                             </section>
                         )}
 
+                        {/* Inline validation warning */}
+                        {(() => {
+                            if (!selectedChoice) return (
+                                <p className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-center animate-in fade-in duration-300">
+                                    {t('validationSelectAttendance')}
+                                </p>
+                            );
+                            if (selectedChoice === 'YES' && !selectedTeam) return (
+                                <p className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-center animate-in fade-in duration-300">
+                                    {t('validationSelectTeam')}
+                                </p>
+                            );
+                            return null;
+                        })()}
+
                         <button
                             disabled={!selectedChoice || (selectedChoice === 'YES' && !selectedTeam)}
                             onClick={() => setShowPreview(true)}
-                            className="w-full mt-4 py-4 md:py-6 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-black uppercase tracking-widest shadow-xl disabled:opacity-30 transition-all hover:scale-[1.02]"
+                            className="w-full mt-4 py-4 md:py-6 rounded-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-black uppercase tracking-widest shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {t('submitIntel')}
                         </button>
