@@ -451,7 +451,7 @@ export default function GrowthPage() {
                   <button key={b.id} onClick={() => setActiveBorderId(b.id)}
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all text-center ${activeBorderId === b.id ? 'ring-2 scale-105' : 'opacity-50 hover:opacity-80'}`}
                     style={activeBorderId === b.id ? {
-                      background: `${b.accent}18`, ringColor: b.accent,
+                      background: `${b.accent}18`,
                       boxShadow: `0 0 12px ${b.accent}40`,
                       outline: `2px solid ${b.accent}`,
                     } : { background: 'rgba(255,255,255,0.03)' }}
