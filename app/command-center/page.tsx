@@ -92,10 +92,20 @@ export default function CommandCenter() {
     const [csRegistrationOpen, setCsRegistrationOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState<{ role?: string; username?: string } | null>(null);
     const [members, setMembers] = useState<any[]>([]);
+    const [lastSnapshot, setLastSnapshot] = useState<any>(null);
+    const [isSnapshotting, setIsSnapshotting] = useState(false);
 
     useEffect(() => {
         setHasMounted(true);
     }, []);
+
+    const getWeekNumber = (d: Date) => {
+        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+        const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+        return weekNo;
+    };
 
     useEffect(() => {
         if (!hasMounted || !user) return;
@@ -124,9 +134,37 @@ export default function CommandCenter() {
             // Fetch All Members for stats
             const { data: membersData } = await supabase.from('members').select('*');
             if (membersData) setMembers(membersData);
+
+            // Fetch last growth snapshot info
+            const { data: lastSnap } = await supabase
+                .from('growth_snapshots')
+                .select('week_label, captured_at')
+                .order('captured_at', { ascending: false })
+                .limit(1);
+            if (lastSnap && lastSnap.length > 0) setLastSnapshot(lastSnap[0]);
         }
         loadData();
     }, [hasMounted, user]);
+
+    const isSuperAdmin = user?.id === '1ae3fd86-2f52-45d7-9b37-00d41e42cabf' || (user as any)?.username === 'Zovian';
+
+    const triggerSnapshot = async (overwrite = false) => {
+        setIsSnapshotting(true);
+        try {
+            const response = await fetch(`/api/cron/snapshot?secret=${process.env.NEXT_PUBLIC_CRON_SECRET || 'manual'}${overwrite ? '&overwrite=true' : ''}`);
+            const result = await response.json();
+            if (response.ok) {
+                alert(`✅ Snapshot successful: ${result.message}`);
+                window.location.reload();
+            } else {
+                alert(`❌ Failed: ${result.error || result.message}`);
+            }
+        } catch (err) {
+            alert("❌ Network Error: Could not trigger snapshot.");
+        } finally {
+            setIsSnapshotting(false);
+        }
+    };
 
     // Calculate Stats
     const getStats = (event: 'DS' | 'CS') => {
@@ -314,6 +352,57 @@ export default function CommandCenter() {
                         </div>
                     </div>
                 </div>
+
+                {/* BOTTOM SECTION: GROWTH OPERATIONS - RESTRICTED TO ZOVIAN ONLY */}
+                {isSuperAdmin && (
+                    <div className="bg-slate-800/40 p-4 rounded-xl border border-pink-500/10 space-y-4">
+                        <div className="flex items-center justify-between border-b border-pink-500/10 pb-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xl">📊</span>
+                                <h3 className="text-[12px] font-black text-white italic tracking-widest uppercase">Growth Logistics (Zovian Only)</h3>
+                            </div>
+                            {lastSnapshot && (
+                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
+                                    Last Captured: <span className="text-pink-500">{lastSnapshot.week_label}</span> ({new Date(lastSnapshot.captured_at).toLocaleDateString()})
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                            <div className="space-y-1">
+                                <p className="text-[10px] text-slate-400 font-bold leading-relaxed uppercase">
+                                    Manual Power Snapshot Override
+                                </p>
+                                <p className="text-[8px] text-slate-500 font-medium">
+                                    Forces a snapshot of all active player power stats. This controls the global growth repository.
+                                </p>
+                            </div>
+                            
+                            <button
+                                disabled={isSnapshotting}
+                                onClick={() => {
+                                    const now = new Date();
+                                    const currentWeekLabel = `W${getWeekNumber(now)}-${now.getFullYear()}`;
+                                    
+                                    if (lastSnapshot && lastSnapshot.week_label === currentWeekLabel) {
+                                        if (window.confirm(`⚠️ Data for this week (${lastSnapshot.week_label}) has already been captured. Overwrite existing records?`)) {
+                                            triggerSnapshot(true);
+                                        }
+                                    } else {
+                                        if (window.confirm("🚀 Trigger manual power snapshot for all members?")) {
+                                            triggerSnapshot(false);
+                                        }
+                                    }
+                                }}
+                                className={`py-3 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                                    isSnapshotting ? 'bg-slate-800 text-slate-600 animate-pulse' : 'bg-gradient-to-r from-pink-600 to-purple-700 text-white shadow-lg hover:shadow-pink-500/20 hover:scale-[1.02]'
+                                }`}
+                            >
+                                {isSnapshotting ? 'SYNCING_INTEL...' : '🚀 Execute Manual Snapshot'}
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <footer className="pt-2 border-t border-white/5 flex justify-between items-center opacity-30 px-2">
                     <p className="text-[6px] font-black uppercase tracking-[0.2em]">020 Strategic Command</p>
