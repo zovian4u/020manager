@@ -371,7 +371,7 @@ export default function GrowthPage() {
 
   const chartData = getChartData();
   const isLocked = snapshots.length < 2;
-  const playerName = (memberUsername || user?.displayName || (user as any)?.username || user?.primary_email?.split('@')[0] || 'COMMANDER').toUpperCase();
+  const playerName = (memberUsername || user?.displayName || (user as any)?.username || user?.primaryEmail?.split('@')[0] || 'COMMANDER').toUpperCase();
   const chartColor = activeTab === 'total' ? '#f472b6' : activeTab === 'squad' ? '#60a5fa' : '#fbbf24';
   const chartTitle = activeTab === 'total' ? 'Total Hero Power' : activeTab === 'squad' ? 'Squad 1 Power' : 'Arena Power';
 
