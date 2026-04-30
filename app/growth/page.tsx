@@ -6,6 +6,48 @@ import { supabase } from '../../lib/supabase';
 import { useLanguage } from '../../lib/LanguageContext';
 import Link from 'next/link';
 
+// ─── RESPONSIVE CARD SCALER ───────────────────────────────────────────────────
+// Keeps the 480x480 card pixel-perfect for download while fitting any screen
+const CARD_SIZE = 480;
+const ScaledCardWrapper = ({ children, accentColor }: { children: React.ReactNode; accentColor: string }) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    const obs = new ResizeObserver(([entry]) => {
+      const w = entry.contentRect.width;
+      setScale(Math.min(1, w / CARD_SIZE));
+    });
+    obs.observe(wrapperRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={wrapperRef}
+      style={{
+        width: '100%',
+        maxWidth: CARD_SIZE,
+        height: CARD_SIZE * scale,
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: 16,
+        boxShadow: `0 0 60px ${accentColor}30`,
+      }}
+    >
+      <div style={{
+        width: CARD_SIZE,
+        height: CARD_SIZE,
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left',
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 // ─── BORDER DEFINITIONS ───────────────────────────────────────────────────────
 const BORDERS = [
   { id: 'sakura',    icon: '🌸', label: 'Sakura Bloom',    bg: '#1a0a18', accent: '#f472b6', accent2: '#e879f9', emoji: ['🌸','🌸','🌺','🌸'] },
@@ -99,7 +141,9 @@ const ShareCard = React.forwardRef<HTMLDivElement, {
   color: string;
   title: string;
   isMocking: boolean;
-}>(({ border, playerName, data, color, title, isMocking }, ref) => {
+  allianceLabel: string;
+  trackerLabel: string;
+}>(({ border, playerName, data, color, title, isMocking, allianceLabel, trackerLabel }, ref) => {
   const SIZE = 480;
 
   return (
@@ -270,7 +314,7 @@ const ShareCard = React.forwardRef<HTMLDivElement, {
           color: border.accent, fontWeight: 900, fontSize: 10,
           letterSpacing: '0.25em', textTransform: 'uppercase',
         }}>
-          020 Alliance
+          020 {allianceLabel}
         </span>
         <div style={{
           width: 4, height: 4, borderRadius: '50%',
@@ -280,7 +324,7 @@ const ShareCard = React.forwardRef<HTMLDivElement, {
           color: '#ffffff55', fontWeight: 700, fontSize: 9,
           letterSpacing: '0.15em', textTransform: 'uppercase',
         }}>
-          {isMocking ? 'TEST_DATA' : 'Power Tracker'}
+          {isMocking ? 'TEST_DATA' : trackerLabel}
         </span>
         <span style={{ fontSize: 14 }}>{border.emoji[1]}</span>
       </div>
@@ -373,7 +417,9 @@ export default function GrowthPage() {
   const isLocked = snapshots.length < 2;
   const playerName = (memberUsername || user?.displayName || (user as any)?.username || user?.primaryEmail?.split('@')[0] || 'COMMANDER').toUpperCase();
   const chartColor = activeTab === 'total' ? '#f472b6' : activeTab === 'squad' ? '#60a5fa' : '#fbbf24';
-  const chartTitle = activeTab === 'total' ? 'Total Hero Power' : activeTab === 'squad' ? 'Squad 1 Power' : 'Arena Power';
+  const chartTitle = activeTab === 'total' ? t('totalHeroPowerGrowth') : activeTab === 'squad' ? t('squad1PowerGrowth') : t('arenaPowerGrowth');
+  const allianceLabel = t('allianceName');
+  const trackerLabel = t('growthChart');
 
   if (isLoading) return (
     <div className="h-screen bg-[#050010] flex items-center justify-center text-white font-black animate-pulse uppercase tracking-[0.4em] text-sm">
@@ -406,7 +452,7 @@ export default function GrowthPage() {
             {(['total','squad','arena'] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)}
                 className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-black' : 'text-slate-500 hover:text-white'}`}>
-                {tab === 'total' ? 'Hero' : tab === 'squad' ? 'Squad' : 'Arena'}
+                {tab === 'total' ? t('heroRanking') : tab === 'squad' ? t('squadRanking') : t('arenaRanking')}
               </button>
             ))}
           </div>
@@ -423,18 +469,22 @@ export default function GrowthPage() {
         {/* ── Main Layout ── */}
         <div className="flex flex-col lg:flex-row gap-8 items-start">
 
-          {/* Card Preview */}
+          {/* Card Preview — scales to fit any screen width */}
           <div className="flex-shrink-0 flex items-center justify-center w-full lg:w-auto">
-            <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ boxShadow: `0 0 60px ${activeBorder.accent}30` }}>
-              <ShareCard
-                ref={cardRef}
-                border={activeBorder}
-                playerName={playerName}
-                data={chartData}
-                color={chartColor}
-                title={chartTitle}
-                isMocking={isMocking}
-              />
+            <div className="w-full flex justify-center">
+              <ScaledCardWrapper accentColor={activeBorder.accent}>
+                <ShareCard
+                  ref={cardRef}
+                  border={activeBorder}
+                  playerName={playerName}
+                  data={chartData}
+                  color={chartColor}
+                  title={chartTitle}
+                  isMocking={isMocking}
+                  allianceLabel={allianceLabel}
+                  trackerLabel={trackerLabel}
+                />
+              </ScaledCardWrapper>
             </div>
           </div>
 
@@ -444,7 +494,7 @@ export default function GrowthPage() {
             {/* Border selector */}
             <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-4">
               <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: activeBorder.accent }}>
-                🎨 Choose Your Style
+                🎨 {t('growthChart')}
               </h3>
               <div className="grid grid-cols-5 gap-2">
                 {BORDERS.map(b => (
@@ -468,7 +518,7 @@ export default function GrowthPage() {
               <button onClick={handleDownload} disabled={isGenerating || isLocked}
                 className="w-full py-4 font-black rounded-xl uppercase tracking-widest text-sm transition-all disabled:opacity-30 flex items-center justify-center gap-2"
                 style={{ background: isLocked ? undefined : `linear-gradient(135deg, ${activeBorder.accent}, ${activeBorder.accent2})`, color: isLocked ? undefined : '#000' }}>
-                {isGenerating ? '⏳ Generating...' : isLocked ? `🔒 ${t('locked')}` : `📸 Download Card`}
+                {isGenerating ? `⏳ ${t('syncing')}` : isLocked ? `🔒 ${t('locked')}` : `📸 ${t('downloadImage')}`}
               </button>
 
               {isLocked ? (
@@ -483,7 +533,7 @@ export default function GrowthPage() {
               ) : (
                 <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
                   <p className="text-[9px] text-green-400 font-bold uppercase tracking-widest">
-                    ✓ {snapshots.length} snapshots captured — Share your card!
+                    ✓ {snapshots.length} {t('captureProgress').replace('...', '')} — {t('downloadImage')}!
                   </p>
                 </div>
               )}
@@ -494,7 +544,7 @@ export default function GrowthPage() {
               <span className="text-2xl">{activeBorder.icon}</span>
               <div>
                 <p className="text-sm font-black uppercase tracking-tight" style={{ color: activeBorder.accent }}>{activeBorder.label}</p>
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Active Frame Style</p>
+                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{t('growthChart')}</p>
               </div>
             </div>
           </div>
