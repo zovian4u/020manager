@@ -215,7 +215,7 @@ const ShareCard = React.forwardRef<HTMLDivElement, {
                 {playerName}
               </div>
               <div style={{ color: border.accent, fontWeight: 700, fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 2, opacity: 0.8 }}>
-                {customTitle ? customTitle : (title + (lines.length > 1 ? ` + ${comparisonLabel}` : ''))}
+                {title} {customTitle ? ` • ${customTitle}` : (lines.length > 1 ? ` + ${comparisonLabel}` : '')}
               </div>
             </div>
           </div>
