@@ -7,7 +7,6 @@ import { useLanguage } from '../../lib/LanguageContext';
 import Link from 'next/link';
 
 // ─── RESPONSIVE CARD SCALER ───────────────────────────────────────────────────
-// Keeps the 480x480 card pixel-perfect for download while fitting any screen
 const CARD_SIZE = 480;
 const ScaledCardWrapper = ({ children, accentColor }: { children: React.ReactNode; accentColor: string }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -26,9 +25,8 @@ const ScaledCardWrapper = ({ children, accentColor }: { children: React.ReactNod
   return (
     <div
       ref={wrapperRef}
+      className="w-full max-w-[280px] sm:max-w-[340px] md:max-w-[420px] mx-auto"
       style={{
-        width: '100%',
-        maxWidth: CARD_SIZE,
         height: CARD_SIZE * scale,
         position: 'relative',
         overflow: 'hidden',
@@ -62,43 +60,43 @@ const BORDERS = [
   { id: 'rose',     icon: '🌹', label: 'Royal Rose',       bg: '#150510', accent: '#fb7185', accent2: '#e11d48', emoji: ['🌹','👑','💎','🌹'] },
 ];
 
-// ─── CHART (inside the 1x1 card, self-contained, no overlap) ─────────────────
-const CardChart = ({ data, color }: { data: { week: string; value: number }[]; color: string }) => {
-  if (!data || data.length < 2) return (
+// ─── CHART ────────────────────────────────────────────────────────────────────
+const CardChart = ({ lines }: { lines: { data: { week: string; value: number }[]; color: string; name: string; isMain?: boolean }[] }) => {
+  if (!lines || lines.length === 0 || !lines[0].data || lines[0].data.length < 2) return (
     <div style={{ color: '#ffffff44', fontSize: 11, fontWeight: 900, textAlign: 'center', marginTop: 20 }}>
       NOT ENOUGH DATA
     </div>
   );
 
   const W = 360, H = 180, padL = 45, padR = 10, padT = 10, padB = 24;
-  const vals = data.map(d => d.value);
-  let minV = Math.min(...vals);
-  let maxV = Math.max(...vals);
+  const allVals = lines.flatMap(l => l.data.map(d => d.value));
+  if (allVals.length === 0) return null;
+
+  let minV = Math.min(...allVals);
+  let maxV = Math.max(...allVals);
   
-  // Add buffer to top and bottom
   const actualRange = maxV - minV;
   const buffer = actualRange === 0 ? (maxV * 0.1 || 1) : actualRange * 0.1;
   minV -= buffer;
   maxV += buffer;
   const range = maxV - minV;
 
-  const px = (i: number) => padL + (i / (data.length - 1)) * (W - padL - padR);
+  const mainData = lines[0].data;
+  const px = (i: number) => padL + (i / (mainData.length - 1)) * (W - padL - padR);
   const py = (v: number) => padT + (1 - (v - minV) / range) * (H - padT - padB);
 
-  const path = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${px(i).toFixed(1)},${py(d.value).toFixed(1)}`).join(' ');
-  const area = `${path} L ${px(data.length - 1).toFixed(1)},${(H - padB).toFixed(1)} L ${px(0).toFixed(1)},${(H - padB).toFixed(1)} Z`;
-
-  const labelStep = Math.max(1, Math.floor((data.length - 1) / 4));
+  const labelStep = Math.max(1, Math.floor((mainData.length - 1) / 4));
 
   return (
     <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible', display: 'block' }}>
       <defs>
-        <linearGradient id={`cg-${color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.35" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
+        {lines.filter(l => l.isMain).map((l, idx) => (
+          <linearGradient key={`cg-${idx}`} id={`cg-${l.color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={l.color} stopOpacity="0.35" />
+            <stop offset="100%" stopColor={l.color} stopOpacity="0" />
+          </linearGradient>
+        ))}
       </defs>
-      {/* Grid + Labels */}
       {[0, 1, 2].map(i => {
         const y = padT + (i / 2) * (H - padT - padB);
         const val = maxV - (i / 2) * range;
@@ -111,18 +109,24 @@ const CardChart = ({ data, color }: { data: { week: string; value: number }[]; c
           </g>
         );
       })}
-      {/* Area fill */}
-      <path d={area} fill={`url(#cg-${color.replace('#','')})`} />
-      {/* Line */}
-      <path d={path} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Dots (thinned) */}
-      {data.map((d, i) => {
-        if (data.length > 12 && i % 4 !== 0 && i !== data.length - 1) return null;
-        return <circle key={i} cx={px(i)} cy={py(d.value)} r="3.5" fill="#050010" stroke={color} strokeWidth="2" />;
+      {/* Reverse loop so main line is drawn last (on top) */}
+      {[...lines].reverse().map((l) => {
+        const path = l.data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${px(i).toFixed(1)},${py(d.value).toFixed(1)}`).join(' ');
+        const area = `${path} L ${px(l.data.length - 1).toFixed(1)},${(H - padB).toFixed(1)} L ${px(0).toFixed(1)},${(H - padB).toFixed(1)} Z`;
+        
+        return (
+          <g key={l.name}>
+            {l.isMain && <path d={area} fill={`url(#cg-${l.color.replace('#','')})`} />}
+            <path d={path} fill="none" stroke={l.color} strokeWidth={l.isMain ? "2.5" : "1.5"} strokeLinecap="round" strokeLinejoin="round" opacity={l.isMain ? 1 : 0.7} />
+            {l.data.map((d, i) => {
+              if (l.data.length > 12 && i % 4 !== 0 && i !== l.data.length - 1) return null;
+              return <circle key={i} cx={px(i)} cy={py(d.value)} r={l.isMain ? "3.5" : "2"} fill="#050010" stroke={l.color} strokeWidth={l.isMain ? "2" : "1"} opacity={l.isMain ? 1 : 0.7} />;
+            })}
+          </g>
+        );
       })}
-      {/* X labels */}
-      {data.map((d, i) => {
-        if (i % labelStep !== 0 && i !== data.length - 1) return null;
+      {mainData.map((d, i) => {
+        if (i % labelStep !== 0 && i !== mainData.length - 1) return null;
         return (
           <text key={i} x={px(i)} y={H - 6} textAnchor="middle" fill="#ffffff40" fontSize="8" fontWeight="700">
             {d.week}
@@ -133,17 +137,16 @@ const CardChart = ({ data, color }: { data: { week: string; value: number }[]; c
   );
 };
 
-// ─── THE SHAREABLE 1×1 CARD ──────────────────────────────────────────────────
+// ─── SHARE CARD ───────────────────────────────────────────────────────────────
 const ShareCard = React.forwardRef<HTMLDivElement, {
   border: typeof BORDERS[0];
   playerName: string;
-  data: { week: string; value: number }[];
-  color: string;
+  lines: { data: { week: string; value: number }[]; color: string; name: string; isMain?: boolean }[];
   title: string;
   isMocking: boolean;
   allianceLabel: string;
   trackerLabel: string;
-}>(({ border, playerName, data, color, title, isMocking, allianceLabel, trackerLabel }, ref) => {
+}>(({ border, playerName, lines, title, isMocking, allianceLabel, trackerLabel }, ref) => {
   const SIZE = 480;
 
   return (
@@ -159,7 +162,6 @@ const ShareCard = React.forwardRef<HTMLDivElement, {
         flexShrink: 0,
       }}
     >
-      {/* Dot grid texture */}
       <div style={{
         position: 'absolute', inset: 0, opacity: 0.07,
         backgroundImage: 'radial-gradient(circle, white 1px, transparent 0)',
@@ -167,163 +169,111 @@ const ShareCard = React.forwardRef<HTMLDivElement, {
         pointerEvents: 'none',
       }} />
 
-      {/* Glow blobs */}
       <div style={{
-        position: 'absolute', top: -60, left: -60,
-        width: 200, height: 200,
-        borderRadius: '50%',
-        background: border.accent,
-        opacity: 0.12, filter: 'blur(60px)',
-        pointerEvents: 'none',
+        position: 'absolute', top: -60, left: -60, width: 200, height: 200, borderRadius: '50%',
+        background: border.accent, opacity: 0.12, filter: 'blur(60px)', pointerEvents: 'none',
       }} />
       <div style={{
-        position: 'absolute', bottom: -60, right: -60,
-        width: 200, height: 200,
-        borderRadius: '50%',
-        background: border.accent2,
-        opacity: 0.12, filter: 'blur(60px)',
-        pointerEvents: 'none',
+        position: 'absolute', bottom: -60, right: -60, width: 200, height: 200, borderRadius: '50%',
+        background: border.accent2, opacity: 0.12, filter: 'blur(60px)', pointerEvents: 'none',
       }} />
 
-      {/* ── SVG Border Frame ── */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
-        viewBox="0 0 480 480" fill="none">
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} viewBox="0 0 480 480" fill="none">
         <defs>
           <linearGradient id="fg1" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor={border.accent} />
             <stop offset="100%" stopColor={border.accent2} />
           </linearGradient>
         </defs>
-
-        {/* Outer subtle rect */}
         <rect x="14" y="14" width="452" height="452" rx="24" stroke={border.accent} strokeOpacity="0.15" strokeWidth="1" />
-
-        {/* Corner L-shapes */}
-        {/* TL */}
         <path d={`M14,70 L14,28 Q14,14 28,14 L70,14`} stroke="url(#fg1)" strokeWidth="3" strokeLinecap="round" fill="none"/>
-        {/* TR */}
         <path d={`M410,14 L452,14 Q466,14 466,28 L466,70`} stroke="url(#fg1)" strokeWidth="3" strokeLinecap="round" fill="none"/>
-        {/* BL */}
         <path d={`M14,410 L14,452 Q14,466 28,466 L70,466`} stroke="url(#fg1)" strokeWidth="3" strokeLinecap="round" fill="none"/>
-        {/* BR */}
         <path d={`M410,466 L452,466 Q466,466 466,452 L466,410`} stroke="url(#fg1)" strokeWidth="3" strokeLinecap="round" fill="none"/>
-
-        {/* Mid tick lines */}
         <line x1="240" y1="14" x2="240" y2="24" stroke={border.accent} strokeOpacity="0.5" strokeWidth="2"/>
         <line x1="240" y1="456" x2="240" y2="466" stroke={border.accent} strokeOpacity="0.5" strokeWidth="2"/>
         <line x1="14" y1="240" x2="24" y2="240" stroke={border.accent} strokeOpacity="0.5" strokeWidth="2"/>
         <line x1="456" y1="240" x2="466" y2="240" stroke={border.accent} strokeOpacity="0.5" strokeWidth="2"/>
-
-        {/* Corner dots */}
         {[[28,28],[452,28],[28,452],[452,452]].map(([cx,cy],i) => (
           <circle key={i} cx={cx} cy={cy} r="3" fill={border.accent} opacity="0.6"/>
         ))}
       </svg>
 
-      {/* ── Corner emojis ── */}
       <div style={{ position: 'absolute', top: 22, left: 22, fontSize: 22, lineHeight: 1 }}>{border.emoji[0]}</div>
       <div style={{ position: 'absolute', top: 22, right: 22, fontSize: 22, lineHeight: 1 }}>{border.emoji[1]}</div>
       <div style={{ position: 'absolute', bottom: 54, left: 22, fontSize: 18, lineHeight: 1 }}>{border.emoji[2]}</div>
       <div style={{ position: 'absolute', bottom: 54, right: 22, fontSize: 22, lineHeight: 1 }}>{border.emoji[3]}</div>
 
-      {/* ── Content ── */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        display: 'flex', flexDirection: 'column',
-        padding: '44px 36px 50px 36px',
-      }}>
-        {/* Header: username + title */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: '44px 36px 50px 36px' }}>
         <div style={{ marginBottom: 12 }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4,
-          }}>
-            <div style={{
-              width: 6, height: 28, borderRadius: 3,
-              background: `linear-gradient(to bottom, ${border.accent}, ${border.accent2})`,
-              flexShrink: 0,
-            }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <div style={{ width: 6, height: 28, borderRadius: 3, background: `linear-gradient(to bottom, ${border.accent}, ${border.accent2})`, flexShrink: 0 }} />
             <div>
-              <div style={{
-                color: '#ffffff', fontWeight: 900, fontSize: 20,
-                letterSpacing: '-0.03em', textTransform: 'uppercase', lineHeight: 1,
-              }}>
+              <div style={{ color: '#ffffff', fontWeight: 900, fontSize: 20, letterSpacing: '-0.03em', textTransform: 'uppercase', lineHeight: 1 }}>
                 {playerName}
               </div>
-              <div style={{
-                color: border.accent, fontWeight: 700, fontSize: 9,
-                letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 2, opacity: 0.8,
-              }}>
-                {title}
+              <div style={{ color: border.accent, fontWeight: 700, fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 2, opacity: 0.8 }}>
+                {title} {lines.length > 1 && ' + COMP'}
               </div>
             </div>
           </div>
-          {/* Divider */}
-          <div style={{
-            height: 1, background: `linear-gradient(to right, ${border.accent}33, transparent)`,
-            marginTop: 6,
-          }} />
+          <div style={{ height: 1, background: `linear-gradient(to right, ${border.accent}33, transparent)`, marginTop: 6 }} />
         </div>
 
-        {/* Chart area — takes remaining space */}
         <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center' }}>
           <div style={{ width: '100%', height: '100%' }}>
-            <CardChart data={data} color={color} />
+            <CardChart lines={lines} />
           </div>
         </div>
 
-        {/* Latest value pill + Growth Summary */}
-        {data.length > 0 && (
-          <div style={{
-            display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, marginTop: 8, marginBottom: 2,
-          }}>
-            {data.length >= 2 && (
+        {lines.length > 0 && lines[0].data.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginTop: 8, marginBottom: 2, flexWrap: 'wrap' }}>
+            {lines.length === 1 && lines[0].data.length >= 2 && (
               <div style={{
-                color: (data[data.length-1].value - data[0].value) >= 0 ? '#4ade80' : '#f87171',
-                fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em'
+                color: (lines[0].data[lines[0].data.length-1].value - lines[0].data[0].value) >= 0 ? '#4ade80' : '#f87171',
+                fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: 4
               }}>
-                {(data[data.length-1].value - data[0].value) >= 0 ? '+' : ''}
-                {(data[data.length-1].value - data[0].value).toFixed(1)}M 
-                ({(((data[data.length-1].value - data[0].value) / (data[0].value || 1)) * 100).toFixed(1)}%)
+                {(lines[0].data[lines[0].data.length-1].value - lines[0].data[0].value) >= 0 ? '+' : ''}
+                {(lines[0].data[lines[0].data.length-1].value - lines[0].data[0].value).toFixed(1)}M 
+                ({(((lines[0].data[lines[0].data.length-1].value - lines[0].data[0].value) / (lines[0].data[0].value || 1)) * 100).toFixed(1)}%)
               </div>
             )}
-            <div style={{
-              background: `${border.accent}22`,
-              border: `1px solid ${border.accent}55`,
-              borderRadius: 100, padding: '4px 14px',
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: border.accent }} />
-              <span style={{ color: border.accent, fontWeight: 900, fontSize: 13, letterSpacing: '-0.02em' }}>
-                {data[data.length - 1].value.toFixed(1)}M
-              </span>
-            </div>
+            {lines.map((l, i) => {
+              const data = l.data;
+              if (data.length < 1) return null;
+              return (
+                <div key={l.name} style={{
+                  background: `${l.color}15`,
+                  border: `1px solid ${l.color}55`,
+                  borderRadius: 100, padding: '4px 10px',
+                  display: 'flex', alignItems: 'center', gap: 5,
+                }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: l.color }} />
+                  {i !== 0 && <span style={{ color: '#ffffffaa', fontSize: 8, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {l.name.length > 6 ? l.name.substring(0,6) + '..' : l.name}
+                  </span>}
+                  <span style={{ color: l.color, fontWeight: 900, fontSize: i === 0 ? 12 : 10, letterSpacing: '-0.02em' }}>
+                    {data[data.length - 1].value.toFixed(1)}M
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* ── Footer: cute 020 Alliance ── */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, height: 42,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: `linear-gradient(to right, ${border.accent}10, ${border.accent2}18, ${border.accent}10)`,
-        borderTop: `1px solid ${border.accent}22`,
-        gap: 8,
+        borderTop: `1px solid ${border.accent}22`, gap: 8,
       }}>
         <span style={{ fontSize: 14 }}>{border.emoji[0]}</span>
-        <span style={{
-          color: border.accent, fontWeight: 900, fontSize: 10,
-          letterSpacing: '0.25em', textTransform: 'uppercase',
-        }}>
+        <span style={{ color: border.accent, fontWeight: 900, fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase' }}>
           020 {allianceLabel}
         </span>
-        <div style={{
-          width: 4, height: 4, borderRadius: '50%',
-          background: border.accent2, opacity: 0.8,
-        }} />
-        <span style={{
-          color: '#ffffff55', fontWeight: 700, fontSize: 9,
-          letterSpacing: '0.15em', textTransform: 'uppercase',
-        }}>
+        <div style={{ width: 4, height: 4, borderRadius: '50%', background: border.accent2, opacity: 0.8 }} />
+        <span style={{ color: '#ffffff55', fontWeight: 700, fontSize: 9, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
           {isMocking ? 'TEST_DATA' : trackerLabel}
         </span>
         <span style={{ fontSize: 14 }}>{border.emoji[1]}</span>
@@ -349,7 +299,17 @@ export default function GrowthPage() {
   const [viewRange, setViewRange] = useState(0);
   const [memberUsername, setMemberUsername] = useState<string | null>(null);
 
+  // Compare States
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [allMembers, setAllMembers] = useState<{user_id: string, username: string, total_hero_power: number}[]>([]);
+  const [compareMembers, setCompareMembers] = useState<{user_id: string, username: string, color: string}[]>([]);
+  const [compareSnapshots, setCompareSnapshots] = useState<Record<string, any[]>>({});
+  const [showAllianceAvg, setShowAllianceAvg] = useState(false);
+  const [avgSnapshots, setAvgSnapshots] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const activeBorder = BORDERS.find(b => b.id === activeBorderId) || BORDERS[0];
+  const chartColor = activeTab === 'total' ? '#f472b6' : activeTab === 'squad' ? '#60a5fa' : '#fbbf24';
 
   const ranges = [
     { label: '1M', weeks: 4 },
@@ -362,19 +322,18 @@ export default function GrowthPage() {
   useEffect(() => {
     if (!user) return;
     setIsLoading(true);
-    
     async function loadInitialData() {
-      // Fetch Growth Snapshots
       const { data: snapData } = await supabase.from('growth_snapshots').select('*').eq('user_id', user!.id).order('captured_at', { ascending: true });
       if (snapData) setSnapshots(snapData);
 
-      // Fetch Member Profile for Username
-      const { data: memberData } = await supabase.from('members').select('username').eq('user_id', user!.id).single();
-      if (memberData) setMemberUsername(memberData.username);
-      
+      const { data: membersData } = await supabase.from('members').select('user_id, username, total_hero_power');
+      if (membersData) {
+        setAllMembers(membersData);
+        const me = membersData.find(m => m.user_id === user!.id);
+        if (me) setMemberUsername(me.username);
+      }
       setIsLoading(false);
     }
-
     loadInitialData();
   }, [user]);
 
@@ -385,6 +344,99 @@ export default function GrowthPage() {
       week: s.week_label || new Date(s.captured_at).toLocaleDateString(language, { month: 'short', day: 'numeric' }),
       value: (activeTab === 'total' ? s.total_hero_power : activeTab === 'squad' ? s.squad_1_power : s.arena_power) / factor,
     }));
+  };
+
+  const normalizeData = (mainData: {week: string, value: number}[], rawSnapshots: any[]) => {
+    const factor = 1_000_000;
+    let lastVal = 0;
+    if (rawSnapshots.length > 0) {
+       const first = rawSnapshots[0];
+       lastVal = (activeTab === 'total' ? first.total_hero_power : activeTab === 'squad' ? first.squad_1_power : first.arena_power) / factor;
+    }
+    
+    return mainData.map(md => {
+       const cd = rawSnapshots.find(c => {
+           const wLabel = c.week_label || new Date(c.captured_at).toLocaleDateString(language, { month: 'short', day: 'numeric' });
+           return wLabel === md.week;
+       });
+       if (cd) {
+           lastVal = (activeTab === 'total' ? cd.total_hero_power : activeTab === 'squad' ? cd.squad_1_power : cd.arena_power) / factor;
+       }
+       return { week: md.week, value: lastVal };
+    });
+  };
+
+  const fetchAvgData = async () => {
+    const { data } = await supabase.from('growth_snapshots').select('week_label, total_hero_power, squad_1_power, arena_power, captured_at');
+    if (data) {
+       const grouped = data.reduce((acc: any, curr) => {
+          const w = curr.week_label || new Date(curr.captured_at).toLocaleDateString(language, { month: 'short', day: 'numeric' });
+          if (!acc[w]) acc[w] = { count: 0, total_hero_power: 0, squad_1_power: 0, arena_power: 0, captured_at: curr.captured_at, week_label: curr.week_label };
+          acc[w].count++;
+          acc[w].total_hero_power += curr.total_hero_power;
+          acc[w].squad_1_power += curr.squad_1_power;
+          acc[w].arena_power += curr.arena_power;
+          return acc;
+       }, {});
+       
+       const avg = Object.values(grouped).map((g: any) => ({
+          week_label: g.week_label,
+          captured_at: g.captured_at,
+          total_hero_power: g.total_hero_power / g.count,
+          squad_1_power: g.squad_1_power / g.count,
+          arena_power: g.arena_power / g.count,
+       })).sort((a: any, b: any) => new Date(a.captured_at).getTime() - new Date(b.captured_at).getTime());
+       setAvgSnapshots(avg);
+    }
+  };
+
+  const toggleAllianceAvg = async () => {
+    if (!showAllianceAvg) {
+       if (avgSnapshots.length === 0) await fetchAvgData();
+       setShowAllianceAvg(true);
+    } else {
+       setShowAllianceAvg(false);
+    }
+  };
+
+  const toggleCompareMember = async (member: any) => {
+    const exists = compareMembers.find(m => m.user_id === member.user_id);
+    if (exists) {
+        setCompareMembers(prev => prev.filter(m => m.user_id !== member.user_id));
+    } else {
+        if (compareMembers.length >= 4) {
+            alert("You can only compare up to 4 other players at once.");
+            return;
+        }
+        const colorPalette = ['#4ade80', '#22d3ee', '#a855f7', '#fbbf24', '#f87171'];
+        const usedColors = compareMembers.map(m => m.color);
+        const availColor = colorPalette.find(c => !usedColors.includes(c)) || colorPalette[0];
+        
+        setCompareMembers(prev => [...prev, { ...member, color: availColor }]);
+        
+        if (!compareSnapshots[member.user_id]) {
+           const { data } = await supabase.from('growth_snapshots').select('*').eq('user_id', member.user_id).order('captured_at', { ascending: true });
+           if (data) {
+               setCompareSnapshots(prev => ({ ...prev, [member.user_id]: data }));
+           }
+        }
+    }
+  };
+
+  const playerName = (memberUsername || user?.displayName || (user as any)?.username || user?.primaryEmail?.split('@')[0] || 'COMMANDER').toUpperCase();
+  
+  const mainChartData = getChartData();
+  const buildLines = () => {
+    if (mainChartData.length === 0) return [];
+    const lines = [{ data: mainChartData, color: chartColor, name: playerName, isMain: true }];
+    if (showAllianceAvg && avgSnapshots.length > 0) {
+       lines.push({ data: normalizeData(mainChartData, avgSnapshots), color: '#ffffff', name: 'ALLIANCE AVG', isMain: false });
+    }
+    compareMembers.forEach(cm => {
+       const snaps = compareSnapshots[cm.user_id] || [];
+       lines.push({ data: normalizeData(mainChartData, snaps), color: cm.color, name: cm.username, isMain: false });
+    });
+    return lines;
   };
 
   const loadMockData = () => {
@@ -413,10 +465,8 @@ export default function GrowthPage() {
     finally { setTimeout(() => setIsGenerating(false), 1500); }
   };
 
-  const chartData = getChartData();
+  const chartLines = buildLines();
   const isLocked = snapshots.length < 2;
-  const playerName = (memberUsername || user?.displayName || (user as any)?.username || user?.primaryEmail?.split('@')[0] || 'COMMANDER').toUpperCase();
-  const chartColor = activeTab === 'total' ? '#f472b6' : activeTab === 'squad' ? '#60a5fa' : '#fbbf24';
   const chartTitle = activeTab === 'total' ? t('totalHeroPowerGrowth') : activeTab === 'squad' ? t('squad1PowerGrowth') : t('arenaPowerGrowth');
   const allianceLabel = t('allianceName');
   const trackerLabel = t('growthChart');
@@ -428,10 +478,9 @@ export default function GrowthPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#050010] text-white pt-20 pb-32 px-4 flex flex-col items-center">
-      <div className="w-full max-w-4xl space-y-8">
+    <div className="min-h-screen bg-[#050010] text-white pt-8 pb-16 px-2 flex flex-col items-center">
+      <div className="w-full max-w-5xl space-y-4">
 
-        {/* ── Header ── */}
         <div className="flex items-end justify-between px-2">
           <div>
             <h1 className="text-4xl md:text-6xl font-black italic tracking-tighter uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-300 to-pink-400">
@@ -446,7 +495,6 @@ export default function GrowthPage() {
           </Link>
         </div>
 
-        {/* ── Tab + Range Controls ── */}
         <div className="flex flex-wrap gap-3 items-center justify-between px-2">
           <div className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
             {(['total','squad','arena'] as const).map(tab => (
@@ -466,19 +514,15 @@ export default function GrowthPage() {
           </div>
         </div>
 
-        {/* ── Main Layout ── */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-
-          {/* Card Preview — scales to fit any screen width */}
-          <div className="flex-shrink-0 flex items-center justify-center w-full lg:w-auto">
+        <div className="flex flex-col md:flex-row gap-4 items-center md:items-start">
+          <div className="flex-shrink-0 flex items-center justify-center w-full md:w-auto">
             <div className="w-full flex justify-center">
               <ScaledCardWrapper accentColor={activeBorder.accent}>
                 <ShareCard
                   ref={cardRef}
                   border={activeBorder}
                   playerName={playerName}
-                  data={chartData}
-                  color={chartColor}
+                  lines={chartLines}
                   title={chartTitle}
                   isMocking={isMocking}
                   allianceLabel={allianceLabel}
@@ -488,35 +532,11 @@ export default function GrowthPage() {
             </div>
           </div>
 
-          {/* Controls Panel */}
-          <div className="flex-1 space-y-6 min-w-0">
-
-            {/* Border selector */}
-            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: activeBorder.accent }}>
-                🎨 {t('growthChart')}
-              </h3>
-              <div className="grid grid-cols-5 gap-2">
-                {BORDERS.map(b => (
-                  <button key={b.id} onClick={() => setActiveBorderId(b.id)}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all text-center ${activeBorderId === b.id ? 'ring-2 scale-105' : 'opacity-50 hover:opacity-80'}`}
-                    style={activeBorderId === b.id ? {
-                      background: `${b.accent}18`,
-                      boxShadow: `0 0 12px ${b.accent}40`,
-                      outline: `2px solid ${b.accent}`,
-                    } : { background: 'rgba(255,255,255,0.03)' }}
-                    title={b.label}>
-                    <span className="text-xl">{b.icon}</span>
-                    <span className="text-[7px] font-black uppercase tracking-tight text-slate-400 leading-tight">{b.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Export + Status */}
-            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-3">
+          <div className="flex-1 space-y-4 min-w-0 w-full">
+            {/* Export + Status moved to top to reduce scrolling */}
+            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 space-y-2">
               <button onClick={handleDownload} disabled={isGenerating || isLocked}
-                className="w-full py-4 font-black rounded-xl uppercase tracking-widest text-sm transition-all disabled:opacity-30 flex items-center justify-center gap-2"
+                className="w-full py-3 font-black rounded-xl uppercase tracking-widest text-sm transition-all disabled:opacity-30 flex items-center justify-center gap-2"
                 style={{ background: isLocked ? undefined : `linear-gradient(135deg, ${activeBorder.accent}, ${activeBorder.accent2})`, color: isLocked ? undefined : '#000' }}>
                 {isGenerating ? `⏳ ${t('syncing')}` : isLocked ? `🔒 ${t('locked')}` : `📸 ${t('downloadImage')}`}
               </button>
@@ -539,8 +559,56 @@ export default function GrowthPage() {
               )}
             </div>
 
-            {/* Current border info */}
-            <div className="flex items-center gap-3 px-1">
+            {/* Compare Box */}
+            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 space-y-3">
+              <div className="flex justify-between items-center">
+                 <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                   📊 COMPARE GROWTH
+                 </h3>
+                 <button onClick={() => setShowCompareModal(true)} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-[9px] font-black uppercase transition-all border border-white/10">
+                   + ADD PLAYER
+                 </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                 <button onClick={toggleAllianceAvg} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase border transition-all ${showAllianceAvg ? 'bg-white text-black border-white' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/30'}`}>
+                    ALLIANCE AVG {showAllianceAvg && '✓'}
+                 </button>
+                 {compareMembers.map(cm => (
+                    <div key={cm.user_id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10" style={{ background: `${cm.color}15`, borderColor: `${cm.color}40` }}>
+                       <div className="w-2 h-2 rounded-full" style={{ background: cm.color }} />
+                       <span className="text-[9px] font-black uppercase text-white">{cm.username}</span>
+                       <button onClick={() => toggleCompareMember(cm)} className="ml-1 text-white/50 hover:text-white">✕</button>
+                    </div>
+                 ))}
+                 {!showAllianceAvg && compareMembers.length === 0 && (
+                    <span className="text-[9px] font-bold text-slate-600 uppercase italic py-1.5 px-1">No comparisons active</span>
+                 )}
+              </div>
+            </div>
+
+            {/* Border selector */}
+            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 space-y-3">
+              <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: activeBorder.accent }}>
+                🎨 {t('growthChart')}
+              </h3>
+              <div className="grid grid-cols-5 gap-1.5">
+                {BORDERS.map(b => (
+                  <button key={b.id} onClick={() => setActiveBorderId(b.id)}
+                    className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all text-center ${activeBorderId === b.id ? 'ring-2 scale-105' : 'opacity-50 hover:opacity-80'}`}
+                    style={activeBorderId === b.id ? {
+                      background: `${b.accent}18`,
+                      boxShadow: `0 0 12px ${b.accent}40`,
+                      outline: `2px solid ${b.accent}`,
+                    } : { background: 'rgba(255,255,255,0.03)' }}
+                    title={b.label}>
+                    <span className="text-xl">{b.icon}</span>
+                    <span className="text-[7px] font-black uppercase tracking-tight text-slate-400 leading-tight">{b.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="hidden md:flex items-center gap-3 px-1">
               <span className="text-2xl">{activeBorder.icon}</span>
               <div>
                 <p className="text-sm font-black uppercase tracking-tight" style={{ color: activeBorder.accent }}>{activeBorder.label}</p>
@@ -550,6 +618,41 @@ export default function GrowthPage() {
           </div>
         </div>
       </div>
+
+      {showCompareModal && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+            <div className="bg-[#0a0f1d] border border-white/10 w-full max-w-md rounded-3xl shadow-2xl flex flex-col max-h-[80vh]">
+               <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-white">Select Player to Compare</h3>
+                  <button onClick={() => setShowCompareModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-white/50 hover:bg-red-500/20 hover:text-red-500 transition-all font-black">✕</button>
+               </div>
+               <div className="p-4 border-b border-white/5">
+                  <input type="text" placeholder="SEARCH COMMANDER..." className="w-full bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-white/30 text-white font-black uppercase text-[10px] tracking-widest" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+               </div>
+               <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-black/20">
+                  {allMembers.filter(m => m.user_id !== user?.id && m.username.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .sort((a,b) => b.total_hero_power - a.total_hero_power)
+                    .map(m => {
+                     const isSelected = compareMembers.some(cm => cm.user_id === m.user_id);
+                     return (
+                        <button key={m.user_id} onClick={() => toggleCompareMember(m)} className={`w-full text-left p-2.5 rounded-xl flex items-center justify-between transition-all border ${isSelected ? 'bg-white/10 border-white/20' : 'bg-white/[0.03] border-transparent hover:bg-white/5'}`}>
+                           <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black ${isSelected ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-white/40'}`}>
+                                 {m.username.substring(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                 <span className="block font-black uppercase text-xs text-white truncate max-w-[150px] sm:max-w-[200px]">{m.username}</span>
+                                 <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest mt-0.5 block">{(m.total_hero_power / 1000000).toFixed(1)}M POWER</span>
+                              </div>
+                           </div>
+                           {isSelected && <span className="text-xs text-green-400 font-black px-2">✓</span>}
+                        </button>
+                     )
+                  })}
+               </div>
+            </div>
+         </div>
+      )}
     </div>
   );
 }
