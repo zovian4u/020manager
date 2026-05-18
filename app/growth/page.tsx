@@ -146,7 +146,9 @@ const ShareCard = React.forwardRef<HTMLDivElement, {
   isMocking: boolean;
   allianceLabel: string;
   trackerLabel: string;
-}>(({ border, playerName, lines, title, isMocking, allianceLabel, trackerLabel }, ref) => {
+  comparisonLabel: string;
+  customTitle?: string;
+}>(({ border, playerName, lines, title, isMocking, allianceLabel, trackerLabel, comparisonLabel, customTitle }, ref) => {
   const SIZE = 480;
 
   return (
@@ -213,7 +215,7 @@ const ShareCard = React.forwardRef<HTMLDivElement, {
                 {playerName}
               </div>
               <div style={{ color: border.accent, fontWeight: 700, fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 2, opacity: 0.8 }}>
-                {title} {lines.length > 1 && ' + COMP'}
+                {customTitle ? customTitle : (title + (lines.length > 1 ? ` + ${comparisonLabel}` : ''))}
               </div>
             </div>
           </div>
@@ -249,11 +251,8 @@ const ShareCard = React.forwardRef<HTMLDivElement, {
                   display: 'flex', alignItems: 'center', gap: 5,
                 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: l.color }} />
-                  {i !== 0 && <span style={{ color: '#ffffffaa', fontSize: 8, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {l.name.length > 6 ? l.name.substring(0,6) + '..' : l.name}
-                  </span>}
-                  <span style={{ color: l.color, fontWeight: 900, fontSize: i === 0 ? 12 : 10, letterSpacing: '-0.02em' }}>
-                    {data[data.length - 1].value.toFixed(1)}M
+                  <span style={{ color: i === 0 ? l.color : '#ffffffaa', fontSize: i === 0 ? 10 : 8, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {l.name.length > 12 ? l.name.substring(0,12) + '..' : l.name}
                   </span>
                 </div>
               );
@@ -307,6 +306,7 @@ export default function GrowthPage() {
   const [showAllianceAvg, setShowAllianceAvg] = useState(false);
   const [avgSnapshots, setAvgSnapshots] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [customTitle, setCustomTitle] = useState('');
 
   const activeBorder = BORDERS.find(b => b.id === activeBorderId) || BORDERS[0];
   const chartColor = activeTab === 'total' ? '#f472b6' : activeTab === 'squad' ? '#60a5fa' : '#fbbf24';
@@ -404,11 +404,11 @@ export default function GrowthPage() {
     if (exists) {
         setCompareMembers(prev => prev.filter(m => m.user_id !== member.user_id));
     } else {
-        if (compareMembers.length >= 4) {
-            alert("You can only compare up to 4 other players at once.");
+        if (compareMembers.length >= 5) {
+            alert(t('compareMaxPlayers'));
             return;
         }
-        const colorPalette = ['#4ade80', '#22d3ee', '#a855f7', '#fbbf24', '#f87171'];
+        const colorPalette = ['#39ff14', '#00ffff', '#7000ff', '#ff0000', '#ccff00', '#00ff99'];
         const usedColors = compareMembers.map(m => m.color);
         const availColor = colorPalette.find(c => !usedColors.includes(c)) || colorPalette[0];
         
@@ -430,7 +430,7 @@ export default function GrowthPage() {
     if (mainChartData.length === 0) return [];
     const lines = [{ data: mainChartData, color: chartColor, name: playerName, isMain: true }];
     if (showAllianceAvg && avgSnapshots.length > 0) {
-       lines.push({ data: normalizeData(mainChartData, avgSnapshots), color: '#ffffff', name: 'ALLIANCE AVG', isMain: false });
+       lines.push({ data: normalizeData(mainChartData, avgSnapshots), color: '#ffffff', name: t('allianceAvg'), isMain: false });
     }
     compareMembers.forEach(cm => {
        const snaps = compareSnapshots[cm.user_id] || [];
@@ -527,6 +527,8 @@ export default function GrowthPage() {
                   isMocking={isMocking}
                   allianceLabel={allianceLabel}
                   trackerLabel={trackerLabel}
+                  comparisonLabel={t('comparison') || 'COMPARISON'}
+                  customTitle={customTitle}
                 />
               </ScaledCardWrapper>
             </div>
@@ -563,15 +565,15 @@ export default function GrowthPage() {
             <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 space-y-3">
               <div className="flex justify-between items-center">
                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                   📊 COMPARE GROWTH
+                   📊 {t('compareGrowth')}
                  </h3>
                  <button onClick={() => setShowCompareModal(true)} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-[9px] font-black uppercase transition-all border border-white/10">
-                   + ADD PLAYER
+                   {t('addPlayer')}
                  </button>
               </div>
               <div className="flex flex-wrap gap-2">
                  <button onClick={toggleAllianceAvg} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase border transition-all ${showAllianceAvg ? 'bg-white text-black border-white' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/30'}`}>
-                    ALLIANCE AVG {showAllianceAvg && '✓'}
+                    {t('allianceAvg')} {showAllianceAvg && '✓'}
                  </button>
                  {compareMembers.map(cm => (
                     <div key={cm.user_id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10" style={{ background: `${cm.color}15`, borderColor: `${cm.color}40` }}>
@@ -581,9 +583,14 @@ export default function GrowthPage() {
                     </div>
                  ))}
                  {!showAllianceAvg && compareMembers.length === 0 && (
-                    <span className="text-[9px] font-bold text-slate-600 uppercase italic py-1.5 px-1">No comparisons active</span>
+                    <span className="text-[9px] font-bold text-slate-600 uppercase italic py-1.5 px-1">{t('noComparisonsActive')}</span>
                  )}
               </div>
+              {(compareMembers.length > 0 || showAllianceAvg) && (
+                <div className="pt-2 border-t border-white/5">
+                  <input type="text" placeholder={t('customTitlePlaceholder') || 'CUSTOM CHART TITLE...'} value={customTitle} onChange={e => setCustomTitle(e.target.value)} className="w-full bg-black/40 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-white font-black uppercase text-[9px] tracking-widest" />
+                </div>
+              )}
             </div>
 
             {/* Border selector */}
@@ -623,11 +630,11 @@ export default function GrowthPage() {
          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
             <div className="bg-[#0a0f1d] border border-white/10 w-full max-w-md rounded-3xl shadow-2xl flex flex-col max-h-[80vh]">
                <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-white">Select Player to Compare</h3>
+                  <h3 className="text-sm font-black uppercase tracking-widest text-white">{t('selectPlayerToCompare')}</h3>
                   <button onClick={() => setShowCompareModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-white/50 hover:bg-red-500/20 hover:text-red-500 transition-all font-black">✕</button>
                </div>
                <div className="p-4 border-b border-white/5">
-                  <input type="text" placeholder="SEARCH COMMANDER..." className="w-full bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-white/30 text-white font-black uppercase text-[10px] tracking-widest" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                  <input type="text" placeholder={t('searchCommander')} className="w-full bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-white/30 text-white font-black uppercase text-[10px] tracking-widest" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                </div>
                <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-black/20">
                   {allMembers.filter(m => m.user_id !== user?.id && m.username.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -642,7 +649,7 @@ export default function GrowthPage() {
                               </div>
                               <div>
                                  <span className="block font-black uppercase text-xs text-white truncate max-w-[150px] sm:max-w-[200px]">{m.username}</span>
-                                 <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest mt-0.5 block">{(m.total_hero_power / 1000000).toFixed(1)}M POWER</span>
+                                 <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest mt-0.5 block">{(m.total_hero_power / 1000000).toFixed(1)}M {t('power').toUpperCase()}</span>
                               </div>
                            </div>
                            {isSelected && <span className="text-xs text-green-400 font-black px-2">✓</span>}
