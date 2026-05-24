@@ -14,6 +14,7 @@ interface Member {
     squad_1_power: number;
     total_hero_power?: number;
     arena_power?: number;
+    squad_type?: string;
     team_assignment?: string; // R4 Final Decision for DS
     ds_choice?: string;       // Attendance status for DS
     ds_team?: string;         // Member's requested Team for DS
@@ -60,7 +61,7 @@ export default function TacticalDashboard() {
                 let data: Member[] | null = null;
                 const { data: initialData, error } = await supabase
                     .from('members')
-                    .select('user_id, username, squad_1_power, total_hero_power, arena_power, team_assignment, ds_choice, ds_team, cs_team_assignment, cs_choice, cs_team, role, missed_ds, missed_cs');
+                    .select('user_id, username, squad_1_power, total_hero_power, arena_power, squad_type, team_assignment, ds_choice, ds_team, cs_team_assignment, cs_choice, cs_team, role, missed_ds, missed_cs');
 
                 if (initialData) {
                     data = initialData as Member[];
@@ -423,7 +424,21 @@ export default function TacticalDashboard() {
                                                         <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">({m.role || 'R1'})</div>
                                                     </td>
                                                     <td className={`px-3 py-3 font-mono ${magicFilterMode === 'hero' ? 'text-pink-600 font-extrabold table-cell' : 'text-slate-500 hidden lg:table-cell'}`}>{heroPower.toFixed(2)}M</td>
-                                                    <td className={`px-3 py-3 font-mono ${magicFilterMode === 'squad' || magicFilterMode === 'off' ? 'table-cell' : 'hidden sm:table-cell'} ${magicFilterMode === 'squad' ? 'text-pink-600 font-extrabold sm:text-sm' : 'text-slate-500'}`}>{squadPower.toFixed(2)}M</td>
+                                                    <td className={`px-3 py-3 font-mono ${magicFilterMode === 'squad' || magicFilterMode === 'off' ? 'table-cell' : 'hidden sm:table-cell'} ${magicFilterMode === 'squad' ? 'text-pink-600 font-extrabold sm:text-sm' : 'text-slate-500'}`}>
+                                                        <div>{squadPower.toFixed(2)}M</div>
+                                                        {m.squad_type && (() => {
+                                                            const st = m.squad_type!;
+                                                            const icon = st === 'Missile' ? '🚀' : st === 'Aircraft' ? '✈️' : st === 'Tank' ? '🛡️' : st.startsWith('Hybrid') ? '⚡' : null;
+                                                            const short = st.startsWith('Hybrid') ? st.replace('Hybrid — ', '') : st;
+                                                            if (!icon) return null;
+                                                            return (
+                                                                <div className="flex items-center gap-0.5 mt-0.5">
+                                                                    <span className="text-[10px] leading-none">{icon}</span>
+                                                                    <span className="text-[7px] font-black uppercase tracking-tight text-slate-400 truncate max-w-[60px]">{short}</span>
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </td>
                                                     <td className={`px-3 py-3 font-mono ${magicFilterMode === 'arena' ? 'text-pink-600 font-extrabold table-cell' : 'text-slate-500 hidden xl:table-cell'}`}>{arenaPower.toFixed(2)}M</td>
                                                     <td className="px-3 py-3 text-[9px] uppercase font-black text-slate-500 hidden sm:table-cell">
                                                         {(() => {

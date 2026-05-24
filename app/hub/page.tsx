@@ -26,6 +26,7 @@ interface Member {
     cs_team?: string;        // CS Requested Team
     cs_team_assignment?: string; // CS Assigned
     cs_signup_time?: string;
+    squad_type?: string;     // Squad 1 Type
 }
 
 const displayPower = (val: string | number) => {
@@ -40,6 +41,15 @@ const displayPower = (val: string | number) => {
         return validNum.toFixed(1) + "M";
     }
     return (validNum / 1000).toFixed(1) + "K";
+};
+
+const squadTypeIcon = (type?: string) => {
+    if (!type) return null;
+    if (type === 'Missile') return '🚀';
+    if (type === 'Aircraft') return '✈️';
+    if (type === 'Tank') return '🛡️';
+    if (type.startsWith('Hybrid')) return '⚡';
+    return null;
 };
 
 export default function HubPage() {
@@ -309,7 +319,7 @@ export default function HubPage() {
                                 </div>
                             </div>
 
-                            <div className="mt-4 flex gap-4 md:gap-8 justify-start">
+                            <div className="mt-4 flex flex-wrap gap-4 md:gap-8 justify-start items-end">
                                 <div className="text-left">
                                     <p className="text-[7px] md:text-[8px] font-black text-slate-600 uppercase tracking-tighter mb-0.5 italic leading-none">{t('squad1PowerLabel')}</p>
                                     <p className="text-sm md:text-lg font-black text-white leading-none tracking-tight">{displayPower(currentUser?.squad_1_power || 0)}</p>
@@ -318,6 +328,33 @@ export default function HubPage() {
                                     <p className="text-[7px] md:text-[8px] font-black text-slate-600 uppercase tracking-tighter mb-0.5 italic leading-none">{t('arenaPowerLabel')}</p>
                                     <p className="text-sm md:text-lg font-black text-white leading-none tracking-tight">{displayPower(currentUser?.arena_power || 0)}</p>
                                 </div>
+                                {currentUser?.squad_type && (() => {
+                                    const st = currentUser.squad_type;
+                                    const isHybrid = st.startsWith('Hybrid');
+                                    const isMissile = st === 'Missile';
+                                    const isAircraft = st === 'Aircraft';
+                                    const isTank = st === 'Tank';
+                                    const colorCls = isMissile ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                                        : isAircraft ? 'bg-sky-500/10 border-sky-500/30 text-sky-400'
+                                        : isTank ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                                        : isHybrid ? 'bg-purple-500/10 border-purple-500/30 text-purple-400'
+                                        : 'bg-white/5 border-white/10 text-slate-400';
+                                    const dotCls = isMissile ? 'bg-red-500'
+                                        : isAircraft ? 'bg-sky-500'
+                                        : isTank ? 'bg-green-500'
+                                        : 'bg-purple-500';
+                                    const icon = isMissile ? '🚀' : isAircraft ? '✈️' : isTank ? '🛡️' : '⚡';
+                                    return (
+                                        <div className="text-left">
+                                            <p className="text-[7px] md:text-[8px] font-black text-slate-600 uppercase tracking-tighter mb-1 italic leading-none">{t('squadTypeLabel')}</p>
+                                            <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[7px] md:text-[8px] font-black uppercase tracking-wide ${colorCls}`}>
+                                                <span className="text-xs">{icon}</span>
+                                                <div className={`w-1 h-1 rounded-full ${dotCls}`} />
+                                                <span className="max-w-[100px] truncate">{st}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </div>
 
@@ -370,6 +407,9 @@ export default function HubPage() {
                                             <div className="flex items-center gap-1 md:gap-2 min-w-0 flex-1">
                                                 <span className={`text-[7px] md:text-[9px] font-black w-2.5 ${i === 0 ? 'text-yellow-500' : 'text-slate-600'}`}>{i + 1}</span>
                                                 <span className="text-[7px] md:text-[10px] font-black uppercase tracking-tight text-white truncate">{m.username}</span>
+                                                {squadTypeIcon(m.squad_type) && (
+                                                    <span className="text-[9px] md:text-[11px] shrink-0 leading-none" title={m.squad_type}>{squadTypeIcon(m.squad_type)}</span>
+                                                )}
                                             </div>
                                             <span className="text-[6px] md:text-[10px] font-mono font-bold text-slate-400 ml-1 shrink-0">{displayPower(m.squad_1_power).replace('M', '')}</span>
                                         </div>

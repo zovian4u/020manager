@@ -6,6 +6,18 @@ import { supabase } from '../../lib/supabase';
 import { useLanguage } from '../../lib/LanguageContext';
 import Link from 'next/link';
 
+const SQUAD_TYPES = [
+    { value: 'Missile',                      icon: '🚀', color: 'from-red-500/20 to-orange-500/20',     border: 'border-red-500/40',    text: 'text-red-400',    dot: 'bg-red-500' },
+    { value: 'Aircraft',                     icon: '✈️', color: 'from-sky-500/20 to-blue-500/20',      border: 'border-sky-500/40',    text: 'text-sky-400',    dot: 'bg-sky-500' },
+    { value: 'Tank',                         icon: '🛡️', color: 'from-green-500/20 to-emerald-500/20', border: 'border-green-500/40',  text: 'text-green-400',  dot: 'bg-green-500' },
+    { value: 'Hybrid — 4 Aircraft + Murphy',  icon: '⚡', color: 'from-purple-500/20 to-violet-500/20', border: 'border-purple-500/40', text: 'text-purple-400', dot: 'bg-purple-500' },
+    { value: 'Hybrid — 4 Tank + Lucius',     icon: '⚡', color: 'from-purple-500/20 to-violet-500/20', border: 'border-purple-500/40', text: 'text-purple-400', dot: 'bg-purple-500' },
+    { value: 'Hybrid — 4 Missile + Lucius',  icon: '⚡', color: 'from-purple-500/20 to-violet-500/20', border: 'border-purple-500/40', text: 'text-purple-400', dot: 'bg-purple-500' },
+    { value: 'Hybrid — 4 Missile + Marshal', icon: '⚡', color: 'from-purple-500/20 to-violet-500/20', border: 'border-purple-500/40', text: 'text-purple-400', dot: 'bg-purple-500' },
+] as const;
+
+type SquadTypeValue = typeof SQUAD_TYPES[number]['value'] | '';
+
 export default function SettingsPage() {
     const stack = useStackApp();
     const user = stack.useUser();
@@ -20,6 +32,7 @@ export default function SettingsPage() {
         total_hero_power: 0,
         squad_1_power: 0,
         arena_power: 0,
+        squad_type: '' as SquadTypeValue,
         bio: "",
         gender: "",
         birthday: "",
@@ -53,6 +66,7 @@ export default function SettingsPage() {
                         total_hero_power: formatInM(data.total_hero_power || 0),
                         squad_1_power: formatInM(data.squad_1_power || 0),
                         arena_power: formatInM(data.arena_power || 0),
+                        squad_type: (data.squad_type || '') as SquadTypeValue,
                         bio: data.bio || "",
                         gender: data.gender || "",
                         birthday: data.birthday || "",
@@ -77,6 +91,7 @@ export default function SettingsPage() {
                 total_hero_power: (formData.total_hero_power || 0) * 1000000,
                 squad_1_power: (formData.squad_1_power || 0) * 1000000,
                 arena_power: (formData.arena_power || 0) * 1000000,
+                squad_type: formData.squad_type || null,
                 bio: formData.bio,
                 gender: formData.gender,
                 birthday: formData.birthday || null,
@@ -223,6 +238,53 @@ export default function SettingsPage() {
                                 />
                             </div>
                         
+                        {/* Squad Type Picker - Full Width */}
+                        <div className="col-span-2 lg:col-span-3 space-y-2">
+                            <label className="text-[8px] md:text-[9px] text-violet-400 font-black uppercase tracking-widest flex items-center gap-1.5 leading-none px-1">
+                                <span className="w-1 h-1 bg-violet-400 rounded-full" /> {t('squadTypeLabel')}
+                            </label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5">
+                                {SQUAD_TYPES.map((st) => {
+                                    const isSelected = formData.squad_type === st.value;
+                                    const label = (() => {
+                                        switch (st.value) {
+                                            case 'Missile': return t('squadTypeMissile');
+                                            case 'Aircraft': return t('squadTypeAircraft');
+                                            case 'Tank': return t('squadTypeTank');
+                                            case 'Hybrid — 4 Aircraft + Murphy': return t('squadTypeHybrid4AircraftMurphy');
+                                            case 'Hybrid — 4 Tank + Lucius': return t('squadTypeHybrid4TankLucius');
+                                            case 'Hybrid — 4 Missile + Lucius': return t('squadTypeHybrid4MissileLucius');
+                                            case 'Hybrid — 4 Missile + Marshal': return t('squadTypeHybrid4MissileMarshal');
+                                        }
+                                    })();
+                                    return (
+                                        <button
+                                            key={st.value}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, squad_type: isSelected ? '' : st.value })}
+                                            className={`relative flex items-center gap-2 px-2.5 py-2 rounded-xl border text-left transition-all duration-200 ${
+                                                isSelected
+                                                    ? `bg-gradient-to-br ${st.color} ${st.border} shadow-lg scale-[1.02]`
+                                                    : 'bg-slate-800/40 border-white/5 hover:bg-slate-700/40 hover:border-white/10'
+                                            }`}
+                                        >
+                                            <span className="text-sm shrink-0">{st.icon}</span>
+                                            <div className="min-w-0 flex-1">
+                                                <span className={`block text-[8px] md:text-[9px] font-black uppercase leading-tight truncate ${
+                                                    isSelected ? st.text : 'text-slate-400'
+                                                }`}>
+                                                    {label}
+                                                </span>
+                                            </div>
+                                            {isSelected && (
+                                                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${st.dot} shadow-lg`} />
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         {/* Bio Section - Full Width but Compact */}
                         <div className="col-span-2 lg:col-span-3 space-y-1">
                             <label className="text-[8px] md:text-[9px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-1.5 leading-none px-1">

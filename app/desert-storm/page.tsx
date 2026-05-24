@@ -6,6 +6,18 @@ import { supabase } from "../../lib/supabase";
 import Link from "next/link";
 import { useLanguage } from "../../lib/LanguageContext";
 
+const SQUAD_TYPES = [
+    { value: 'Missile',                      icon: '🚀', label: 'Missile',              color: 'bg-red-50 border-red-300 text-red-700',    active: 'bg-red-500 border-red-500 text-white' },
+    { value: 'Aircraft',                     icon: '✈️', label: 'Aircraft',             color: 'bg-sky-50 border-sky-300 text-sky-700',    active: 'bg-sky-500 border-sky-500 text-white' },
+    { value: 'Tank',                         icon: '🛡️', label: 'Tank',                 color: 'bg-green-50 border-green-300 text-green-700', active: 'bg-green-600 border-green-600 text-white' },
+    { value: 'Hybrid — 4 Aircraft + Murphy', icon: '⚡', label: '4 Aircraft + Murphy',  color: 'bg-purple-50 border-purple-300 text-purple-700', active: 'bg-purple-600 border-purple-600 text-white' },
+    { value: 'Hybrid — 4 Tank + Lucius',     icon: '⚡', label: '4 Tank + Lucius',      color: 'bg-purple-50 border-purple-300 text-purple-700', active: 'bg-purple-600 border-purple-600 text-white' },
+    { value: 'Hybrid — 4 Missile + Lucius',  icon: '⚡', label: '4 Missile + Lucius',   color: 'bg-purple-50 border-purple-300 text-purple-700', active: 'bg-purple-600 border-purple-600 text-white' },
+    { value: 'Hybrid — 4 Missile + Marshal', icon: '⚡', label: '4 Missile + Marshal',  color: 'bg-purple-50 border-purple-300 text-purple-700', active: 'bg-purple-600 border-purple-600 text-white' },
+] as const;
+
+type SquadTypeValue = typeof SQUAD_TYPES[number]['value'] | '';
+
 interface MemberProfile {
     user_id: string;
     username: string;
@@ -13,8 +25,9 @@ interface MemberProfile {
     total_hero_power: number;
     squad_1_power: number;
     arena_power?: number;
+    squad_type?: string;
     ds_choice?: string;
-    ds_team?: string; // Member's preference
+    ds_team?: string;
     ds_signup_time?: string;
 }
 
@@ -28,13 +41,15 @@ export default function DesertStormSignup() {
     const [selectedTeam, setSelectedTeam] = useState("");
     const [showPreview, setShowPreview] = useState(false);
     const [loading, setLoading] = useState(false);
-    
+
     const [statsData, setStatsData] = useState({
         total_hero_power: 0,
         squad_1_power: 0,
         arena_power: 0,
     });
 
+    const [selectedSquadType, setSelectedSquadType] = useState<SquadTypeValue>('');
+    const [showSquadAlert, setShowSquadAlert] = useState(false);
     const [isWindowOpen, setIsWindowOpen] = useState(false);
     const [statusChecked, setStatusChecked] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -52,6 +67,7 @@ export default function DesertStormSignup() {
                 setUserData(userRes.data as MemberProfile);
                 if (userRes.data.ds_choice) setSelectedChoice(userRes.data.ds_choice);
                 if (userRes.data.ds_team) setSelectedTeam(userRes.data.ds_team);
+                if (userRes.data.squad_type) setSelectedSquadType(userRes.data.squad_type as SquadTypeValue);
 
                 const formatForUI = (val: number) => {
                     if (!val) return 0;
@@ -228,7 +244,7 @@ export default function DesertStormSignup() {
                     </div>
                 ) : (
                     <div className="text-center space-y-4">
-                        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 md:p-10 space-y-4 text-left">
+                        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 md:p-6 space-y-4 text-left">
                             <div className="flex justify-between items-end">
                                 <div>
                                     <span className="text-[8px] text-slate-400 uppercase font-black tracking-widest block mb-1">{t('ign')}</span>
@@ -257,7 +273,7 @@ export default function DesertStormSignup() {
                                     />
                                 </div>
                                 <div>
-                                    <span className="text-[7px] md:text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-0.5">S1 Power</span>
+                                    <span className="text-[7px] md:text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-0.5">{t('squad1Power')}</span>
                                     <input
                                         type="number"
                                         step="0.1"
@@ -268,7 +284,7 @@ export default function DesertStormSignup() {
                                     />
                                 </div>
                                 <div>
-                                    <span className="text-[7px] md:text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-0.5">Arena</span>
+                                    <span className="text-[7px] md:text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-0.5">{t('arenaPower')}</span>
                                     <input
                                         type="number"
                                         step="0.1"
@@ -279,6 +295,39 @@ export default function DesertStormSignup() {
                                     />
                                 </div>
                             </div>
+
+                            {/* Squad Type Picker */}
+                            <div className="pt-1 border-t border-slate-100">
+                                <span className="text-[7px] md:text-[9px] text-slate-400 uppercase font-black tracking-widest block mb-2">{t('squadTypeLabel')}</span>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    {SQUAD_TYPES.map((st) => {
+                                        const isSelected = selectedSquadType === st.value;
+                                        return (
+                                            <button
+                                                key={st.value}
+                                                type="button"
+                                                onClick={() => setSelectedSquadType(isSelected ? '' : st.value)}
+                                                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border text-left transition-all duration-150 ${
+                                                    isSelected ? st.active : st.color
+                                                } border`}
+                                            >
+                                                <span className="text-sm shrink-0">{st.icon}</span>
+                                                <span className="text-[8px] md:text-[9px] font-black uppercase leading-tight truncate">
+                                                    {st.label}
+                                                </span>
+                                                {isSelected && <span className="ml-auto shrink-0 text-[10px]">✓</span>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Squad type missing alert — only shown after a failed confirm attempt */}
+                            {showSquadAlert && !selectedSquadType && (
+                                <p className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-center animate-in fade-in duration-300">
+                                    {t('validationSelectSquadType')}
+                                </p>
+                            )}
 
                             {selectedTeam && selectedChoice === 'YES' && (
                                 <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
@@ -293,13 +342,18 @@ export default function DesertStormSignup() {
                         <div className="flex gap-2">
                             <button onClick={() => setShowPreview(false)} className="flex-1 py-3 rounded-full bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]">{t('edit')}</button>
                             <button
+                                disabled={loading}
                                 onClick={async () => {
+                                    if (!selectedSquadType) {
+                                        setShowSquadAlert(true);
+                                        return;
+                                    }
                                     setLoading(true);
                                     const smartScale = (val: number) => {
                                         if (val <= 0) return 0;
                                         return val < 5000 ? Math.round(val * 1000000) : Math.round(val);
                                     };
-                                    
+
                                     const finalTHP = smartScale(statsData.total_hero_power);
                                     const finalS1P = smartScale(statsData.squad_1_power);
                                     const finalAP = smartScale(statsData.arena_power);
@@ -309,6 +363,7 @@ export default function DesertStormSignup() {
                                         total_hero_power: finalTHP,
                                         squad_1_power: finalS1P,
                                         arena_power: finalAP,
+                                        squad_type: selectedSquadType || null,
                                         ds_choice: selectedChoice,
                                         ds_team: selectedChoice === 'YES' ? selectedTeam : null,
                                         ds_signup_time: new Date().toISOString()
@@ -317,7 +372,7 @@ export default function DesertStormSignup() {
                                     if (error) { setLoading(false); console.error(error.message); }
                                     else { setIsSuccess(true); }
                                 }}
-                                className="flex-1 py-3 rounded-full bg-slate-900 text-white font-black uppercase text-[9px] md:text-[10px]"
+                                className="flex-1 py-3 rounded-full bg-slate-900 text-white font-black uppercase text-[9px] md:text-[10px] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                             >
                                 {loading ? t('syncing') : t('confirmDeployment')}
                             </button>
