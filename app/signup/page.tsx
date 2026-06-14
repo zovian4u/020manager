@@ -66,79 +66,35 @@ export default function SignUpPage() {
                         020
                     </div>
                     <h1 className="text-3xl font-black text-white tracking-tight uppercase italic drop-shadow-lg text-center leading-tight">
-                        {t('signUpTitle')}
+                        Registration Closed
                     </h1>
                     <p className="text-slate-400 font-bold mt-2 tracking-widest text-[10px] uppercase">
                         Join the Elite Alliance
                     </p>
                 </div>
 
-                {/* Signup Card */}
-                <div className="bg-slate-900/50 backdrop-blur-2xl border border-white/10 rounded-[32px] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {error && (
-                            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-2xl text-xs font-black uppercase tracking-wider animate-shake">
-                                ⚠️ {error}
-                            </div>
-                        )}
+                {/* Closed Message Card */}
+                <div className="bg-slate-900/50 backdrop-blur-2xl border border-white/10 rounded-[32px] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] text-center space-y-6">
+                    <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center text-red-500 text-3xl mx-auto filter drop-shadow-[0_0_8px_rgba(239,68,68,0.3)]">
+                        ⚠️
+                    </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">
-                                {t('email')}
-                            </label>
-                            <input
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-slate-800/50 border border-white/5 rounded-2xl px-5 py-4 text-white font-bold outline-none focus:border-pink-500/50 focus:ring-4 focus:ring-pink-500/10 transition-all placeholder:text-slate-600"
-                                placeholder="commander@020.alliance"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">
-                                {t('password')}
-                            </label>
-                            <input
-                                type="password"
-                                required
-                                minLength={8}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-slate-800/50 border border-white/5 rounded-2xl px-5 py-4 text-white font-bold outline-none focus:border-pink-500/50 focus:ring-4 focus:ring-pink-500/10 transition-all placeholder:text-slate-600"
-                                placeholder="Min. 8 characters"
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-black py-5 rounded-2xl shadow-[0_20px_40px_-10px_rgba(236,72,153,0.3)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
-                        >
-                            <span className="relative z-10 flex items-center justify-center gap-2 uppercase tracking-[0.2em]">
-                                {isLoading ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                    <>
-                                        {t('signUp')}
-                                        <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                        </svg>
-                                    </>
-                                )}
-                            </span>
-                        </button>
-                    </form>
-
-                    <div className="mt-8 text-center pt-6 border-t border-white/5">
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                            {t('alreadyAccount')}
-                            <Link href="/signin" className="ml-2 text-pink-500 hover:text-pink-400 transition-colors underline-offset-4 hover:underline">
-                                {t('signIn')}
-                            </Link>
+                    <div className="space-y-2">
+                        <h2 className="text-white font-black uppercase tracking-wider text-sm">
+                            Recruitment is Closed
+                        </h2>
+                        <p className="text-slate-400 text-xs leading-relaxed font-bold">
+                            Registration for the 020 Strategic Hub is currently closed to new members. If you need access, please contact an R4 Officer or the Alliance Leader.
                         </p>
                     </div>
+
+                    <Link href="/signin" className="block">
+                        <button
+                            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 uppercase tracking-widest text-xs"
+                        >
+                            Return to Sign In
+                        </button>
+                    </Link>
                 </div>
 
                 {/* Footer Meta */}

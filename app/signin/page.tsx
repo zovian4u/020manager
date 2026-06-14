@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from 'react';
 import { useStackApp } from "@stackframe/stack";
@@ -112,11 +112,8 @@ export default function SignInPage() {
                     </form>
 
                     <div className="mt-8 text-center pt-6 border-t border-white/5">
-                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                            {t('noAccount')}
-                            <Link href="/signup" className="ml-2 text-pink-500 hover:text-pink-400 transition-colors underline-offset-4 hover:underline">
-                                {t('signUp')}
-                            </Link>
+                        <p className="text-slate-500 text-[8px] sm:text-[9px] font-black uppercase tracking-widest leading-relaxed">
+                            Recruitment is closed. Contact R4 officers for command hub access.
                         </p>
                     </div>
                 </div>
