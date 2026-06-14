@@ -108,6 +108,7 @@ export default function MenuBar() {
                                         <NavLink href="/" label={t('homePage')} isActive={pathname === '/'} />
                                         <NavLink href="/hub" label={t('hubTitle')} isActive={pathname === '/hub'} />
                                         <NavLink href="/growth" label={t('growth')} isActive={pathname === '/growth'} />
+                                        <NavLink href="/season-6" label={t('season6')} isActive={pathname === '/season-6'} />
                                         
                                         <div className="relative group" onMouseEnter={() => setDesktopDropdownOpen(true)} onMouseLeave={() => setDesktopDropdownOpen(false)}>
                                             <button className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap shadow-sm border flex items-center gap-2 ${isActivityActive ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}>
@@ -158,6 +159,7 @@ export default function MenuBar() {
                                             <NavLink href="/" label={t('homePage')} isActive={pathname === '/'} />
                                             <NavLink href="/hub" label={t('hubTitle')} isActive={pathname === '/hub'} />
                                             <NavLink href="/growth" label={t('growth')} isActive={pathname === '/growth'} />
+                                            <NavLink href="/season-6" label={t('season6')} isActive={pathname === '/season-6'} />
                                         </div>
                                         <div className="relative group" 
                                             onMouseEnter={() => setDesktopDropdownOpen(true)}
@@ -194,6 +196,7 @@ export default function MenuBar() {
                                                         <Link href="/calculators/t11" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('t11Calculator')}</Link>
                                                         
                                                         <div className="border-b border-slate-700/50 pb-2 my-2 px-4 text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Info</div>
+                                                         <Link href="/season-6" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('season6')}</Link>
                                                         <Link href="/guide" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('guide')}</Link>
                                                         <Link href="/about" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('aboutUs')}</Link>
                                                         <Link href="/contact" className="block px-4 py-2 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-colors">{t('contactUs')}</Link>
@@ -456,6 +459,9 @@ function MobileDock() {
                         </Link>
                         <Link href="/contact" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-pink-500/10 hover:text-pink-500 transition-all font-black">
                             <span>📧</span> {t('contactUs')}
+                        </Link>
+                        <Link href="/season-6" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-purple-500/10 hover:text-purple-500 transition-all font-black">
+                            <span>🏆</span> {t('season6')}
                         </Link>
                         <div className="h-px bg-slate-800 my-1 mx-2" />
                         <Link href="/settings" onClick={closeAll}>
