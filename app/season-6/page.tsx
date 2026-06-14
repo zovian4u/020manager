@@ -896,103 +896,189 @@ export default function Season6Page() {
                                             {t("noTradePosts") || "No trade post records found."}
                                         </div>
                                     ) : (
-                                        <div className="overflow-x-auto rounded-2xl border border-emerald-900/50 bg-[#010905]/40 shadow-inner">
-                                            <table className="w-full border-collapse text-left">
-                                                <thead>
-                                                    <tr className="border-b border-emerald-900 text-[10px] font-black text-emerald-500/85 uppercase tracking-widest bg-[#010c06]/90">
-                                                        <th className="px-6 py-4 w-12 text-center">Rank</th>
-                                                        <th className="px-6 py-4">{t("alliance") || "Alliance"}</th>
-                                                        <th className="px-6 py-4 text-center">{t("server") || "Server"}</th>
-                                                        <th className="px-6 py-4">{t("faction") || "Faction"}</th>
-                                                        <th className="px-6 py-4 text-center">{t("tradePosts") || "Trade Posts"}</th>
-                                                        {isR4OrR5 && <th className="px-6 py-4 text-center w-28">Actions</th>}
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="text-xs font-bold text-emerald-100 divide-y divide-emerald-950/50">
-                                                    {filteredRecords.map((r, index) => {
-                                                        const faction = getFaction(r.server_number);
-                                                        const isMyAlliance = r.alliance_name.trim().toLowerCase() === "020";
+                                        <>
+                                            {/* Mobile Responsive Cards View */}
+                                            <div className="md:hidden space-y-4 animate-in fade-in duration-300">
+                                                {filteredRecords.map((r, index) => {
+                                                    const faction = getFaction(r.server_number);
+                                                    const isMyAlliance = r.alliance_name.trim().toLowerCase() === "020";
 
-                                                        return (
-                                                            <tr
-                                                                key={r.id}
-                                                                className={`hover:bg-emerald-950/20 transition-colors ${
-                                                                    isMyAlliance ? "bg-blue-950/15 hover:bg-blue-950/30" : ""
-                                                                }`}
-                                                            >
-                                                                <td className="px-6 py-4 text-center font-black text-emerald-800 font-mono">
-                                                                    {index + 1}
-                                                                </td>
+                                                    return (
+                                                        <div
+                                                            key={r.id}
+                                                            className={`bg-[#010c06]/85 border border-emerald-950/60 rounded-2xl p-4 shadow-md transition-all relative overflow-hidden ${
+                                                                isMyAlliance ? "ring-1 ring-blue-500/20 bg-blue-950/10" : ""
+                                                            }`}
+                                                        >
+                                                            {/* Background ambient glow inside card if it's our alliance */}
+                                                            {isMyAlliance && (
+                                                                <div className="absolute right-0 top-0 w-24 h-24 bg-blue-500/5 blur-2xl rounded-full pointer-events-none" />
+                                                            )}
 
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span
-                                                                            className={`uppercase tracking-tighter ${
-                                                                                isMyAlliance
-                                                                                    ? "text-blue-400 font-extrabold"
-                                                                                    : "text-white"
-                                                                            }`}
-                                                                        >
-                                                                            {r.alliance_name}
-                                                                        </span>
-                                                                        {isMyAlliance && (
-                                                                            <span className="bg-blue-500/20 text-blue-400 text-[8px] font-black uppercase px-1.5 py-0.5 rounded tracking-widest animate-pulse">
-                                                                                MINE
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </td>
-
-                                                                <td className="px-6 py-4 text-center font-mono text-emerald-400/80">
-                                                                    #{r.server_number}
-                                                                </td>
-
-                                                                <td className="px-6 py-4">
-                                                                    {faction === "Deepwood" ? (
-                                                                        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-950/70 text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-wider">
-                                                                            <img src="/images/season-6/deer.jpg" alt="Deer" className="w-4.5 h-4.5 rounded-full object-cover border border-emerald-500/30" />
-                                                                            {getFactionName(faction, t)}
-                                                                        </div>
-                                                                    ) : faction === "Wetland" ? (
-                                                                        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-cyan-950/70 text-cyan-400 border border-cyan-500/20 text-[9px] font-black uppercase tracking-wider">
-                                                                            <img src="/images/season-6/crocodile.jpg" alt="Crocodile" className="w-4.5 h-4.5 rounded-full object-cover border border-cyan-500/30" />
-                                                                            {getFactionName(faction, t)}
-                                                                        </div>
-                                                                    ) : (
-                                                                        <span className="bg-slate-900/80 text-slate-500 border border-slate-800 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">
-                                                                            Other
+                                                            <div className="flex justify-between items-center mb-3">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[10px] font-black text-emerald-600/80 font-mono bg-emerald-950/40 border border-emerald-900/30 px-2 py-0.5 rounded">
+                                                                        Rank {index + 1}
+                                                                    </span>
+                                                                    <span className={`text-sm uppercase font-black tracking-tight ${isMyAlliance ? "text-blue-400" : "text-white"}`}>
+                                                                        {r.alliance_name}
+                                                                    </span>
+                                                                    {isMyAlliance && (
+                                                                        <span className="bg-blue-500/20 text-blue-400 text-[7px] font-black uppercase px-1.5 py-0.5 rounded tracking-widest animate-pulse">
+                                                                            MINE
                                                                         </span>
                                                                     )}
-                                                                </td>
+                                                                </div>
+                                                                <span className="font-mono text-xs text-emerald-400 font-bold">
+                                                                    #{r.server_number}
+                                                                </span>
+                                                            </div>
 
-                                                                <td className="px-6 py-4 text-center font-mono font-extrabold text-white text-sm">
-                                                                    {r.trade_posts_count}
-                                                                </td>
+                                                            <div className="flex justify-between items-center bg-[#010804]/50 border border-emerald-950/30 p-2.5 rounded-xl text-[11px] mb-3">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Faction:</span>
+                                                                    {faction === "Deepwood" ? (
+                                                                        <div className="inline-flex items-center gap-1.5 text-emerald-400 text-[9px] font-black uppercase tracking-wider">
+                                                                            <img src="/images/season-6/deer.jpg" alt="Deer" className="w-4 h-4 rounded-full object-cover border border-emerald-500/30" />
+                                                                            Deer
+                                                                        </div>
+                                                                    ) : faction === "Wetland" ? (
+                                                                        <div className="inline-flex items-center gap-1.5 text-cyan-400 text-[9px] font-black uppercase tracking-wider">
+                                                                            <img src="/images/season-6/crocodile.jpg" alt="Crocodile" className="w-4 h-4 rounded-full object-cover border border-cyan-500/30" />
+                                                                            Crocodile
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="text-slate-500 text-[9px] font-black uppercase">Other</span>
+                                                                    )}
+                                                                </div>
 
-                                                                {isR4OrR5 && (
-                                                                    <td className="px-6 py-4 text-center">
-                                                                        <div className="flex justify-center gap-2">
-                                                                            <button
-                                                                                onClick={() => handleEditClick(r)}
-                                                                                className="px-2 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:text-white transition-colors"
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">Posts:</span>
+                                                                    <span className="font-mono font-black text-white text-xs">{r.trade_posts_count}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* R4/R5 Action Buttons directly inside the card */}
+                                                            {isR4OrR5 && (
+                                                                <div className="flex gap-2 pt-2 border-t border-emerald-950/30">
+                                                                    <button
+                                                                        onClick={() => handleEditClick(r)}
+                                                                        className="flex-1 py-2 bg-emerald-950/50 hover:bg-emerald-900/40 text-emerald-400 hover:text-white rounded-lg border border-emerald-800/30 font-black uppercase text-[9px] tracking-widest transition-all text-center"
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeleteClick(r.id)}
+                                                                        className="flex-1 py-2 bg-red-950/20 hover:bg-red-900/10 text-red-400 hover:text-red-500 rounded-lg border border-red-900/20 font-black uppercase text-[9px] tracking-widest transition-all text-center"
+                                                                    >
+                                                                        {t("deleteRecord") || "Delete"}
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Desktop Table View */}
+                                            <div className="hidden md:block overflow-x-auto rounded-2xl border border-emerald-900/50 bg-[#010905]/40 shadow-inner">
+                                                <table className="w-full border-collapse text-left">
+                                                    <thead>
+                                                        <tr className="border-b border-emerald-900 text-[10px] font-black text-emerald-500/85 uppercase tracking-widest bg-[#010c06]/90">
+                                                            <th className="px-6 py-4 w-12 text-center">Rank</th>
+                                                            <th className="px-6 py-4">{t("alliance") || "Alliance"}</th>
+                                                            <th className="px-6 py-4 text-center">{t("server") || "Server"}</th>
+                                                            <th className="px-6 py-4">{t("faction") || "Faction"}</th>
+                                                            <th className="px-6 py-4 text-center">{t("tradePosts") || "Trade Posts"}</th>
+                                                            {isR4OrR5 && <th className="px-6 py-4 text-center w-28">Actions</th>}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="text-xs font-bold text-emerald-100 divide-y divide-emerald-950/50">
+                                                        {filteredRecords.map((r, index) => {
+                                                            const faction = getFaction(r.server_number);
+                                                            const isMyAlliance = r.alliance_name.trim().toLowerCase() === "020";
+
+                                                            return (
+                                                                <tr
+                                                                    key={r.id}
+                                                                    className={`hover:bg-emerald-950/20 transition-colors ${
+                                                                        isMyAlliance ? "bg-blue-950/15 hover:bg-blue-950/30" : ""
+                                                                    }`}
+                                                                >
+                                                                    <td className="px-6 py-4 text-center font-black text-emerald-800 font-mono">
+                                                                        {index + 1}
+                                                                    </td>
+
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span
+                                                                                className={`uppercase tracking-tighter ${
+                                                                                    isMyAlliance
+                                                                                        ? "text-blue-400 font-extrabold"
+                                                                                        : "text-white"
+                                                                                }`}
                                                                             >
-                                                                                Edit
-                                                                            </button>
-                                                                            <button
-                                                                                onClick={() => handleDeleteClick(r.id)}
-                                                                                className="px-2 py-1 text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-500 transition-colors"
-                                                                            >
-                                                                                {t("deleteRecord") || "Delete"}
-                                                                            </button>
+                                                                                {r.alliance_name}
+                                                                            </span>
+                                                                            {isMyAlliance && (
+                                                                                <span className="bg-blue-500/20 text-blue-400 text-[8px] font-black uppercase px-1.5 py-0.5 rounded tracking-widest animate-pulse">
+                                                                                    MINE
+                                                                                </span>
+                                                                            )}
                                                                         </div>
                                                                     </td>
-                                                                )}
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </table>
-                                        </div>
+
+                                                                    <td className="px-6 py-4 text-center font-mono text-emerald-400/80">
+                                                                        #{r.server_number}
+                                                                    </td>
+
+                                                                    <td className="px-6 py-4">
+                                                                        {faction === "Deepwood" ? (
+                                                                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-950/70 text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-wider">
+                                                                                <img src="/images/season-6/deer.jpg" alt="Deer" className="w-4.5 h-4.5 rounded-full object-cover border border-emerald-500/30" />
+                                                                                {getFactionName(faction, t)}
+                                                                            </div>
+                                                                        ) : faction === "Wetland" ? (
+                                                                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-cyan-950/70 text-cyan-400 border border-cyan-500/20 text-[9px] font-black uppercase tracking-wider">
+                                                                                <img src="/images/season-6/crocodile.jpg" alt="Crocodile" className="w-4.5 h-4.5 rounded-full object-cover border border-cyan-500/30" />
+                                                                                {getFactionName(faction, t)}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span className="bg-slate-900/80 text-slate-500 border border-slate-800 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full">
+                                                                                Other
+                                                                            </span>
+                                                                        )}
+                                                                    </td>
+
+                                                                    <td className="px-6 py-4 text-center font-mono font-extrabold text-white text-sm">
+                                                                        {r.trade_posts_count}
+                                                                    </td>
+
+                                                                    {isR4OrR5 && (
+                                                                        <td className="px-6 py-4 text-center">
+                                                                            <div className="flex justify-center gap-2">
+                                                                                <button
+                                                                                    onClick={() => handleEditClick(r)}
+                                                                                    className="px-2 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:text-white transition-colors"
+                                                                                >
+                                                                                    Edit
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => handleDeleteClick(r.id)}
+                                                                                    className="px-2 py-1 text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-500 transition-colors"
+                                                                                >
+                                                                                    {t("deleteRecord") || "Delete"}
+                                                                                </button>
+                                                                            </div>
+                                                                        </td>
+                                                                    )}
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </>
                                     )}
                                 </>
                             )}

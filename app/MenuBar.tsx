@@ -522,6 +522,13 @@ function MobileDock() {
                             icon={<svg className="w-5 h-5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
                         />
 
+                        <NavIcon 
+                            href="/season-6" 
+                            label={t('season6')} 
+                            isActive={pathname === '/season-6'}
+                            icon={<span className="text-lg md:text-xl">🏆</span>}
+                        />
+
                         <button 
                             onClick={() => { const newState = !showBattle; closeAll(); setShowBattle(newState); }}
                             className="flex flex-col items-center justify-center gap-1 flex-1 min-w-0"
