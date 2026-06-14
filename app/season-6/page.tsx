@@ -745,75 +745,75 @@ export default function Season6Page() {
                 )}
 
                 {/* KPI Metrics Dashboard */}
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
                     {/* Deepwood (Deer) Card */}
-                    <div className="bg-[#042111]/70 border border-emerald-500/20 backdrop-blur-md rounded-3xl p-5 shadow-[0_10px_30px_rgba(4,33,17,0.5)] flex flex-col justify-between relative overflow-hidden group hover:border-emerald-500/40 transition-all duration-300">
-                        <div className="absolute right-3 top-3 w-14 h-14 rounded-full overflow-hidden border border-emerald-500/30 shadow-md">
+                    <div className="bg-[#042111]/70 border border-emerald-500/20 backdrop-blur-md rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-[0_10px_30px_rgba(4,33,17,0.5)] flex flex-col justify-between relative overflow-hidden group hover:border-emerald-500/40 transition-all duration-300">
+                        <div className="absolute right-2 top-2 sm:right-3 sm:top-3 w-8 h-8 sm:w-14 sm:h-14 rounded-full overflow-hidden border border-emerald-500/30 shadow-md">
                             <img src="/images/season-6/deer.jpg" alt="Deepwood Deer" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
-                        <div className="pr-14">
-                            <span className="text-[8px] text-emerald-500 font-extrabold tracking-widest uppercase block mb-1">
+                        <div className="pr-8 sm:pr-14">
+                            <span className="text-[7px] sm:text-[8px] text-emerald-500 font-extrabold tracking-widest uppercase block mb-0.5 sm:mb-1">
                                 Faction Emblem
                             </span>
-                            <h3 className="text-lg font-black text-white uppercase italic tracking-tight mb-2">
+                            <h3 className="text-xs sm:text-lg font-black text-white uppercase italic tracking-tight mb-1 sm:mb-2 truncate sm:overflow-visible">
                                 {t("deepwood") || "Deepwood (Dear)"}
                             </h3>
-                            <div className="text-4xl font-black text-emerald-400">{deepwoodTotal}</div>
+                            <div className="text-2xl sm:text-4xl font-black text-emerald-400">{deepwoodTotal}</div>
                         </div>
-                        <p className="text-[8px] text-emerald-600/80 font-bold uppercase mt-4 tracking-wider">
+                        <p className="text-[7px] sm:text-[8px] text-emerald-600/80 font-bold uppercase mt-2 sm:mt-4 tracking-wider truncate sm:overflow-visible">
                             Servers: #773, #772, #744, #681, #736
                         </p>
                     </div>
 
                     {/* Wetland (Crocodile) Card */}
-                    <div className="bg-[#021f24]/70 border border-cyan-500/20 backdrop-blur-md rounded-3xl p-5 shadow-[0_10px_30px_rgba(2,31,36,0.5)] flex flex-col justify-between relative overflow-hidden group hover:border-cyan-500/40 transition-all duration-300">
-                        <div className="absolute right-3 top-3 w-14 h-14 rounded-full overflow-hidden border border-cyan-500/30 shadow-md">
+                    <div className="bg-[#021f24]/70 border border-cyan-500/20 backdrop-blur-md rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-[0_10px_30px_rgba(2,31,36,0.5)] flex flex-col justify-between relative overflow-hidden group hover:border-cyan-500/40 transition-all duration-300">
+                        <div className="absolute right-2 top-2 sm:right-3 sm:top-3 w-8 h-8 sm:w-14 sm:h-14 rounded-full overflow-hidden border border-cyan-500/30 shadow-md">
                             <img src="/images/season-6/crocodile.jpg" alt="Wetland Crocodile" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
-                        <div className="pr-14">
-                            <span className="text-[8px] text-cyan-500 font-extrabold tracking-widest uppercase block mb-1">
+                        <div className="pr-8 sm:pr-14">
+                            <span className="text-[7px] sm:text-[8px] text-cyan-500 font-extrabold tracking-widest uppercase block mb-0.5 sm:mb-1">
                                 Faction Emblem
                             </span>
-                            <h3 className="text-lg font-black text-white uppercase italic tracking-tight mb-2">
+                            <h3 className="text-xs sm:text-lg font-black text-white uppercase italic tracking-tight mb-1 sm:mb-2 truncate sm:overflow-visible">
                                 {t("wetland") || "Wetland (Crocodile)"}
                             </h3>
-                            <div className="text-4xl font-black text-cyan-400">{wetlandTotal}</div>
+                            <div className="text-2xl sm:text-4xl font-black text-cyan-400">{wetlandTotal}</div>
                         </div>
-                        <p className="text-[8px] text-cyan-600/80 font-bold uppercase mt-4 tracking-wider">
+                        <p className="text-[7px] sm:text-[8px] text-cyan-600/80 font-bold uppercase mt-2 sm:mt-4 tracking-wider truncate sm:overflow-visible">
                             Servers: #800, #804, #699, #677
                         </p>
                     </div>
 
                     {/* Server 773 Card */}
-                    <div className="bg-[#1b210f]/70 border border-lime-500/20 backdrop-blur-md rounded-3xl p-5 shadow-[0_10px_30px_rgba(27,33,15,0.5)] flex flex-col justify-between relative overflow-hidden group hover:border-lime-500/40 transition-all duration-300">
-                        <div className="absolute right-4 top-4 text-2xl filter drop-shadow-[0_0_5px_rgba(234,179,8,0.3)]">🛡️</div>
-                        <div>
-                            <span className="text-[8px] text-lime-500 font-extrabold tracking-widest uppercase block mb-1">
+                    <div className="bg-[#1b210f]/70 border border-lime-500/20 backdrop-blur-md rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-[0_10px_30px_rgba(27,33,15,0.5)] flex flex-col justify-between relative overflow-hidden group hover:border-lime-500/40 transition-all duration-300">
+                        <div className="absolute right-2 top-2 sm:right-4 sm:top-4 text-lg sm:text-2xl filter drop-shadow-[0_0_5px_rgba(234,179,8,0.3)]">🛡️</div>
+                        <div className="pr-8 sm:pr-0">
+                            <span className="text-[7px] sm:text-[8px] text-lime-500 font-extrabold tracking-widest uppercase block mb-0.5 sm:mb-1">
                                 {t("server773") || "Server #773"}
                             </span>
-                            <h3 className="text-lg font-black text-white uppercase italic tracking-tight mb-2">
+                            <h3 className="text-xs sm:text-lg font-black text-white uppercase italic tracking-tight mb-1 sm:mb-2 truncate sm:overflow-visible">
                                 Our Server Progress
                             </h3>
-                            <div className="text-4xl font-black text-lime-400">{server773Total}</div>
+                            <div className="text-2xl sm:text-4xl font-black text-lime-400">{server773Total}</div>
                         </div>
-                        <p className="text-[8px] text-lime-600/80 font-bold uppercase mt-4 tracking-wider">
+                        <p className="text-[7px] sm:text-[8px] text-lime-600/80 font-bold uppercase mt-2 sm:mt-4 tracking-wider truncate sm:overflow-visible">
                             Total claimed by 773 alliances
                         </p>
                     </div>
 
                     {/* My Alliance Card */}
-                    <div className="bg-[#0b1c2f]/70 border border-blue-500/20 backdrop-blur-md rounded-3xl p-5 shadow-[0_10px_30px_rgba(11,28,47,0.5)] flex flex-col justify-between relative overflow-hidden group hover:border-blue-500/40 transition-all duration-300">
-                        <div className="absolute right-4 top-4 text-2xl filter drop-shadow-[0_0_5px_rgba(59,130,246,0.3)]">🏆</div>
-                        <div>
-                            <span className="text-[8px] text-blue-500 font-extrabold tracking-widest uppercase block mb-1">
+                    <div className="bg-[#0b1c2f]/70 border border-blue-500/20 backdrop-blur-md rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-[0_10px_30px_rgba(11,28,47,0.5)] flex flex-col justify-between relative overflow-hidden group hover:border-blue-500/40 transition-all duration-300">
+                        <div className="absolute right-2 top-2 sm:right-4 sm:top-4 text-lg sm:text-2xl filter drop-shadow-[0_0_5px_rgba(59,130,246,0.3)]">🏆</div>
+                        <div className="pr-8 sm:pr-0">
+                            <span className="text-[7px] sm:text-[8px] text-blue-500 font-extrabold tracking-widest uppercase block mb-0.5 sm:mb-1">
                                 {t("myAlliance") || "My Alliance (020)"}
                             </span>
-                            <h3 className="text-lg font-black text-white uppercase italic tracking-tight mb-2">
+                            <h3 className="text-xs sm:text-lg font-black text-white uppercase italic tracking-tight mb-1 sm:mb-2 truncate sm:overflow-visible">
                                 Alliance Control
                             </h3>
-                            <div className="text-4xl font-black text-blue-400">{myAllianceTotal}</div>
+                            <div className="text-2xl sm:text-4xl font-black text-blue-400">{myAllianceTotal}</div>
                         </div>
-                        <p className="text-[8px] text-blue-600/80 font-bold uppercase mt-4 tracking-wider">
+                        <p className="text-[7px] sm:text-[8px] text-blue-600/80 font-bold uppercase mt-2 sm:mt-4 tracking-wider truncate sm:overflow-visible">
                             Direct contribution from 020
                         </p>
                     </div>
