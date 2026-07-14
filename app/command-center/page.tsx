@@ -146,7 +146,6 @@ export default function CommandCenter() {
         loadData();
     }, [hasMounted, user]);
 
-    const isSuperAdmin = user?.id === '1ae3fd86-2f52-45d7-9b37-00d41e42cabf' || (user as any)?.username === 'Zovian';
 
     const triggerSnapshot = async (overwrite = false) => {
         setIsSnapshotting(true);
@@ -353,13 +352,12 @@ export default function CommandCenter() {
                     </div>
                 </div>
 
-                {/* BOTTOM SECTION: GROWTH OPERATIONS - RESTRICTED TO ZOVIAN ONLY */}
-                {isSuperAdmin && (
-                    <div className="bg-slate-800/40 p-4 rounded-xl border border-pink-500/10 space-y-4">
-                        <div className="flex items-center justify-between border-b border-pink-500/10 pb-2">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xl">📊</span>
-                                <h3 className="text-[12px] font-black text-white italic tracking-widest uppercase">Growth Logistics (Zovian Only)</h3>
+                {/* BOTTOM SECTION: GROWTH OPERATIONS */}
+                <div className="bg-slate-800/40 p-4 rounded-xl border border-pink-500/10 space-y-4">
+                    <div className="flex items-center justify-between border-b border-pink-500/10 pb-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xl">📊</span>
+                            <h3 className="text-[12px] font-black text-white italic tracking-widest uppercase">Growth Logistics</h3>
                             </div>
                             {lastSnapshot && (
                                 <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">
@@ -400,9 +398,8 @@ export default function CommandCenter() {
                             >
                                 {isSnapshotting ? 'SYNCING_INTEL...' : '🚀 Execute Manual Snapshot'}
                             </button>
-                        </div>
                     </div>
-                )}
+                </div>
 
                 <footer className="pt-2 border-t border-white/5 flex justify-between items-center opacity-30 px-2">
                     <p className="text-[6px] font-black uppercase tracking-[0.2em]">020 Strategic Command</p>
