@@ -112,8 +112,11 @@ export default function SignInPage() {
                     </form>
 
                     <div className="mt-8 text-center pt-6 border-t border-white/5">
-                        <p className="text-slate-500 text-[8px] sm:text-[9px] font-black uppercase tracking-widest leading-relaxed">
-                            Recruitment is closed. Contact R4 officers for command hub access.
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                            {t('noAccount')}{' '}
+                            <Link href="/signup" className="text-pink-400 hover:text-pink-300 transition-colors">
+                                {t('signUp')}
+                            </Link>
                         </p>
                     </div>
                 </div>
