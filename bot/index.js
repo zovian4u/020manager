@@ -284,63 +284,38 @@ client.on(Events.InteractionCreate, async (interaction) => {
       // ── /create ────────────────────────────────────────────────────────────
       if (commandName === 'create') {
         const targetChannel = interaction.options.getChannel('channel');
-        const imageUrl = interaction.options.getString('image') || null;
+        const title       = interaction.options.getString('title');
+        const content     = interaction.options.getString('body');
+        const timeRaw     = interaction.options.getString('time');
+        const intervalRaw = interaction.options.getString('interval');
+        const imageUrl    = interaction.options.getString('image') || null;
 
-        // Show current local time in the guild's configured timezone
-        const tz = getGuildTimezone(interaction.guildId);
-        const localNowStr = new Date().toLocaleString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
+        const executeAt       = parseLocalTime(timeRaw, interaction.guildId);
+        const intervalMinutes = parseInterval(intervalRaw);
+        const existingList    = await loadAnnouncements(guildId);
+        const id              = generateNextId(existingList);
 
-        const modal = new ModalBuilder()
-          .setCustomId(`modal_create_ann_${targetChannel.id}_${imageUrl ? encodeURIComponent(imageUrl) : 'noimg'}`)
-          .setTitle('Create Alliance Announcement');
+        const announcementObj = {
+          id, guildId, title, content,
+          targetChannelId: targetChannel.id,
+          type: intervalMinutes ? 'interval' : 'once',
+          executeAt, intervalMinutes, rolePing: 'everyone', imageUrl,
+          createdBy: interaction.user.tag,
+          createdAt: new Date().toISOString(),
+          active: true, isNewCreation: true
+        };
 
-        modal.addComponents(
-          new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-              .setCustomId('create_title')
-              .setLabel('Title')
-              .setStyle(TextInputStyle.Short)
-              .setPlaceholder('e.g. Marshall Event / Desert Storm')
-              .setRequired(true)
-          ),
-          new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-              .setCustomId('create_body')
-              .setLabel('Message Body')
-              .setStyle(TextInputStyle.Paragraph)
-              .setPlaceholder('Enter the full announcement message...')
-              .setRequired(true)
-          ),
-          new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-              .setCustomId('create_time')
-              .setLabel(`When to send? (${tz} now: ${localNowStr})`)
-              .setStyle(TextInputStyle.Short)
-              .setPlaceholder('"now"  "in 2 hours"  "18:30"  "tomorrow 18:30"')
-              .setValue('now')
-              .setRequired(true)
-          ),
-          new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-              .setCustomId('create_interval')
-              .setLabel('Repeat Interval (how often to repeat)')
-              .setStyle(TextInputStyle.Short)
-              .setPlaceholder('"none"  "every 36 hours"  "every 3 days"  "every 45 minutes"')
-              .setValue('none')
-              .setRequired(false)
-          ),
-          new ActionRowBuilder().addComponents(
-            new TextInputBuilder()
-              .setCustomId('create_image')
-              .setLabel('Image (right-click image msg → Copy Message Link)')
-              .setStyle(TextInputStyle.Short)
-              .setPlaceholder('Paste Discord Message Link here, or leave empty')
-              .setValue(imageUrl || '')
-              .setRequired(false)
-          )
-        );
+        await saveAnnouncement(announcementObj);
+        scheduleItem(client, announcementObj);
 
-        return interaction.showModal(modal);
+        const startUnix = Math.floor(new Date(executeAt).getTime() / 1000);
+        const isNow = new Date(executeAt).getTime() <= Date.now() + 5000;
+        let reply = isNow
+          ? `✅ **"${title}" [ID: \`${id}\`]** → <#${targetChannel.id}>\n⚡ **First Send**: Immediately`
+          : `✅ **"${title}" [ID: \`${id}\`]** → <#${targetChannel.id}>\n⏰ **First Send**: <t:${startUnix}:F> (<t:${startUnix}:R>)`;
+        if (intervalMinutes) reply += `\n🔁 **Repeat**: Every ${intervalToString(intervalMinutes)}`;
+
+        return interaction.reply({ content: reply, ephemeral: true });
 
       // ── /list ──────────────────────────────────────────────────────────────
       } else if (commandName === 'list') {
@@ -472,45 +447,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // ── Modal Submits ─────────────────────────────────────────────────────────
     } else if (interaction.isModalSubmit()) {
 
-      // ── Handle Create Modal Submit ─────────────────────────────────────────
-      if (interaction.customId.startsWith('modal_create_ann_')) {
-        const targetChannelId = interaction.customId.replace('modal_create_ann_', '').split('_')[0];
-
-        const title       = interaction.fields.getTextInputValue('create_title').trim();
-        const content     = interaction.fields.getTextInputValue('create_body').trim();
-        const timeRaw     = interaction.fields.getTextInputValue('create_time').trim();
-        const intervalRaw = interaction.fields.getTextInputValue('create_interval').trim();
-        const imageRaw    = interaction.fields.getTextInputValue('create_image').trim();
-        const imageUrl    = imageRaw || null;
-
-        const executeAt       = parseLocalTime(timeRaw, interaction.guildId);
-        const intervalMinutes = parseInterval(intervalRaw);
-        const existingList    = await loadAnnouncements(interaction.guildId);
-        const id              = generateNextId(existingList);
-
-        const announcementObj = {
-          id, guildId: interaction.guildId, title, content,
-          targetChannelId,
-          type: intervalMinutes ? 'interval' : 'once',
-          executeAt, intervalMinutes, rolePing: 'everyone', imageUrl,
-          createdBy: interaction.user.tag,
-          createdAt: new Date().toISOString(),
-          active: true, isNewCreation: true
-        };
-
-
-        await saveAnnouncement(announcementObj);
-        scheduleItem(client, announcementObj);
-
-        const startUnix = Math.floor(new Date(executeAt).getTime() / 1000);
-        const isNow = new Date(executeAt).getTime() <= Date.now() + 5000;
-        let reply = isNow
-          ? `✅ **"${title}" [ID: \`${id}\`]** → <#${targetChannelId}>\n⚡ **First Send**: Immediately`
-          : `✅ **"${title}" [ID: \`${id}\`]** → <#${targetChannelId}>\n⏰ **First Send**: <t:${startUnix}:F> (<t:${startUnix}:R>)`;
-        if (intervalMinutes) reply += `\n🔁 **Repeat**: Every ${intervalToString(intervalMinutes)}`;
-
-        return interaction.reply({ content: reply, ephemeral: true });
-      }
 
       // ── Handle Edit Modal Submit ───────────────────────────────────────────
       if (interaction.customId.startsWith('modal_edit_ann_')) {

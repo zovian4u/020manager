@@ -45,6 +45,8 @@ function setGuildTimezone(guildId, timezone) {
  *   "tomorrow"        → next day, same local time
  *   "tomorrow 18:30"  → next day at 18:30 local time
  *   "18:30"           → today at 18:30 local time (tomorrow if passed)
+ *   "6:30PM"          → today at 18:30 local time
+ *   "08/09 6:30PM"    → specific date at 18:30 local time (MM/DD h:mmA)
  *   "18:30 10-08-2026"→ specific date at 18:30 local time
  *   "18:30 10082026"  → same, without separators
  */
@@ -98,6 +100,27 @@ function parseLocalTime(rawInput, guildId) {
     return tmr.toISOString();
   }
 
+  // "MM/DD h:mmA" or "MM/DD HH:MM" e.g. "08/09 6:30PM" or "08/09 18:30"
+  const mdTimeMatch = str.match(/^(\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{2})(?:\s*(am|pm))?$/);
+  if (mdTimeMatch) {
+    let month = parseInt(mdTimeMatch[1]);
+    let day = parseInt(mdTimeMatch[2]);
+    let h = parseInt(mdTimeMatch[3]);
+    let min = parseInt(mdTimeMatch[4]);
+    const ampm = mdTimeMatch[5];
+    if (ampm === 'pm' && h < 12) h += 12;
+    if (ampm === 'am' && h === 12) h = 0;
+    
+    let year = ln.y;
+    let result = localToUTC(year, month, day, h, min);
+    // If it's more than a day in the past, assume they meant next year
+    if (result.getTime() <= Date.now() - 86400000) { 
+       year++;
+       result = localToUTC(year, month, day, h, min);
+    }
+    return result.toISOString();
+  }
+
   // "HH:MM DD-MM-YYYY" or "HH:MM DDMMYYYY"
   const dtMatch = str.match(/^(\d{1,2}):(\d{2})\s+(\d{2})[-/]?(\d{2})[-/]?(\d{4})$/);
   if (dtMatch) {
@@ -107,6 +130,23 @@ function parseLocalTime(rawInput, guildId) {
     );
     return result.toISOString();
   }
+
+  // "h:mmA" e.g. "6:30PM"
+  const timeAmpmMatch = str.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/);
+  if (timeAmpmMatch) {
+    let h = parseInt(timeAmpmMatch[1]);
+    let min = parseInt(timeAmpmMatch[2]);
+    const ampm = timeAmpmMatch[3];
+    if (ampm === 'pm' && h < 12) h += 12;
+    if (ampm === 'am' && h === 12) h = 0;
+    
+    let result = localToUTC(ln.y, ln.m, ln.d, h, min);
+    if (result.getTime() <= Date.now()) {
+      result = localToUTC(ln.y, ln.m, ln.d + 1, h, min);
+    }
+    return result.toISOString();
+  }
+
 
   // "HH:MM" only → today or tomorrow if already passed
   const timeOnly = str.match(/^(\d{1,2}):(\d{2})$/);

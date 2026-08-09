@@ -23,6 +23,22 @@ const allCommandsData = [
       .setDescription('Channel to post the announcement in')
       .setRequired(true))
     .addStringOption(opt => opt
+      .setName('title')
+      .setDescription('Announcement title')
+      .setRequired(true))
+    .addStringOption(opt => opt
+      .setName('body')
+      .setDescription('Full announcement message body')
+      .setRequired(true))
+    .addStringOption(opt => opt
+      .setName('time')
+      .setDescription('When to send in your local timezone (e.g. 08/09 6:30PM, in 2 hours, now)')
+      .setRequired(true))
+    .addStringOption(opt => opt
+      .setName('interval')
+      .setDescription('Repeat interval (e.g. 1m, 36 hours, 3 days)')
+      .setRequired(false))
+    .addStringOption(opt => opt
       .setName('image')
       .setDescription('Image: right-click an image message → Copy Message Link → paste here')
       .setRequired(false)),
