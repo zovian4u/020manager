@@ -10,6 +10,7 @@ const {
   StringSelectMenuBuilder,
   ChannelType
 } = require('discord.js');
+const http = require('http');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
 
@@ -23,6 +24,15 @@ if (!token) {
   console.error('❌ Error: DISCORD_TOKEN is missing in your .env.local file!');
   process.exit(1);
 }
+
+// Lightweight HTTP server for Render Health Checks & UptimeRobot pings
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('🤖 Wolfie Alliance Discord Bot is Online 24/7!');
+}).listen(PORT, () => {
+  console.log(`🌐 Keep-Alive HTTP Server listening on port ${PORT}`);
+});
 
 // Initialize Client with Intents
 const client = new Client({
