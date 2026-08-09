@@ -64,80 +64,55 @@ function generateNextId(list) {
 }
 
 /**
- * Parse Start Date & Time in 24h format (HH:MM) and DDMMYYYY format:
- * Examples:
- * - "now" -> Current time
- * - "18:00" -> 18:00 today (or tomorrow if 18:00 passed today)
- * - "18:00 10082026" -> 18:00 on 10th August 2026
- * - "10082026 18:00" -> 18:00 on 10th August 2026
+ * Parse Start Date & Time from separate Time (HH:MM 24h) and Date (DDMMYYYY) fields:
  */
-function parseStartTime(inputRaw) {
-  const str = (inputRaw || 'now').trim();
-  const lower = str.toLowerCase();
+function parseDateTime(timeRaw, dateRaw) {
+  const tStr = (timeRaw || 'now').trim().toLowerCase();
+  const dStr = (dateRaw || 'today').trim().toLowerCase();
 
-  if (lower === 'now' || lower === '0') {
+  if (tStr === 'now' || tStr === '0') {
     return new Date().toISOString();
   }
 
-  // 1. Time (HH:MM) + Date (DDMMYYYY) e.g. "18:00 10082026"
-  const timeDateMatch = str.match(/^(\d{1,2}):(\d{2})\s+(\d{2})(\d{2})(\d{4})$/);
-  if (timeDateMatch) {
-    const hours = parseInt(timeDateMatch[1]);
-    const minutes = parseInt(timeDateMatch[2]);
-    const day = parseInt(timeDateMatch[3]);
-    const month = parseInt(timeDateMatch[4]) - 1;
-    const year = parseInt(timeDateMatch[5]);
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth();
+  let day = now.getDate();
 
-    const target = new Date(year, month, day, hours, minutes, 0, 0);
-    return target.toISOString();
-  }
-
-  // 2. Date (DDMMYYYY) + Time (HH:MM) e.g. "10082026 18:00"
-  const dateTimeMatch = str.match(/^(\d{2})(\d{2})(\d{4})\s+(\d{1,2}):(\d{2})$/);
-  if (dateTimeMatch) {
-    const day = parseInt(dateTimeMatch[1]);
-    const month = parseInt(dateTimeMatch[2]) - 1;
-    const year = parseInt(dateTimeMatch[3]);
-    const hours = parseInt(dateTimeMatch[4]);
-    const minutes = parseInt(dateTimeMatch[5]);
-
-    const target = new Date(year, month, day, hours, minutes, 0, 0);
-    return target.toISOString();
-  }
-
-  // 3. Time (HH:MM) + Date with separators e.g. "18:00 10-08-2026"
-  const timeSepMatch = str.match(/^(\d{1,2}):(\d{2})\s+(\d{2})[-/](\d{2})[-/](\d{4})$/);
-  if (timeSepMatch) {
-    const hours = parseInt(timeSepMatch[1]);
-    const minutes = parseInt(timeSepMatch[2]);
-    const day = parseInt(timeSepMatch[3]);
-    const month = parseInt(timeSepMatch[4]) - 1;
-    const year = parseInt(timeSepMatch[5]);
-
-    const target = new Date(year, month, day, hours, minutes, 0, 0);
-    return target.toISOString();
-  }
-
-  // 4. Time only (HH:MM 24-hr format) e.g. "18:00" or "09:30"
-  const clockMatch = str.match(/^(\d{1,2}):(\d{2})$/);
-  if (clockMatch) {
-    const hours = parseInt(clockMatch[1]);
-    const minutes = parseInt(clockMatch[2]);
-    const target = new Date();
-    target.setHours(hours, minutes, 0, 0);
-
-    if (target.getTime() <= Date.now()) {
-      target.setDate(target.getDate() + 1);
+  // Parse Date (DDMMYYYY or DD-MM-YYYY or DD/MM/YYYY or "today" or "tomorrow")
+  if (dStr === 'tomorrow') {
+    const tmr = new Date();
+    tmr.setDate(tmr.getDate() + 1);
+    year = tmr.getFullYear();
+    month = tmr.getMonth();
+    day = tmr.getDate();
+  } else if (dStr !== 'today' && dStr !== 'now' && dStr !== '') {
+    const dMatch = dStr.match(/^(\d{2})[-/]?(\d{2})[-/]?(\d{4})$/);
+    if (dMatch) {
+      day = parseInt(dMatch[1], 10);
+      month = parseInt(dMatch[2], 10) - 1; // 0-indexed month
+      year = parseInt(dMatch[3], 10);
     }
-    return target.toISOString();
   }
 
-  const parsedDate = Date.parse(str);
-  if (!isNaN(parsedDate)) {
-    return new Date(parsedDate).toISOString();
+  // Parse Time (HH:MM 24-hr format) e.g. "18:00" or "09:30"
+  let hours = now.getHours();
+  let minutes = now.getMinutes();
+
+  const tMatch = tStr.match(/^(\d{1,2}):(\d{2})$/);
+  if (tMatch) {
+    hours = parseInt(tMatch[1], 10);
+    minutes = parseInt(tMatch[2], 10);
   }
 
-  return new Date().toISOString();
+  const target = new Date(year, month, day, hours, minutes, 0, 0);
+
+  // If date was "today" or empty, and target time has passed today, push to tomorrow
+  if ((dStr === 'today' || dStr === '') && target.getTime() <= Date.now()) {
+    target.setDate(target.getDate() + 1);
+  }
+
+  return target.toISOString();
 }
 
 /**
@@ -241,6 +216,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .setCustomId('modal_announce_edit')
           .setTitle(`Edit Announcement [ID: ${item.id}]`);
 
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
+
         const titleInput = new TextInputBuilder()
           .setCustomId('announce_title')
           .setLabel('Title')
@@ -250,18 +229,26 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const contentInput = new TextInputBuilder()
           .setCustomId('announce_content')
-          .setLabel('Message Body')
+          .setLabel('Message Body (Include Msg Link for Image)')
           .setValue(item.content || '')
           .setStyle(TextInputStyle.Paragraph)
           .setRequired(true);
 
         const startTimeInput = new TextInputBuilder()
           .setCustomId('announce_start_time')
-          .setLabel('Start Time (HH:MM DDMMYYYY or now)')
-          .setPlaceholder('e.g. "18:00 10082026", "18:00", or "now"')
+          .setLabel(`Start Time HH:MM (Bot now: ${timeStr})`)
+          .setPlaceholder('e.g. "18:00" or "now"')
           .setValue('now')
           .setStyle(TextInputStyle.Short)
           .setRequired(true);
+
+        const startDateInput = new TextInputBuilder()
+          .setCustomId('announce_start_date')
+          .setLabel(`Start Date DDMMYYYY (today: ${dateStr})`)
+          .setPlaceholder(`e.g. "${dateStr}", "today", or "tomorrow"`)
+          .setValue('today')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(false);
 
         let existingIntervalStr = 'none';
         if (item.intervalMinutes) {
@@ -282,19 +269,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .setStyle(TextInputStyle.Short)
           .setRequired(false);
 
-        const imageInput = new TextInputBuilder()
-          .setCustomId('announce_image')
-          .setLabel('Image (Copy Message Link)')
-          .setValue(item.imageUrl || '')
-          .setStyle(TextInputStyle.Short)
-          .setRequired(false);
-
         modal.addComponents(
           new ActionRowBuilder().addComponents(titleInput),
           new ActionRowBuilder().addComponents(contentInput),
           new ActionRowBuilder().addComponents(startTimeInput),
-          new ActionRowBuilder().addComponents(intervalInput),
-          new ActionRowBuilder().addComponents(imageInput)
+          new ActionRowBuilder().addComponents(startDateInput),
+          new ActionRowBuilder().addComponents(intervalInput)
         );
 
         return interaction.showModal(modal);
@@ -383,6 +363,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const targetChannelId = interaction.values[0];
         sessionState.set(interaction.user.id, { targetChannelId });
 
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
+
         const modal = new ModalBuilder()
           .setCustomId('modal_announce_submit')
           .setTitle('Create Alliance Announcement');
@@ -396,18 +380,26 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const contentInput = new TextInputBuilder()
           .setCustomId('announce_content')
-          .setLabel('Message Body')
-          .setPlaceholder('Enter full strategy notes, timing instructions, or links...')
+          .setLabel('Message Body (Include Msg Link for Image)')
+          .setPlaceholder('Enter message body. Paste Discord Message Link for image...')
           .setStyle(TextInputStyle.Paragraph)
           .setRequired(true);
 
         const startTimeInput = new TextInputBuilder()
           .setCustomId('announce_start_time')
-          .setLabel('Start Time (HH:MM DDMMYYYY or now)')
-          .setPlaceholder('e.g. "18:00 10082026", "18:00", or "now"')
+          .setLabel(`Start Time HH:MM (Bot now: ${timeStr})`)
+          .setPlaceholder('e.g. "18:00" or "now"')
           .setStyle(TextInputStyle.Short)
           .setValue('now')
           .setRequired(true);
+
+        const startDateInput = new TextInputBuilder()
+          .setCustomId('announce_start_date')
+          .setLabel(`Start Date DDMMYYYY (today: ${dateStr})`)
+          .setPlaceholder(`e.g. "${dateStr}", "today", or "tomorrow"`)
+          .setStyle(TextInputStyle.Short)
+          .setValue('today')
+          .setRequired(false);
 
         const intervalInput = new TextInputBuilder()
           .setCustomId('announce_interval')
@@ -417,19 +409,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
           .setValue('none')
           .setRequired(false);
 
-        const imageInput = new TextInputBuilder()
-          .setCustomId('announce_image')
-          .setLabel('Image (Copy Message Link)')
-          .setPlaceholder('Right click image msg -> Copy Message Link')
-          .setStyle(TextInputStyle.Short)
-          .setRequired(false);
-
         modal.addComponents(
           new ActionRowBuilder().addComponents(titleInput),
           new ActionRowBuilder().addComponents(contentInput),
           new ActionRowBuilder().addComponents(startTimeInput),
-          new ActionRowBuilder().addComponents(intervalInput),
-          new ActionRowBuilder().addComponents(imageInput)
+          new ActionRowBuilder().addComponents(startDateInput),
+          new ActionRowBuilder().addComponents(intervalInput)
         );
 
         await interaction.showModal(modal);
@@ -529,13 +514,24 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const session = sessionState.get(interaction.user.id);
 
         const title = interaction.fields.getTextInputValue('announce_title');
-        const content = interaction.fields.getTextInputValue('announce_content');
+        let content = interaction.fields.getTextInputValue('announce_content');
         const startTimeRaw = interaction.fields.getTextInputValue('announce_start_time');
+        const startDateRaw = interaction.fields.getTextInputValue('announce_start_date');
         const intervalRaw = interaction.fields.getTextInputValue('announce_interval');
-        const imageUrl = interaction.fields.getTextInputValue('announce_image');
 
-        const executeAt = parseStartTime(startTimeRaw);
+        const executeAt = parseDateTime(startTimeRaw, startDateRaw);
         const intervalMinutes = parseInterval(intervalRaw);
+
+        // Check if content includes Discord Message Link or Direct Image URL
+        let imageUrl = null;
+        const msgLinkMatch = content.match(/https:\/\/discord\.com\/channels\/\d+\/(\d+)\/(\d+)/);
+        const directUrlMatch = content.match(/(https?:\/\/\S+\.(?:png|jpg|jpeg|gif|webp))/i);
+
+        if (msgLinkMatch) {
+          imageUrl = msgLinkMatch[0];
+        } else if (directUrlMatch) {
+          imageUrl = directUrlMatch[0];
+        }
 
         let id;
         if (isEdit && session && session.editingId) {
@@ -556,7 +552,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           executeAt,
           intervalMinutes,
           rolePing: 'everyone',
-          imageUrl: imageUrl ? imageUrl.trim() : null,
+          imageUrl,
           createdBy: interaction.user.tag,
           createdAt: new Date().toISOString(),
           active: true,
@@ -567,8 +563,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
         scheduleItem(client, announcementObj);
 
         let actionText = isEdit ? 'updated' : 'posted';
+        const startUnix = Math.floor(new Date(executeAt).getTime() / 1000);
+        let timeSnippet = `scheduled for <t:${startUnix}:F> (<t:${startUnix}:R>)`;
+        if (new Date(executeAt).getTime() <= Date.now() + 5000) {
+          timeSnippet = 'sent immediately';
+        }
+
         await interaction.reply({
-          content: `✅ Announcement **"${title}"** [ID: \`${id}\`] ${actionText} successfully for <#${targetChannelId}>!`,
+          content: `✅ Announcement **"${title}"** [ID: \`${id}\`] ${actionText} successfully (${timeSnippet}) for <#${targetChannelId}>!`,
           ephemeral: true
         });
       }
