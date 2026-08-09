@@ -58,7 +58,6 @@ async function loadAnnouncements(guildId = null) {
       let query = supabase.from('alliance_announcements').select('*');
       const { data, error } = await query;
       if (!error && data && data.length > 0) {
-        // Map Supabase snake_case columns back to camelCase object
         const mappedData = data.map(row => ({
           id: row.id,
           guildId: row.guild_id,
@@ -77,8 +76,8 @@ async function loadAnnouncements(guildId = null) {
         }));
 
         const mergedMap = new Map();
-        list.forEach(item => mergedMap.set(item.id, item));
-        mappedData.forEach(item => mergedMap.set(item.id, item));
+        list.forEach(item => mergedMap.set(String(item.id), item));
+        mappedData.forEach(item => mergedMap.set(String(item.id), item));
         list = Array.from(mergedMap.values());
         saveAnnouncementsLocally(list);
       }
@@ -152,23 +151,30 @@ async function saveAnnouncement(announcement) {
 }
 
 /**
- * Delete announcement by ID (matches "001", "1", etc.)
+ * Delete announcement by ID (matches "002", "2", "ann_002" flexibly across both Local and Supabase)
  */
 async function deleteAnnouncement(id, guildId = null) {
   let list = await loadAnnouncements();
   const initialCount = list.length;
   
-  const itemToDelete = list.find(a => matchId(a.id, id) && (!guildId || a.guildId === guildId || !a.guildId));
+  const itemsToDelete = list.filter(a => matchId(a.id, id) && (!guildId || a.guildId === guildId || !a.guildId));
   
-  if (itemToDelete) {
-    list = list.filter(a => a.id !== itemToDelete.id);
+  if (itemsToDelete.length > 0) {
+    // Remove from local list
+    list = list.filter(a => !matchId(a.id, id));
     saveAnnouncementsLocally(list);
 
     if (supabase) {
       try {
-        await supabase.from('alliance_announcements').delete().eq('id', itemToDelete.id);
+        const rawId = String(id).trim();
+        const numId = String(parseInt(rawId.replace(/\D/g, ''), 10));
+        const padId = !isNaN(numId) ? numId.padStart(3, '0') : rawId;
+        
+        const deleteIds = Array.from(new Set([rawId, numId, padId, ...itemsToDelete.map(i => String(i.id))]));
+
+        await supabase.from('alliance_announcements').delete().in('id', deleteIds);
       } catch (err) {
-        console.warn('Supabase delete notice:', err.message);
+        console.warn('Supabase delete error:', err.message);
       }
     }
   }
