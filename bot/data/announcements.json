@@ -1,5 +1,21 @@
 [
   {
+    "id": "002",
+    "guildId": "1294462126634696786",
+    "title": "test",
+    "content": "test",
+    "targetChannelId": "1456177750787227648",
+    "type": "interval",
+    "executeAt": "2026-08-09T10:11:00+00:00",
+    "intervalMinutes": 9082026,
+    "cronExpression": null,
+    "rolePing": "everyone",
+    "imageUrl": null,
+    "createdBy": "hemzovianasia",
+    "createdAt": "2026-08-09T10:10:34.521+00:00",
+    "active": true
+  },
+  {
     "id": "001",
     "guildId": "1294462126634696786",
     "title": "Alliance Exercise: Marshall",
@@ -14,23 +30,5 @@
     "createdBy": "hemzovianasia",
     "createdAt": "2026-08-09T10:01:05.438+00:00",
     "active": true
-  },
-  {
-    "id": "002",
-    "guildId": "1294462126634696786",
-    "title": "test",
-    "content": "test",
-    "targetChannelId": "1456177750787227648",
-    "type": "interval",
-    "executeAt": "2026-08-09T10:11:00+00:00",
-    "intervalMinutes": 9082026,
-    "cronExpression": null,
-    "rolePing": "everyone",
-    "imageUrl": null,
-    "createdBy": "hemzovianasia",
-    "createdAt": "2026-08-09T10:10:34.521+00:00",
-    "active": true,
-    "isNewCreation": false,
-    "lastExecutedAt": "2026-08-09T10:25:48.751Z"
   }
 ]

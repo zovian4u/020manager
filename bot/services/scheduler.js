@@ -1,9 +1,11 @@
 const cron = require('node-cron');
 const { EmbedBuilder } = require('discord.js');
-const { loadAnnouncements, saveAnnouncement } = require('./database');
+const { loadAnnouncements, saveAnnouncement, deleteAnnouncement } = require('./database');
 
 // Active cron / timeout jobs held in memory
 const activeJobs = new Map();
+// Track deleted IDs to prevent ghost re-saves
+const deletedIds = new Set();
 
 /**
  * Initialize all scheduled announcements on bot start.
@@ -27,7 +29,6 @@ async function resolveImageUrl(client, input, targetChannelId) {
   if (!input || !input.trim()) return null;
   const str = input.trim();
 
-  // Direct URL
   if (str.startsWith('http://') || str.startsWith('https://')) {
     const match = str.match(/channels\/\d+\/(\d+)\/(\d+)/);
     if (match) {
@@ -44,11 +45,10 @@ async function resolveImageUrl(client, input, targetChannelId) {
         console.warn('Failed to fetch image from message link:', e.message);
       }
     } else {
-      return str; // Direct image URL
+      return str;
     }
   }
 
-  // Pure numbers -> Discord Message ID in target channel
   if (/^\d+$/.test(str)) {
     try {
       const chan = await client.channels.fetch(targetChannelId);
@@ -67,11 +67,10 @@ async function resolveImageUrl(client, input, targetChannelId) {
 
 /**
  * Schedule an announcement with optional future Start Time and optional Repeat Interval.
- * @param {Object} client Discord Client
- * @param {Object} item Announcement item
  */
 function scheduleItem(client, item) {
   cancelScheduledJob(item.id);
+  deletedIds.delete(String(item.id)); // Re-activate if re-created
 
   const startTimeMs = item.executeAt ? new Date(item.executeAt).getTime() : Date.now();
   const now = Date.now();
@@ -79,44 +78,55 @@ function scheduleItem(client, item) {
 
   const hasInterval = item.intervalMinutes && item.intervalMinutes > 0;
   const intervalMs = hasInterval ? item.intervalMinutes * 60 * 1000 : 0;
-
   const needsImmediateDispatch = item.isNewCreation || (!item.lastExecutedAt && delay <= 0);
 
   if (delay <= 0) {
-    // Start time is now or passed
     if (needsImmediateDispatch) {
       dispatchAnnouncement(client, item);
       item.isNewCreation = false;
       item.lastExecutedAt = new Date().toISOString();
-      saveAnnouncement(item);
+      if (!deletedIds.has(String(item.id))) saveAnnouncement(item);
     }
 
     if (hasInterval) {
       const timer = setInterval(async () => {
+        if (deletedIds.has(String(item.id))) {
+          clearInterval(timer);
+          activeJobs.delete(item.id);
+          return;
+        }
         await dispatchAnnouncement(client, item);
         item.lastExecutedAt = new Date().toISOString();
-        await saveAnnouncement(item);
+        if (!deletedIds.has(String(item.id))) await saveAnnouncement(item);
       }, intervalMs);
 
       activeJobs.set(item.id, { timer, type: 'interval' });
     } else {
       item.active = false;
-      saveAnnouncement(item);
+      if (!deletedIds.has(String(item.id))) saveAnnouncement(item);
     }
 
   } else {
-    // Start time is in the future
     const timer = setTimeout(async () => {
+      if (deletedIds.has(String(item.id))) {
+        activeJobs.delete(item.id);
+        return;
+      }
+
       await dispatchAnnouncement(client, item);
       item.lastExecutedAt = new Date().toISOString();
       item.isNewCreation = false;
 
       if (hasInterval) {
-        // Start recurring interval after first execution
         const intervalTimer = setInterval(async () => {
+          if (deletedIds.has(String(item.id))) {
+            clearInterval(intervalTimer);
+            activeJobs.delete(item.id);
+            return;
+          }
           await dispatchAnnouncement(client, item);
           item.lastExecutedAt = new Date().toISOString();
-          await saveAnnouncement(item);
+          if (!deletedIds.has(String(item.id))) await saveAnnouncement(item);
         }, intervalMs);
 
         activeJobs.set(item.id, { timer: intervalTimer, type: 'interval' });
@@ -124,7 +134,8 @@ function scheduleItem(client, item) {
         item.active = false;
         activeJobs.delete(item.id);
       }
-      await saveAnnouncement(item);
+
+      if (!deletedIds.has(String(item.id))) await saveAnnouncement(item);
 
     }, delay);
 
@@ -133,9 +144,12 @@ function scheduleItem(client, item) {
 }
 
 /**
- * Cancel a running schedule job.
+ * Cancel a running schedule job and mark as deleted to prevent ghost re-saves.
  */
 function cancelScheduledJob(id) {
+  const strId = String(id);
+  deletedIds.add(strId); // Mark as deleted — prevents any in-memory re-save
+
   if (activeJobs.has(id)) {
     const job = activeJobs.get(id);
     if (job.type === 'cron' && job.task) {
@@ -146,12 +160,19 @@ function cancelScheduledJob(id) {
     }
     activeJobs.delete(id);
   }
+  console.log(`🛑 Cancelled in-memory job for ID: ${id}`);
 }
 
 /**
- * Dispatch rich embed announcement to target Discord channel (clean format: title + body + image + creator footer).
+ * Dispatch rich embed announcement to target Discord channel.
  */
 async function dispatchAnnouncement(client, item) {
+  // Guard: don't dispatch for deleted items
+  if (deletedIds.has(String(item.id))) {
+    console.log(`⚠️ Skipped dispatch for deleted item: ${item.id}`);
+    return;
+  }
+
   try {
     const channel = await client.channels.fetch(item.targetChannelId);
     if (!channel) {
@@ -159,7 +180,6 @@ async function dispatchAnnouncement(client, item) {
       return;
     }
 
-    // Discord Blurple color theme
     const color = 0x5865F2;
 
     const embed = new EmbedBuilder()
@@ -169,13 +189,11 @@ async function dispatchAnnouncement(client, item) {
       .setTimestamp()
       .setFooter({ text: `Creator: ${item.createdBy || 'Alliance Leader'}` });
 
-    // Image URL / Message Link / Message ID resolution
     const finalImageUrl = await resolveImageUrl(client, item.imageUrl, item.targetChannelId);
     if (finalImageUrl) {
       embed.setImage(finalImageUrl);
     }
 
-    // Role Ping string
     let pingText = '';
     if (item.rolePing && item.rolePing !== 'none') {
       if (item.rolePing === 'everyone') pingText = '@everyone ';
@@ -189,7 +207,7 @@ async function dispatchAnnouncement(client, item) {
     });
 
     item.lastMessageId = message.id;
-    saveAnnouncement(item);
+    if (!deletedIds.has(String(item.id))) saveAnnouncement(item);
 
   } catch (err) {
     console.error(`Error sending announcement ${item.id}:`, err);
