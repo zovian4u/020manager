@@ -1,80 +1,99 @@
-const { 
-  SlashCommandBuilder, 
-  PermissionFlagsBits, 
-  ChannelType, 
-  EmbedBuilder,
-  ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  StringSelectMenuBuilder
-} = require('discord.js');
-const { loadAnnouncements, saveAnnouncement, deleteAnnouncement, matchId } = require('../services/database');
-const { scheduleItem, cancelScheduledJob, dispatchAnnouncement } = require('../services/scheduler');
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
 /**
- * Check if the executing member has R4 / R5 / Officer permissions.
+ * Check if a member has Alliance Leader permissions (R4/R5/Admin)
  */
 function isAllianceLeader(member) {
   if (!member) return false;
   if (member.permissions.has(PermissionFlagsBits.Administrator)) return true;
   if (member.permissions.has(PermissionFlagsBits.ManageMessages)) return true;
-  
-  const leaderRoleNames = ['r4', 'r5', 'leader', 'officer', 'alliance leader', 'admin', 'r4/r5'];
-  return member.roles.cache.some(role => leaderRoleNames.includes(role.name.toLowerCase()));
+
+  const leaderRoles = ['r4', 'r5', 'leader', 'officer', 'alliance leader', 'admin', 'co-leader', 'mod'];
+  return member.roles.cache.some(role =>
+    leaderRoles.some(lr => role.name.toLowerCase().includes(lr))
+  );
 }
 
-// 1. Top-level /create command
-const createCommand = new SlashCommandBuilder()
-  .setName('create')
-  .setDescription('Create a new instant or scheduled alliance announcement')
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages);
-
-// 2. Top-level /edit command
-const editCommand = new SlashCommandBuilder()
-  .setName('edit')
-  .setDescription('Edit an existing announcement by ID (e.g. 001)')
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
-  .addStringOption(opt =>
-    opt
-      .setName('id')
-      .setDescription('Announcement ID to edit (e.g. 001 or 1)')
-      .setRequired(true)
-  );
-
-// 3. Top-level /list command
-const listCommand = new SlashCommandBuilder()
-  .setName('list')
-  .setDescription('List all active scheduled announcements & reminders')
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages);
-
-// 4. Top-level /delete command
-const deleteCommand = new SlashCommandBuilder()
-  .setName('delete')
-  .setDescription('Delete a scheduled announcement by ID')
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
-  .addStringOption(opt =>
-    opt
-      .setName('id')
-      .setDescription('Announcement ID to cancel (e.g. 001 or 1)')
-      .setRequired(true)
-  );
-
-// 5. Top-level /preset command
-const presetCommand = new SlashCommandBuilder()
-  .setName('preset')
-  .setDescription('Quickly activate 1-click Alliance Event Presets')
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages);
-
 const allCommandsData = [
-  createCommand,
-  editCommand,
-  listCommand,
-  deleteCommand,
-  presetCommand
+  new SlashCommandBuilder()
+    .setName('create')
+    .setDescription('Create a scheduled alliance announcement')
+    .addChannelOption(opt => opt
+      .setName('channel')
+      .setDescription('Channel to post the announcement in')
+      .setRequired(true))
+    .addStringOption(opt => opt
+      .setName('title')
+      .setDescription('Announcement title (e.g. Desert Storm / Marshall Event)')
+      .setRequired(true))
+    .addStringOption(opt => opt
+      .setName('body')
+      .setDescription('Full announcement message body')
+      .setRequired(true))
+    .addStringOption(opt => opt
+      .setName('time')
+      .setDescription('Start time in 24h format or "now" (e.g. 18:00)')
+      .setRequired(true))
+    .addStringOption(opt => opt
+      .setName('date')
+      .setDescription('Start date DDMMYYYY, "today", or "tomorrow" (e.g. 10082026)')
+      .setRequired(false))
+    .addStringOption(opt => opt
+      .setName('interval')
+      .setDescription('Repeat interval: "none", "36 hours", "3 days", "45 minutes"')
+      .setRequired(false))
+    .addStringOption(opt => opt
+      .setName('image')
+      .setDescription('Image: right-click an image message → Copy Message Link → paste here')
+      .setRequired(false)),
+
+  new SlashCommandBuilder()
+    .setName('edit')
+    .setDescription('Edit an existing scheduled announcement')
+    .addStringOption(opt => opt
+      .setName('id')
+      .setDescription('Announcement ID to edit (e.g. 001)')
+      .setRequired(true))
+    .addStringOption(opt => opt
+      .setName('title')
+      .setDescription('New title (leave empty to keep current)')
+      .setRequired(false))
+    .addStringOption(opt => opt
+      .setName('body')
+      .setDescription('New message body (leave empty to keep current)')
+      .setRequired(false))
+    .addStringOption(opt => opt
+      .setName('time')
+      .setDescription('New start time in 24h format or "now" (e.g. 18:00)')
+      .setRequired(false))
+    .addStringOption(opt => opt
+      .setName('date')
+      .setDescription('New start date DDMMYYYY, "today", or "tomorrow"')
+      .setRequired(false))
+    .addStringOption(opt => opt
+      .setName('interval')
+      .setDescription('New repeat interval: "none", "36 hours", "3 days"')
+      .setRequired(false))
+    .addStringOption(opt => opt
+      .setName('image')
+      .setDescription('New image: Copy Message Link, or "none" to remove')
+      .setRequired(false)),
+
+  new SlashCommandBuilder()
+    .setName('list')
+    .setDescription('List all active scheduled announcements for this server'),
+
+  new SlashCommandBuilder()
+    .setName('delete')
+    .setDescription('Delete a scheduled announcement by ID')
+    .addStringOption(opt => opt
+      .setName('id')
+      .setDescription('Announcement ID to delete (e.g. 001)')
+      .setRequired(true)),
+
+  new SlashCommandBuilder()
+    .setName('preset')
+    .setDescription('Quick-deploy a preset Alliance Event announcement'),
 ];
 
-module.exports = {
-  allCommandsData,
-  isAllianceLeader,
-};
+module.exports = { allCommandsData, isAllianceLeader };

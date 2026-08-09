@@ -1,16 +1,11 @@
 const { 
   Client, 
   GatewayIntentBits, 
-  Events, 
-  ModalBuilder, 
-  TextInputBuilder, 
-  TextInputStyle, 
-  ActionRowBuilder,
+  Events,
   EmbedBuilder,
   StringSelectMenuBuilder,
-  ChannelType,
-  ButtonBuilder,
-  ButtonStyle
+  ActionRowBuilder,
+  ChannelType
 } = require('discord.js');
 const http = require('http');
 const path = require('path');
@@ -33,15 +28,9 @@ http.createServer((req, res) => {
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.DirectMessages
+    GatewayIntentBits.GuildMembers
   ]
 });
-
-// Active conversation sessions: userId -> { step, data, messages[] }
-const activeSessions = new Map();
 
 function generateNextId(list) {
   let maxId = 0;
@@ -54,7 +43,10 @@ function generateNextId(list) {
   return String(maxId + 1).padStart(3, '0');
 }
 
-function parseStartTime(timeRaw, dateRaw) {
+/**
+ * Parse Start Date & Time from separate time (HH:MM) and date (DDMMYYYY) strings
+ */
+function parseDateTime(timeRaw, dateRaw) {
   const tStr = (timeRaw || 'now').trim().toLowerCase();
   const dStr = (dateRaw || 'today').trim().toLowerCase();
 
@@ -66,7 +58,7 @@ function parseStartTime(timeRaw, dateRaw) {
   if (dStr === 'tomorrow') {
     const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
     year = tmr.getFullYear(); month = tmr.getMonth(); day = tmr.getDate();
-  } else if (dStr !== 'today' && dStr !== 'skip' && dStr !== '') {
+  } else if (dStr !== 'today' && dStr !== '' && dStr !== 'skip') {
     const m = dStr.match(/^(\d{2})[-/]?(\d{2})[-/]?(\d{4})$/);
     if (m) { day = parseInt(m[1]); month = parseInt(m[2]) - 1; year = parseInt(m[3]); }
   }
@@ -99,146 +91,6 @@ function parseInterval(inputRaw) {
   return null;
 }
 
-// Delete all bot messages tracked in a session
-async function cleanupSessionMessages(session) {
-  for (const msg of (session.messages || [])) {
-    try { await msg.delete(); } catch (_) {}
-  }
-}
-
-// Ask a step question and return the sent message
-async function askStep(channel, userId, question, hint = '') {
-  const content = `${question}${hint ? `\n> 💡 *${hint}*` : ''}`;
-  const msg = await channel.send({ content });
-  return msg;
-}
-
-// Wait for a reply from the specific user
-async function awaitReply(channel, userId, timeoutMs = 90000) {
-  try {
-    const collected = await channel.awaitMessages({
-      filter: m => m.author.id === userId && !m.author.bot,
-      max: 1,
-      time: timeoutMs,
-      errors: ['time']
-    });
-    return collected.first();
-  } catch (e) {
-    throw new Error('timeout');
-  }
-}
-
-// Run the full step-by-step announcement creation flow
-async function runCreateFlow(interaction, targetChannelId) {
-  const channel = interaction.channel;
-  const userId = interaction.user.id;
-  const now = new Date();
-  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  const dateStr = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}`;
-
-  const session = { messages: [], data: { targetChannelId } };
-  activeSessions.set(userId, session);
-
-  try {
-    // Step 1: Title
-    let m = await askStep(channel, userId, '**Step 1/6 — Title:**', 'e.g. Marshall Event / Desert Storm');
-    session.messages.push(m);
-    const titleReply = await awaitReply(channel, userId);
-    session.messages.push(titleReply);
-    session.data.title = titleReply.content.trim();
-
-    // Step 2: Body
-    m = await askStep(channel, userId, '**Step 2/6 — Message Body:**', 'Enter the full announcement text');
-    session.messages.push(m);
-    const bodyReply = await awaitReply(channel, userId);
-    session.messages.push(bodyReply);
-    session.data.content = bodyReply.content.trim();
-
-    // Step 3: Time
-    m = await askStep(channel, userId, `**Step 3/6 — Start Time (HH:MM):**`, `Bot time now: ${timeStr} — type "now" to send immediately`);
-    session.messages.push(m);
-    const timeReply = await awaitReply(channel, userId);
-    session.messages.push(timeReply);
-    session.data.startTime = timeReply.content.trim();
-
-    // Step 4: Date
-    m = await askStep(channel, userId, `**Step 4/6 — Start Date (DDMMYYYY):**`, `Today: ${dateStr} — type "today" or "tomorrow" or a date like ${dateStr}`);
-    session.messages.push(m);
-    const dateReply = await awaitReply(channel, userId);
-    session.messages.push(dateReply);
-    session.data.startDate = dateReply.content.trim();
-
-    // Step 5: Interval
-    m = await askStep(channel, userId, '**Step 5/6 — Repeat Interval:**', 'e.g. "none", "36 hours", "45 minutes", "3 days"');
-    session.messages.push(m);
-    const intervalReply = await awaitReply(channel, userId);
-    session.messages.push(intervalReply);
-    session.data.interval = intervalReply.content.trim();
-
-    // Step 6: Image
-    m = await askStep(channel, userId, '**Step 6/6 — Image Link:**', 'Right click an image message → Copy Message Link — or type "skip"');
-    session.messages.push(m);
-    const imageReply = await awaitReply(channel, userId);
-    session.messages.push(imageReply);
-    const imageRaw = imageReply.content.trim().toLowerCase() === 'skip' ? '' : imageReply.content.trim();
-    session.data.imageUrl = imageRaw || null;
-
-    // Clean up all conversation messages
-    await cleanupSessionMessages(session);
-
-    // Build announcement object
-    const executeAt = parseStartTime(session.data.startTime, session.data.startDate);
-    const intervalMinutes = parseInterval(session.data.interval);
-    const existingList = await loadAnnouncements(interaction.guildId);
-    const id = generateNextId(existingList);
-
-    const announcementObj = {
-      id,
-      guildId: interaction.guildId,
-      title: session.data.title,
-      content: session.data.content,
-      targetChannelId: session.data.targetChannelId,
-      type: intervalMinutes ? 'interval' : 'once',
-      executeAt,
-      intervalMinutes,
-      rolePing: 'everyone',
-      imageUrl: session.data.imageUrl,
-      createdBy: interaction.user.tag,
-      createdAt: new Date().toISOString(),
-      active: true,
-      isNewCreation: true
-    };
-
-    await saveAnnouncement(announcementObj);
-    scheduleItem(client, announcementObj);
-
-    const startUnix = Math.floor(new Date(executeAt).getTime() / 1000);
-    const isNow = new Date(executeAt).getTime() <= Date.now() + 5000;
-    let timeDetails = isNow ? `⚡ **Sent**: Immediately` : `⏰ **First Send**: <t:${startUnix}:F> (<t:${startUnix}:R>)`;
-    let repeatDetails = '';
-    if (intervalMinutes) {
-      if (intervalMinutes >= 1440 && intervalMinutes % 1440 === 0) repeatDetails = `\n⏱️ **Repeat**: Every ${intervalMinutes/1440} day(s)`;
-      else if (intervalMinutes >= 60 && intervalMinutes % 60 === 0) repeatDetails = `\n⏱️ **Repeat**: Every ${intervalMinutes/60} hour(s)`;
-      else repeatDetails = `\n⏱️ **Repeat**: Every ${intervalMinutes} minute(s)`;
-    }
-
-    const confirmMsg = await channel.send({
-      content: `✅ **"${session.data.title}" [ID: \`${id}\`] scheduled for <#${targetChannelId}>!**\n${timeDetails}${repeatDetails}`
-    });
-
-    // Auto-delete confirmation after 10 seconds
-    setTimeout(() => confirmMsg.delete().catch(() => {}), 10000);
-
-  } catch (err) {
-    await cleanupSessionMessages(session);
-    const errMsg = await channel.send({ content: '⏱️ Announcement creation timed out or was cancelled. Use `/create` to try again.' });
-    setTimeout(() => errMsg.delete().catch(() => {}), 8000);
-    console.error('Create flow error:', err.message);
-  } finally {
-    activeSessions.delete(userId);
-  }
-}
-
 client.once(Events.ClientReady, async (c) => {
   console.log('----------------------------------------------------');
   console.log(`🤖 Wolfie Bot ONLINE as ${c.user.tag}`);
@@ -257,17 +109,51 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
       if (commandName === 'create') {
-        const channels = interaction.guild.channels.cache
-          .filter(c => c.type === ChannelType.GuildText).first(25);
+        const targetChannel = interaction.options.getChannel('channel');
+        const title   = interaction.options.getString('title');
+        const content = interaction.options.getString('body');
+        const timeRaw = interaction.options.getString('time') || 'now';
+        const dateRaw = interaction.options.getString('date') || 'today';
+        const intervalRaw = interaction.options.getString('interval') || 'none';
+        const imageUrl = interaction.options.getString('image') || null;
 
-        const selectMenu = new StringSelectMenuBuilder()
-          .setCustomId('select_announce_channel')
-          .setPlaceholder('Select Target Channel for Announcement...')
-          .addOptions(channels.map(c => ({ label: `#${c.name}`, value: c.id, description: `Post to #${c.name}` })));
+        const executeAt = parseDateTime(timeRaw, dateRaw);
+        const intervalMinutes = parseInterval(intervalRaw);
+
+        const existingList = await loadAnnouncements(guildId);
+        const id = generateNextId(existingList);
+
+        const announcementObj = {
+          id, guildId, title, content,
+          targetChannelId: targetChannel.id,
+          type: intervalMinutes ? 'interval' : 'once',
+          executeAt, intervalMinutes,
+          rolePing: 'everyone',
+          imageUrl,
+          createdBy: interaction.user.tag,
+          createdAt: new Date().toISOString(),
+          active: true,
+          isNewCreation: true
+        };
+
+        await saveAnnouncement(announcementObj);
+        scheduleItem(client, announcementObj);
+
+        const startUnix = Math.floor(new Date(executeAt).getTime() / 1000);
+        const isNow = new Date(executeAt).getTime() <= Date.now() + 5000;
+        let timeDetails = isNow
+          ? `⚡ **First Send**: Immediately`
+          : `⏰ **First Send**: <t:${startUnix}:F> (<t:${startUnix}:R>)`;
+
+        let repeatDetails = '';
+        if (intervalMinutes) {
+          if (intervalMinutes >= 1440 && intervalMinutes % 1440 === 0) repeatDetails = `\n⏱️ **Repeat**: Every ${intervalMinutes/1440} day(s)`;
+          else if (intervalMinutes >= 60 && intervalMinutes % 60 === 0) repeatDetails = `\n⏱️ **Repeat**: Every ${intervalMinutes/60} hour(s)`;
+          else repeatDetails = `\n⏱️ **Repeat**: Every ${intervalMinutes} minute(s)`;
+        }
 
         return interaction.reply({
-          content: '📢 **Create Announcement** — Select which channel to post in:',
-          components: [new ActionRowBuilder().addComponents(selectMenu)],
+          content: `✅ **"${title}" [ID: \`${id}\`] scheduled for <#${targetChannel.id}>!**\n${timeDetails}${repeatDetails}`,
           ephemeral: true
         });
 
@@ -275,97 +161,37 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const id = interaction.options.getString('id');
         const list = await loadAnnouncements(guildId);
         const item = list.find(a => matchId(a.id, id));
-        if (!item) return interaction.reply({ content: `❌ ID \`${id}\` not found. Use \`/list\`.`, ephemeral: true });
+        if (!item) return interaction.reply({ content: `❌ ID \`${id}\` not found. Use \`/list\` to see active IDs.`, ephemeral: true });
 
-        await interaction.reply({ content: `✏️ **Edit [ID: ${id}]** — I'll ask you each field step by step. Starting now...`, ephemeral: false });
+        const title   = interaction.options.getString('title')    || item.title;
+        const content = interaction.options.getString('body')     || item.content;
+        const timeRaw = interaction.options.getString('time')     || 'now';
+        const dateRaw = interaction.options.getString('date')     || 'today';
+        const intervalRaw = interaction.options.getString('interval');
+        const imageInput  = interaction.options.getString('image');
 
-        const channel = interaction.channel;
-        const userId = interaction.user.id;
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-        const dateStr = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}`;
-        const session = { messages: [], data: { targetChannelId: item.targetChannelId, editingId: item.id } };
-        activeSessions.set(userId, session);
+        const executeAt = parseDateTime(timeRaw, dateRaw);
+        const intervalMinutes = intervalRaw !== null ? parseInterval(intervalRaw) : item.intervalMinutes;
+        const imageUrl = imageInput === 'none' ? null : (imageInput || item.imageUrl);
 
-        try {
-          let m;
-          m = await askStep(channel, userId, `**Edit Step 1/6 — Title** (current: "${item.title}"):`, 'Reply with new title or type "same" to keep');
-          session.messages.push(m);
-          const titleReply = await awaitReply(channel, userId);
-          session.messages.push(titleReply);
-          session.data.title = titleReply.content.trim().toLowerCase() === 'same' ? item.title : titleReply.content.trim();
+        const updated = {
+          ...item,
+          title, content, executeAt, intervalMinutes, imageUrl,
+          isNewCreation: true
+        };
 
-          m = await askStep(channel, userId, `**Edit Step 2/6 — Message Body** (current set):`, 'Reply with new body or type "same" to keep');
-          session.messages.push(m);
-          const bodyReply = await awaitReply(channel, userId);
-          session.messages.push(bodyReply);
-          session.data.content = bodyReply.content.trim().toLowerCase() === 'same' ? item.content : bodyReply.content.trim();
+        cancelScheduledJob(item.id);
+        await saveAnnouncement(updated);
+        scheduleItem(client, updated);
 
-          m = await askStep(channel, userId, `**Edit Step 3/6 — Start Time (HH:MM):**`, `Bot time now: ${timeStr} — type "now" to send immediately`);
-          session.messages.push(m);
-          const timeReply = await awaitReply(channel, userId);
-          session.messages.push(timeReply);
-          session.data.startTime = timeReply.content.trim();
+        const startUnix = Math.floor(new Date(executeAt).getTime() / 1000);
+        const isNow = new Date(executeAt).getTime() <= Date.now() + 5000;
+        const timeDetails = isNow ? `⚡ Sent immediately` : `<t:${startUnix}:F> (<t:${startUnix}:R>)`;
 
-          m = await askStep(channel, userId, `**Edit Step 4/6 — Start Date (DDMMYYYY):**`, `Today: ${dateStr} — type "today" or "tomorrow"`);
-          session.messages.push(m);
-          const dateReply = await awaitReply(channel, userId);
-          session.messages.push(dateReply);
-          session.data.startDate = dateReply.content.trim();
-
-          let currentInterval = 'none';
-          if (item.intervalMinutes) {
-            if (item.intervalMinutes >= 1440 && item.intervalMinutes % 1440 === 0) currentInterval = `${item.intervalMinutes/1440} days`;
-            else if (item.intervalMinutes >= 60 && item.intervalMinutes % 60 === 0) currentInterval = `${item.intervalMinutes/60} hours`;
-            else currentInterval = `${item.intervalMinutes}m`;
-          }
-
-          m = await askStep(channel, userId, `**Edit Step 5/6 — Repeat Interval** (current: ${currentInterval}):`, 'e.g. "none", "36 hours", "3 days" — or type "same"');
-          session.messages.push(m);
-          const intervalReply = await awaitReply(channel, userId);
-          session.messages.push(intervalReply);
-          session.data.interval = intervalReply.content.trim().toLowerCase() === 'same' ? currentInterval : intervalReply.content.trim();
-
-          m = await askStep(channel, userId, `**Edit Step 6/6 — Image Link** (current: ${item.imageUrl ? 'set' : 'none'}):`, 'Paste new Discord Message Link, or type "same" / "skip"');
-          session.messages.push(m);
-          const imageReply = await awaitReply(channel, userId);
-          session.messages.push(imageReply);
-          const imgInput = imageReply.content.trim().toLowerCase();
-          session.data.imageUrl = imgInput === 'same' ? (item.imageUrl || null) : (imgInput === 'skip' ? null : imageReply.content.trim());
-
-          await cleanupSessionMessages(session);
-
-          const executeAt = parseStartTime(session.data.startTime, session.data.startDate);
-          const intervalMinutes = parseInterval(session.data.interval);
-
-          const updated = {
-            ...item,
-            title: session.data.title,
-            content: session.data.content,
-            executeAt,
-            intervalMinutes,
-            imageUrl: session.data.imageUrl,
-            isNewCreation: true
-          };
-
-          cancelScheduledJob(item.id);
-          await saveAnnouncement(updated);
-          scheduleItem(client, updated);
-
-          const startUnix = Math.floor(new Date(executeAt).getTime() / 1000);
-          const isNow = new Date(executeAt).getTime() <= Date.now() + 5000;
-          const timeDetails = isNow ? `⚡ Sent immediately` : `<t:${startUnix}:F> (<t:${startUnix}:R>)`;
-
-          const confirmMsg = await channel.send({ content: `✅ **"${updated.title}" [ID: \`${item.id}\`] updated!** First send: ${timeDetails}` });
-          setTimeout(() => confirmMsg.delete().catch(() => {}), 10000);
-
-        } catch (err) {
-          await cleanupSessionMessages(session);
-          const errMsg = await channel.send({ content: '⏱️ Edit timed out. Use `/edit` to try again.' });
-          setTimeout(() => errMsg.delete().catch(() => {}), 8000);
-        } finally {
-          activeSessions.delete(userId);
-        }
+        return interaction.reply({
+          content: `✅ **"${title}" [ID: \`${id}\`] updated!** First send: ${timeDetails}`,
+          ephemeral: true
+        });
 
       } else if (commandName === 'list') {
         const list = await loadAnnouncements(guildId);
@@ -382,7 +208,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const id = interaction.options.getString('id');
         cancelScheduledJob(id);
         const { success } = await deleteAnnouncement(id, interaction.guildId);
-        return interaction.reply({ content: success ? `✅ Deleted announcement \`${id}\`.` : `❌ ID \`${id}\` not found. Use \`/list\`.`, ephemeral: true });
+        return interaction.reply({
+          content: success ? `✅ Deleted announcement \`${id}\`.` : `❌ ID \`${id}\` not found. Use \`/list\`.`,
+          ephemeral: true
+        });
 
       } else if (commandName === 'preset') {
         const presetsMenu = new StringSelectMenuBuilder()
@@ -397,19 +226,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
       }
 
     } else if (interaction.isStringSelectMenu()) {
-      if (interaction.customId === 'select_announce_channel') {
-        const targetChannelId = interaction.values[0];
-        await interaction.update({ content: `✅ Channel selected: <#${targetChannelId}>\n📝 I'll guide you step-by-step in this channel. Starting now...`, components: [] });
-        await runCreateFlow(interaction, targetChannelId);
-
-      } else if (interaction.customId === 'select_announce_preset') {
+      if (interaction.customId === 'select_announce_preset') {
         const presetKey = interaction.values[0];
         let title = '', content = '';
         if (presetKey === 'preset_desert_storm') { title = '🌵 Desert Storm Match Reminder'; content = 'Desert Storm battle is approaching! All fighters prepare your squads!'; }
         else if (presetKey === 'preset_canyon_storm') { title = '⛈️ Canyon Storm Battle Readiness'; content = 'Canyon Storm is starting soon! Ensure rallies are assigned!'; }
         else if (presetKey === 'preset_tech_reset') { title = '💡 Tech Donation & Daily Arms Race'; content = 'Daily reset! Donate max diamonds/rss to Alliance Tech!'; }
 
-        const channels = interaction.guild.channels.cache.filter(c => c.type === 0).first(25);
+        const channels = interaction.guild.channels.cache.filter(c => c.type === ChannelType.GuildText).first(25);
         const selectMenu = new StringSelectMenuBuilder()
           .setCustomId(`select_preset_channel_${presetKey}`)
           .setPlaceholder(`Select channel for: ${title}`)
@@ -421,8 +245,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const presetKey = interaction.customId.replace('select_preset_channel_', '');
         let title = '', content = '', intervalMinutes = 30;
         if (presetKey === 'preset_desert_storm') { title = '🌵 Desert Storm Match Reminder'; content = 'Desert Storm battle is approaching!'; intervalMinutes = 30; }
-        else if (presetKey === 'preset_canyon_storm') { title = '⛈️ Canyon Storm Battle Readiness'; content = 'Canyon Storm is starting soon! Ensure rallies are assigned!'; intervalMinutes = 15; }
-        else if (presetKey === 'preset_tech_reset') { title = '💡 Tech Donation & Daily Arms Race'; content = 'Daily reset! Donate max diamonds/rss to Alliance Tech!'; intervalMinutes = 1440; }
+        else if (presetKey === 'preset_canyon_storm') { title = '⛈️ Canyon Storm Battle Readiness'; content = 'Canyon Storm is starting soon!'; intervalMinutes = 15; }
+        else if (presetKey === 'preset_tech_reset') { title = '💡 Tech Donation & Daily Arms Race'; content = 'Daily reset! Donate max diamonds/rss!'; intervalMinutes = 1440; }
 
         const existingList = await loadAnnouncements(interaction.guildId);
         const nextId = generateNextId(existingList);
