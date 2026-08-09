@@ -1,35 +1,34 @@
-const fs = require('fs');
-const path = require('path');
+const { loadAnnouncements, saveAnnouncement } = require('./database');
 
-const DATA_DIR = path.join(__dirname, '../data');
-const TZ_FILE = path.join(DATA_DIR, 'timezones.json');
-
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-
-function loadTimezones() {
-  if (!fs.existsSync(TZ_FILE)) return {};
-  try { return JSON.parse(fs.readFileSync(TZ_FILE, 'utf-8')); } catch { return {}; }
+async function getGuildTimezone(guildId) {
+  const list = await loadAnnouncements(guildId);
+  const tzItem = list.find(item => item.id === `tz_${guildId}`);
+  return tzItem ? tzItem.content : 'UTC';
 }
 
-function saveTimezones(data) {
-  fs.writeFileSync(TZ_FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-function getGuildTimezone(guildId) {
-  const data = loadTimezones();
-  return data[guildId] || 'UTC';
-}
-
-function setGuildTimezone(guildId, timezone) {
-  // Validate timezone
+async function setGuildTimezone(guildId, timezone) {
   try {
     Intl.DateTimeFormat(undefined, { timeZone: timezone });
   } catch {
     return { success: false, error: `Invalid timezone: "${timezone}". Use a valid IANA timezone like Asia/Kolkata, Europe/London, America/New_York` };
   }
-  const data = loadTimezones();
-  data[guildId] = timezone;
-  saveTimezones(data);
+  
+  const item = {
+    id: `tz_${guildId}`,
+    guildId,
+    title: 'timezone',
+    content: timezone,
+    targetChannelId: '0',
+    type: 'timezone',
+    executeAt: new Date().toISOString(),
+    intervalMinutes: null,
+    rolePing: 'none',
+    createdBy: 'system',
+    createdAt: new Date().toISOString(),
+    active: false,
+    isNewCreation: false
+  };
+  await saveAnnouncement(item);
   return { success: true };
 }
 
@@ -50,9 +49,9 @@ function setGuildTimezone(guildId, timezone) {
  *   "18:30 10-08-2026"→ specific date at 18:30 local time
  *   "18:30 10082026"  → same, without separators
  */
-function parseLocalTime(rawInput, guildId) {
+async function parseLocalTime(rawInput, guildId) {
   const str = (rawInput || 'now').trim().toLowerCase();
-  const tz = getGuildTimezone(guildId);
+  const tz = await getGuildTimezone(guildId);
 
   if (str === 'now' || str === '0') return new Date().toISOString();
 

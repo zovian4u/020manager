@@ -202,8 +202,8 @@ function buildListComponents(list, selectedId = null) {
 // ─────────────────────────────────────────────
 // Build Edit Modal pre-filled with item values
 // ─────────────────────────────────────────────
-function buildEditModal(item, guildId) {
-  const tz = getGuildTimezone(guildId);
+async function buildEditModal(item, guildId) {
+  const tz = await getGuildTimezone(guildId);
   const localNowStr = new Date().toLocaleString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
 
   const modal = new ModalBuilder()
@@ -280,7 +280,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const intervalRaw = interaction.options.getString('interval');
         const imageUrl    = interaction.options.getString('image') || null;
 
-        const executeAt       = parseLocalTime(timeRaw, interaction.guildId);
+        const executeAt       = await parseLocalTime(timeRaw, interaction.guildId);
         const intervalMinutes = parseInterval(intervalRaw);
         const existingList    = await loadAnnouncements(guildId);
         const id              = generateNextId(existingList);
@@ -309,9 +309,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       // ── /list ──────────────────────────────────────────────────────────────
       } else if (commandName === 'list') {
-        const list = await loadAnnouncements(guildId);
+        const fullList = await loadAnnouncements(guildId);
+        const list = fullList.filter(item => !item.id.startsWith('tz_'));
         if (list.length === 0) {
-          return interaction.reply({ content: 'ℹ️ No active announcements. Use `/create` to add one.', ephemeral: true });
+          return interaction.reply({ content: '📭 No scheduled announcements for this server.', ephemeral: true });
         }
         const { embed, components } = buildListComponents(list, null);
         return interaction.reply({ embeds: [embed], components, ephemeral: true });
@@ -342,7 +343,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const sub = interaction.options.getSubcommand();
         if (sub === 'set') {
           const zone = interaction.options.getString('zone').trim();
-          const result = setGuildTimezone(interaction.guildId, zone);
+          const result = await setGuildTimezone(interaction.guildId, zone);
           if (!result.success) return interaction.reply({ content: `❌ ${result.error}`, ephemeral: true });
           const localNow = new Date().toLocaleString('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false });
           return interaction.reply({
@@ -350,7 +351,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
             ephemeral: true
           });
         } else {
-          const tz = getGuildTimezone(interaction.guildId);
+          const tz = await getGuildTimezone(interaction.guildId);
           const localNow = new Date().toLocaleString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
           return interaction.reply({
             content: `🌍 Server timezone: **${tz}**\n🕐 Current local time: **${localNow}**\nChange with: \`/timezone set zone: Asia/Kolkata\``,
@@ -365,7 +366,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
       // Announcement selector in /list view
       if (interaction.customId === 'list_select_announcement') {
         const selectedId = interaction.values[0];
-        const list = await loadAnnouncements(interaction.guildId);
+        const fullList = await loadAnnouncements(interaction.guildId);
+        const list = fullList.filter(item => !item.id.startsWith('tz_'));
         const { embed, components } = buildListComponents(list, selectedId);
         return interaction.update({ embeds: [embed], components });
       }
@@ -413,7 +415,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const list = await loadAnnouncements(guildId);
         const item = list.find(a => matchId(a.id, id));
         if (!item) return interaction.reply({ content: `❌ Announcement \`${id}\` not found.`, ephemeral: true });
-        return interaction.showModal(buildEditModal(item, guildId));
+        const modal = await buildEditModal(item, guildId);
+        return interaction.showModal(modal);
       }
 
       // Delete button → delete and refresh list
@@ -426,11 +429,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
           return interaction.reply({ content: `❌ Could not delete \`${id}\`.`, ephemeral: true });
         }
 
-        const updatedList = await loadAnnouncements(guildId);
-        if (updatedList.length === 0) {
+        const fullList = await loadAnnouncements(guildId);
+        const list = fullList.filter(item => !item.id.startsWith('tz_'));
+        if (list.length === 0) {
           return interaction.update({ content: '✅ Deleted! No more announcements scheduled.', embeds: [], components: [] });
         }
-        const { embed, components } = buildListComponents(updatedList, null);
+        const { embed, components } = buildListComponents(list, null);
         return interaction.update({ content: `✅ Deleted \`${id}\`!`, embeds: [embed], components });
       }
 
@@ -451,7 +455,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const intervalRaw = interaction.fields.getTextInputValue('edit_interval').trim();
 
         const timeChanged = timeRaw.toLowerCase() !== 'now';
-        const executeAt = parseLocalTime(timeRaw, interaction.guildId);
+        const executeAt = await parseLocalTime(timeRaw, interaction.guildId);
         const intervalMinutes = parseInterval(intervalRaw);
 
         const updated = {
@@ -465,8 +469,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         scheduleItem(client, updated);
 
         // Refresh the list embed
-        const updatedList = await loadAnnouncements(interaction.guildId);
-        const { embed, components } = buildListComponents(updatedList, id);
+        const fullList = await loadAnnouncements(interaction.guildId);
+        const filteredList = fullList.filter(item => !item.id.startsWith('tz_'));
+        const { embed, components } = buildListComponents(filteredList, id);
 
         return interaction.update({ content: `✅ **"${title}" [ID: \`${id}\`]** updated!`, embeds: [embed], components });
       }
