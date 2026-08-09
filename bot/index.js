@@ -202,10 +202,9 @@ function buildListComponents(list, selectedId = null) {
 // ─────────────────────────────────────────────
 // Build Edit Modal pre-filled with item values
 // ─────────────────────────────────────────────
-function buildEditModal(item) {
-  const now = new Date();
-  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  const dateStr = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}`;
+function buildEditModal(item, guildId) {
+  const tz = getGuildTimezone(guildId);
+  const localNowStr = new Date().toLocaleString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
 
   const modal = new ModalBuilder()
     .setCustomId(`modal_edit_ann_${item.id}`)
@@ -231,19 +230,10 @@ function buildEditModal(item) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('edit_time')
-        .setLabel(`Start Time HH:MM  (Bot now: ${timeStr})`)
+        .setLabel(`When to send? (${tz} now: ${localNowStr})`)
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder(`"now" or "${timeStr}"`)
+        .setPlaceholder('"now", "in 2 hours", "18:30", "tomorrow 18:30"')
         .setValue('now')
-        .setRequired(true)
-    ),
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('edit_date')
-        .setLabel(`Start Date DDMMYYYY  (Today: ${dateStr})`)
-        .setStyle(TextInputStyle.Short)
-        .setPlaceholder(`"today", "tomorrow", or "${dateStr}"`)
-        .setValue('today')
         .setRequired(true)
     ),
     new ActionRowBuilder().addComponents(
@@ -423,7 +413,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const list = await loadAnnouncements(guildId);
         const item = list.find(a => matchId(a.id, id));
         if (!item) return interaction.reply({ content: `❌ Announcement \`${id}\` not found.`, ephemeral: true });
-        return interaction.showModal(buildEditModal(item));
+        return interaction.showModal(buildEditModal(item, guildId));
       }
 
       // Delete button → delete and refresh list
@@ -458,11 +448,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const title       = interaction.fields.getTextInputValue('edit_title').trim();
         const content     = interaction.fields.getTextInputValue('edit_body').trim();
         const timeRaw     = interaction.fields.getTextInputValue('edit_time').trim();
-        const dateRaw     = interaction.fields.getTextInputValue('edit_date').trim();
         const intervalRaw = interaction.fields.getTextInputValue('edit_interval').trim();
 
-        const timeChanged = timeRaw.toLowerCase() !== 'now' || dateRaw.toLowerCase() !== 'today';
-        const executeAt = parseLocalTime(`${timeRaw} ${dateRaw}`, interaction.guildId);
+        const timeChanged = timeRaw.toLowerCase() !== 'now';
+        const executeAt = parseLocalTime(timeRaw, interaction.guildId);
         const intervalMinutes = parseInterval(intervalRaw);
 
         const updated = {
