@@ -165,24 +165,30 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const title   = interaction.options.getString('title')    || item.title;
         const content = interaction.options.getString('body')     || item.content;
-        const timeRaw = interaction.options.getString('time')     || 'now';
-        const dateRaw = interaction.options.getString('date')     || 'today';
+        const timeRaw = interaction.options.getString('time');     // null if not provided
+        const dateRaw = interaction.options.getString('date');     // null if not provided
         const intervalRaw = interaction.options.getString('interval');
         const imageInput  = interaction.options.getString('image');
 
-        const executeAt = parseDateTime(timeRaw, dateRaw);
+        // Only recalculate executeAt if time was explicitly provided
+        const timeChanged = timeRaw !== null;
+        const executeAt = timeChanged
+          ? parseDateTime(timeRaw, dateRaw || 'today')
+          : item.executeAt;
+
         const intervalMinutes = intervalRaw !== null ? parseInterval(intervalRaw) : item.intervalMinutes;
         const imageUrl = imageInput === 'none' ? null : (imageInput || item.imageUrl);
 
         const updated = {
           ...item,
           title, content, executeAt, intervalMinutes, imageUrl,
-          isNewCreation: true
+          isNewCreation: timeChanged  // only fire immediately if time was explicitly changed
         };
 
         cancelScheduledJob(item.id);
         await saveAnnouncement(updated);
         scheduleItem(client, updated);
+
 
         const startUnix = Math.floor(new Date(executeAt).getTime() / 1000);
         const isNow = new Date(executeAt).getTime() <= Date.now() + 5000;
