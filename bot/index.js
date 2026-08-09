@@ -44,6 +44,7 @@ function generateNextId(list) {
   let maxId = 0;
   if (Array.isArray(list)) {
     list.forEach(item => {
+      if (String(item.id).startsWith('tz_') || item.type === 'timezone') return;
       const num = parseInt(String(item.id).replace(/\D/g, ''), 10);
       if (!isNaN(num) && num > maxId) maxId = num;
     });
