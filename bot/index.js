@@ -64,75 +64,52 @@ function generateNextId(list) {
 }
 
 /**
- * Parse Start Date & Time (24h HH:MM format + optional DDMMYYYY date format):
+ * Parse Start Date & Time from separate Time (HH:MM 24h) and Date (DDMMYYYY) fields:
  */
-function parseStartTime(inputRaw) {
-  const str = (inputRaw || 'now').trim();
-  const lower = str.toLowerCase();
+function parseDateTime(timeRaw, dateRaw) {
+  const tStr = (timeRaw || 'now').trim().toLowerCase();
+  const dStr = (dateRaw || 'today').trim().toLowerCase();
 
-  if (lower === 'now' || lower === '0') {
+  if (tStr === 'now' || tStr === '0') {
     return new Date().toISOString();
   }
 
-  // 1. Time (HH:MM) + Date (DDMMYYYY) e.g. "18:00 10082026"
-  const timeDateMatch = str.match(/^(\d{1,2}):(\d{2})\s+(\d{2})(\d{2})(\d{4})$/);
-  if (timeDateMatch) {
-    const hours = parseInt(timeDateMatch[1], 10);
-    const minutes = parseInt(timeDateMatch[2], 10);
-    const day = parseInt(timeDateMatch[3], 10);
-    const month = parseInt(timeDateMatch[4], 10) - 1;
-    const year = parseInt(timeDateMatch[5], 10);
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth();
+  let day = now.getDate();
 
-    const target = new Date(year, month, day, hours, minutes, 0, 0);
-    return target.toISOString();
-  }
-
-  // 2. Date (DDMMYYYY) + Time (HH:MM) e.g. "10082026 18:00"
-  const dateTimeMatch = str.match(/^(\d{2})(\d{2})(\d{4})\s+(\d{1,2}):(\d{2})$/);
-  if (dateTimeMatch) {
-    const day = parseInt(dateTimeMatch[1], 10);
-    const month = parseInt(dateTimeMatch[2], 10) - 1;
-    const year = parseInt(dateTimeMatch[3], 10);
-    const hours = parseInt(dateTimeMatch[4], 10);
-    const minutes = parseInt(dateTimeMatch[5], 10);
-
-    const target = new Date(year, month, day, hours, minutes, 0, 0);
-    return target.toISOString();
-  }
-
-  // 3. Time (HH:MM) + Date with separators e.g. "18:00 10-08-2026"
-  const timeSepMatch = str.match(/^(\d{1,2}):(\d{2})\s+(\d{2})[-/](\d{2})[-/](\d{4})$/);
-  if (timeSepMatch) {
-    const hours = parseInt(timeSepMatch[1], 10);
-    const minutes = parseInt(timeSepMatch[2], 10);
-    const day = parseInt(timeSepMatch[3], 10);
-    const month = parseInt(timeSepMatch[4], 10) - 1;
-    const year = parseInt(timeSepMatch[5], 10);
-
-    const target = new Date(year, month, day, hours, minutes, 0, 0);
-    return target.toISOString();
-  }
-
-  // 4. Time only (HH:MM 24-hr format) e.g. "18:00" or "09:30"
-  const clockMatch = str.match(/^(\d{1,2}):(\d{2})$/);
-  if (clockMatch) {
-    const hours = parseInt(clockMatch[1], 10);
-    const minutes = parseInt(clockMatch[2], 10);
-    const target = new Date();
-    target.setHours(hours, minutes, 0, 0);
-
-    if (target.getTime() <= Date.now()) {
-      target.setDate(target.getDate() + 1);
+  if (dStr === 'tomorrow') {
+    const tmr = new Date();
+    tmr.setDate(tmr.getDate() + 1);
+    year = tmr.getFullYear();
+    month = tmr.getMonth();
+    day = tmr.getDate();
+  } else if (dStr !== 'today' && dStr !== 'now' && dStr !== '') {
+    const dMatch = dStr.match(/^(\d{2})[-/]?(\d{2})[-/]?(\d{4})$/);
+    if (dMatch) {
+      day = parseInt(dMatch[1], 10);
+      month = parseInt(dMatch[2], 10) - 1;
+      year = parseInt(dMatch[3], 10);
     }
-    return target.toISOString();
   }
 
-  const parsedDate = Date.parse(str);
-  if (!isNaN(parsedDate)) {
-    return new Date(parsedDate).toISOString();
+  let hours = now.getHours();
+  let minutes = now.getMinutes();
+
+  const tMatch = tStr.match(/^(\d{1,2}):(\d{2})$/);
+  if (tMatch) {
+    hours = parseInt(tMatch[1], 10);
+    minutes = parseInt(tMatch[2], 10);
   }
 
-  return new Date().toISOString();
+  const target = new Date(year, month, day, hours, minutes, 0, 0);
+
+  if ((dStr === 'today' || dStr === '') && target.getTime() <= Date.now()) {
+    target.setDate(target.getDate() + 1);
+  }
+
+  return target.toISOString();
 }
 
 /**
@@ -169,11 +146,48 @@ function parseInterval(inputRaw) {
   const minMatch = str.match(/^(\d+(?:\.\d+)?)/);
   if (minMatch) {
     const mins = parseFloat(minMatch[1]);
-    if (mins > 525600) return null; // Reject unreasonable intervals (>1 year)
+    if (mins > 525600) return null;
     return Math.round(mins);
   }
 
   return null;
+}
+
+/**
+ * Parse Interval and Image link from Field 5
+ */
+function parseIntervalAndImage(inputRaw, bodyContent = '') {
+  let imageUrl = null;
+
+  if (!inputRaw || !inputRaw.trim()) {
+    return { intervalMinutes: null, imageUrl: null };
+  }
+
+  const str = inputRaw.trim();
+
+  // Extract Discord Message Link or direct image URL if present in Field 5
+  const msgLinkMatch = str.match(/https:\/\/discord\.com\/channels\/\d+\/(\d+)\/(\d+)/);
+  const directUrlMatch = str.match(/(https?:\/\/\S+\.(?:png|jpg|jpeg|gif|webp))/i);
+
+  if (msgLinkMatch) {
+    imageUrl = msgLinkMatch[0];
+  } else if (directUrlMatch) {
+    imageUrl = directUrlMatch[0];
+  }
+
+  // Fallback: check body content if Field 5 doesn't contain an image link
+  if (!imageUrl) {
+    const bodyMsgLink = bodyContent.match(/https:\/\/discord\.com\/channels\/\d+\/(\d+)\/(\d+)/);
+    const bodyDirectUrl = bodyContent.match(/(https?:\/\/\S+\.(?:png|jpg|jpeg|gif|webp))/i);
+    if (bodyMsgLink) imageUrl = bodyMsgLink[0];
+    else if (bodyDirectUrl) imageUrl = bodyDirectUrl[0];
+  }
+
+  // Remove the image URL from interval string to parse interval
+  const intervalStr = str.replace(imageUrl || '', '').trim();
+  const intervalMinutes = parseInterval(intervalStr);
+
+  return { intervalMinutes, imageUrl };
 }
 
 client.once(Events.ClientReady, async (c) => {
@@ -243,6 +257,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
 
         const titleInput = new TextInputBuilder()
           .setCustomId('announce_title')
@@ -260,11 +275,19 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const startTimeInput = new TextInputBuilder()
           .setCustomId('announce_start_time')
-          .setLabel(`Start Time & Date (Bot now: ${timeStr})`)
-          .setPlaceholder(`e.g. "${timeStr}", "18:00 10082026", "now"`)
+          .setLabel(`Start Time HH:MM (Bot now: ${timeStr})`)
+          .setPlaceholder('e.g. "18:00" or "now"')
           .setValue('now')
           .setStyle(TextInputStyle.Short)
           .setRequired(true);
+
+        const startDateInput = new TextInputBuilder()
+          .setCustomId('announce_start_date')
+          .setLabel(`Start Date DDMMYYYY (today: ${dateStr})`)
+          .setPlaceholder(`e.g. "${dateStr}", "today", or "tomorrow"`)
+          .setValue('today')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(false);
 
         let existingIntervalStr = 'none';
         if (item.intervalMinutes) {
@@ -276,20 +299,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
             existingIntervalStr = `${item.intervalMinutes}m`;
           }
         }
+        if (item.imageUrl) {
+          existingIntervalStr = `${existingIntervalStr} ${item.imageUrl}`;
+        }
 
         const intervalInput = new TextInputBuilder()
           .setCustomId('announce_interval')
-          .setLabel('Repeat Interval (none, 36h, 3 days)')
-          .setPlaceholder('e.g. "none", "36 hours", "45 minutes", "3 days"')
+          .setLabel('Interval (36h) & Image Link (Copy Msg Link)')
+          .setPlaceholder('e.g. "none", "36 hours", or paste Discord Image Link')
           .setValue(existingIntervalStr)
-          .setStyle(TextInputStyle.Short)
-          .setRequired(false);
-
-        const imageInput = new TextInputBuilder()
-          .setCustomId('announce_image')
-          .setLabel('Image (Copy Message Link)')
-          .setPlaceholder('Right click image msg -> Copy Message Link')
-          .setValue(item.imageUrl || '')
           .setStyle(TextInputStyle.Short)
           .setRequired(false);
 
@@ -297,8 +315,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
           new ActionRowBuilder().addComponents(titleInput),
           new ActionRowBuilder().addComponents(contentInput),
           new ActionRowBuilder().addComponents(startTimeInput),
-          new ActionRowBuilder().addComponents(intervalInput),
-          new ActionRowBuilder().addComponents(imageInput)
+          new ActionRowBuilder().addComponents(startDateInput),
+          new ActionRowBuilder().addComponents(intervalInput)
         );
 
         return interaction.showModal(modal);
@@ -389,6 +407,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
 
         const modal = new ModalBuilder()
           .setCustomId('modal_announce_submit')
@@ -410,33 +429,34 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const startTimeInput = new TextInputBuilder()
           .setCustomId('announce_start_time')
-          .setLabel(`Start Time & Date (Bot now: ${timeStr})`)
-          .setPlaceholder(`e.g. "${timeStr}", "18:00 10082026", "now"`)
+          .setLabel(`Start Time HH:MM (Bot now: ${timeStr})`)
+          .setPlaceholder('e.g. "18:00" or "now"')
           .setStyle(TextInputStyle.Short)
           .setValue('now')
           .setRequired(true);
 
-        const intervalInput = new TextInputBuilder()
-          .setCustomId('announce_interval')
-          .setLabel('Repeat Interval (none, 36h, 3 days)')
-          .setPlaceholder('e.g. "none", "36 hours", "45 minutes", "3 days"')
+        const startDateInput = new TextInputBuilder()
+          .setCustomId('announce_start_date')
+          .setLabel(`Start Date DDMMYYYY (today: ${dateStr})`)
+          .setPlaceholder(`e.g. "${dateStr}", "today", or "tomorrow"`)
           .setStyle(TextInputStyle.Short)
-          .setValue('none')
+          .setValue('today')
           .setRequired(false);
 
-        const imageInput = new TextInputBuilder()
-          .setCustomId('announce_image')
-          .setLabel('Image (Copy Message Link)')
-          .setPlaceholder('Right click image msg -> Copy Message Link')
+        const intervalInput = new TextInputBuilder()
+          .setCustomId('announce_interval')
+          .setLabel('Interval (36h) & Image Link (Copy Msg Link)')
+          .setPlaceholder('e.g. "none", "36 hours", or paste Discord Image Link')
           .setStyle(TextInputStyle.Short)
+          .setValue('none')
           .setRequired(false);
 
         modal.addComponents(
           new ActionRowBuilder().addComponents(titleInput),
           new ActionRowBuilder().addComponents(contentInput),
           new ActionRowBuilder().addComponents(startTimeInput),
-          new ActionRowBuilder().addComponents(intervalInput),
-          new ActionRowBuilder().addComponents(imageInput)
+          new ActionRowBuilder().addComponents(startDateInput),
+          new ActionRowBuilder().addComponents(intervalInput)
         );
 
         await interaction.showModal(modal);
@@ -539,22 +559,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const title = interaction.fields.getTextInputValue('announce_title').trim();
         const content = interaction.fields.getTextInputValue('announce_content').trim();
         const startTimeRaw = interaction.fields.getTextInputValue('announce_start_time');
+        const startDateRaw = interaction.fields.getTextInputValue('announce_start_date');
         const intervalRaw = interaction.fields.getTextInputValue('announce_interval');
-        const imageRaw = interaction.fields.getTextInputValue('announce_image');
 
-        const executeAt = parseStartTime(startTimeRaw);
-        const intervalMinutes = parseInterval(intervalRaw);
-
-        let imageUrl = imageRaw ? imageRaw.trim() : null;
-        if (!imageUrl) {
-          const msgLinkMatch = content.match(/https:\/\/discord\.com\/channels\/\d+\/(\d+)\/(\d+)/);
-          const directUrlMatch = content.match(/(https?:\/\/\S+\.(?:png|jpg|jpeg|gif|webp))/i);
-          if (msgLinkMatch) {
-            imageUrl = msgLinkMatch[0];
-          } else if (directUrlMatch) {
-            imageUrl = directUrlMatch[0];
-          }
-        }
+        const executeAt = parseDateTime(startTimeRaw, startDateRaw);
+        const { intervalMinutes, imageUrl } = parseIntervalAndImage(intervalRaw, content);
 
         let id;
         if (isEdit && session && session.editingId) {
