@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "id": "001",
+    "guildId": "1294462126634696786",
+    "title": "Alliance Exercise: Marshall",
+    "content": "Please login for alliance exercise.",
+    "targetChannelId": "1294462126634696789",
+    "type": "interval",
+    "executeAt": "2026-08-09T13:00:00+00:00",
+    "intervalMinutes": 4320,
+    "cronExpression": null,
+    "rolePing": "everyone",
+    "imageUrl": null,
+    "createdBy": "hemzovianasia",
+    "createdAt": "2026-08-09T09:51:53.665+00:00",
+    "active": true
+  }
+]
