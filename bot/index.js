@@ -50,31 +50,75 @@ function generateNextId(list) {
   return String(maxId + 1).padStart(3, '0');
 }
 
-function parseDateTime(timeRaw, dateRaw) {
-  const tStr = (timeRaw || 'now').trim().toLowerCase();
-  const dStr = (dateRaw || 'today').trim().toLowerCase();
-  if (tStr === 'now') return new Date().toISOString();
+/**
+ * Parse user-friendly time input — supports relative times so timezone doesn't matter.
+ * Supported formats:
+ *   "now"             → immediately
+ *   "in 2 hours"      → 2 hours from now
+ *   "in 30 minutes"   → 30 minutes from now
+ *   "in 30m"          → 30 minutes from now
+ *   "in 2h"           → 2 hours from now
+ *   "in 3 days"       → 3 days from now
+ *   "tomorrow"        → next day same time
+ *   "tomorrow 18:00"  → next day at 18:00 UTC
+ *   "18:00"           → today at 18:00 UTC (or tomorrow if passed)
+ *   "18:00 10082026"  → specific date at 18:00 UTC
+ */
+function parseUserTime(timeRaw) {
+  const str = (timeRaw || 'now').trim().toLowerCase();
 
-  const now = new Date();
-  let year = now.getFullYear(), month = now.getMonth(), day = now.getDate();
-  if (dStr === 'tomorrow') {
-    const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
-    year = tmr.getFullYear(); month = tmr.getMonth(); day = tmr.getDate();
-  } else if (dStr !== 'today' && dStr !== '' && dStr !== 'skip') {
-    const m = dStr.match(/^(\d{2})[-/]?(\d{2})[-/]?(\d{4})$/);
-    if (m) { day = parseInt(m[1]); month = parseInt(m[2]) - 1; year = parseInt(m[3]); }
+  if (str === 'now' || str === '0') return new Date().toISOString();
+
+  // "in X minutes" / "in Xm"
+  const minMatch = str.match(/^in\s+(\d+(?:\.\d+)?)\s*m(?:in(?:utes?)?)?$/);
+  if (minMatch) {
+    return new Date(Date.now() + parseFloat(minMatch[1]) * 60 * 1000).toISOString();
   }
 
-  let hours = now.getHours(), minutes = now.getMinutes();
-  const tm = tStr.match(/^(\d{1,2}):(\d{2})$/);
-  if (tm) { hours = parseInt(tm[1]); minutes = parseInt(tm[2]); }
-
-  const target = new Date(year, month, day, hours, minutes, 0, 0);
-  if ((dStr === 'today' || dStr === '') && target.getTime() <= Date.now()) {
-    target.setDate(target.getDate() + 1);
+  // "in X hours" / "in Xh"
+  const hourMatch = str.match(/^in\s+(\d+(?:\.\d+)?)\s*h(?:ours?)?$/);
+  if (hourMatch) {
+    return new Date(Date.now() + parseFloat(hourMatch[1]) * 60 * 60 * 1000).toISOString();
   }
-  return target.toISOString();
+
+  // "in X days"
+  const dayMatch = str.match(/^in\s+(\d+(?:\.\d+)?)\s*d(?:ays?)?$/);
+  if (dayMatch) {
+    return new Date(Date.now() + parseFloat(dayMatch[1]) * 24 * 60 * 60 * 1000).toISOString();
+  }
+
+  // "tomorrow" or "tomorrow HH:MM"
+  if (str.startsWith('tomorrow')) {
+    const tmr = new Date();
+    tmr.setDate(tmr.getDate() + 1);
+    const timePartMatch = str.match(/(\d{1,2}):(\d{2})/);
+    if (timePartMatch) {
+      tmr.setUTCHours(parseInt(timePartMatch[1]), parseInt(timePartMatch[2]), 0, 0);
+    }
+    return tmr.toISOString();
+  }
+
+  // "HH:MM DD-MM-YYYY" or "HH:MM DDMMYYYY"
+  const dtMatch = str.match(/^(\d{1,2}):(\d{2})\s+(\d{2})[-/]?(\d{2})[-/]?(\d{4})$/);
+  if (dtMatch) {
+    return new Date(Date.UTC(
+      parseInt(dtMatch[5]), parseInt(dtMatch[4]) - 1, parseInt(dtMatch[3]),
+      parseInt(dtMatch[1]), parseInt(dtMatch[2])
+    )).toISOString();
+  }
+
+  // "HH:MM" only → today at that UTC time, tomorrow if already passed
+  const timeOnly = str.match(/^(\d{1,2}):(\d{2})$/);
+  if (timeOnly) {
+    const t = new Date();
+    t.setUTCHours(parseInt(timeOnly[1]), parseInt(timeOnly[2]), 0, 0);
+    if (t.getTime() <= Date.now()) t.setUTCDate(t.getUTCDate() + 1);
+    return t.toISOString();
+  }
+
+  return new Date().toISOString();
 }
+
 
 function parseInterval(inputRaw) {
   const str = (inputRaw || 'none').trim().toLowerCase();
@@ -270,28 +314,28 @@ client.on(Events.InteractionCreate, async (interaction) => {
           new ActionRowBuilder().addComponents(
             new TextInputBuilder()
               .setCustomId('create_time')
-              .setLabel(`Start Time HH:MM  ← Bot time now: ${botTime} UTC`)
+              .setLabel('When to send?')
               .setStyle(TextInputStyle.Short)
-              .setPlaceholder(`"now"  or  "${botTime}"  or  "20:30"`)
+              .setPlaceholder('"now"  "in 2 hours"  "in 30 minutes"  "in 3 days"  "tomorrow"')
               .setValue('now')
               .setRequired(true)
           ),
           new ActionRowBuilder().addComponents(
             new TextInputBuilder()
-              .setCustomId('create_date')
-              .setLabel(`Start Date DDMMYYYY  ← Today: ${botDate}`)
+              .setCustomId('create_interval')
+              .setLabel('Repeat Interval (how often to repeat)')
               .setStyle(TextInputStyle.Short)
-              .setPlaceholder(`"today"  "tomorrow"  or  "${botDate}"`)
-              .setValue('today')
-              .setRequired(true)
+              .setPlaceholder('"none"  "every 36 hours"  "every 3 days"  "every 45 minutes"')
+              .setValue('none')
+              .setRequired(false)
           ),
           new ActionRowBuilder().addComponents(
             new TextInputBuilder()
-              .setCustomId('create_interval')
-              .setLabel('Repeat Interval')
+              .setCustomId('create_image')
+              .setLabel('Image (right-click image msg → Copy Message Link)')
               .setStyle(TextInputStyle.Short)
-              .setPlaceholder('"none"  "36 hours"  "3 days"  "45 minutes"')
-              .setValue('none')
+              .setPlaceholder('Paste Discord Message Link here, or leave empty')
+              .setValue(imageUrl || '')
               .setRequired(false)
           )
         );
@@ -410,19 +454,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       // ── Handle Create Modal Submit ─────────────────────────────────────────
       if (interaction.customId.startsWith('modal_create_ann_')) {
-        // Extract channelId and imageUrl from customId: modal_create_ann_{channelId}_{image}
-        const parts = interaction.customId.replace('modal_create_ann_', '').split('_');
-        const targetChannelId = parts[0];
-        const imageEncoded = parts.slice(1).join('_');
-        const imageUrl = imageEncoded === 'noimg' ? null : decodeURIComponent(imageEncoded);
+        const targetChannelId = interaction.customId.replace('modal_create_ann_', '').split('_')[0];
 
         const title       = interaction.fields.getTextInputValue('create_title').trim();
         const content     = interaction.fields.getTextInputValue('create_body').trim();
         const timeRaw     = interaction.fields.getTextInputValue('create_time').trim();
-        const dateRaw     = interaction.fields.getTextInputValue('create_date').trim();
         const intervalRaw = interaction.fields.getTextInputValue('create_interval').trim();
+        const imageRaw    = interaction.fields.getTextInputValue('create_image').trim();
+        const imageUrl    = imageRaw || null;
 
-        const executeAt       = parseDateTime(timeRaw, dateRaw);
+        const executeAt       = parseUserTime(timeRaw);
         const intervalMinutes = parseInterval(intervalRaw);
         const existingList    = await loadAnnouncements(interaction.guildId);
         const id              = generateNextId(existingList);
@@ -436,6 +477,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           createdAt: new Date().toISOString(),
           active: true, isNewCreation: true
         };
+
 
         await saveAnnouncement(announcementObj);
         scheduleItem(client, announcementObj);
@@ -464,9 +506,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const intervalRaw = interaction.fields.getTextInputValue('edit_interval').trim();
 
         const timeChanged = timeRaw.toLowerCase() !== 'now' || dateRaw.toLowerCase() !== 'today';
-        const executeAt   = (timeRaw.toLowerCase() === 'now' && dateRaw.toLowerCase() === 'today')
-          ? item.executeAt
-          : parseDateTime(timeRaw, dateRaw);
+        const executeAt = parseUserTime(`${timeRaw} ${dateRaw}`);
         const intervalMinutes = parseInterval(intervalRaw);
 
         const updated = {
