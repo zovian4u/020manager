@@ -6,7 +6,6 @@ require('dotenv').config({ path: path.join(__dirname, '../../.env.local') });
 const DATA_DIR = path.join(__dirname, '../data');
 const FILE_PATH = path.join(DATA_DIR, 'announcements.json');
 
-// Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -40,9 +39,9 @@ function matchId(id1, id2) {
 }
 
 /**
- * Load all scheduled announcements / reminders.
+ * Load scheduled announcements / reminders. Filter by guildId if provided.
  */
-async function loadAnnouncements() {
+async function loadAnnouncements(guildId = null) {
   let list = [];
   
   if (fs.existsSync(FILE_PATH)) {
@@ -56,17 +55,40 @@ async function loadAnnouncements() {
 
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('alliance_announcements').select('*');
+      let query = supabase.from('alliance_announcements').select('*');
+      const { data, error } = await query;
       if (!error && data && data.length > 0) {
+        // Map Supabase snake_case columns back to camelCase object
+        const mappedData = data.map(row => ({
+          id: row.id,
+          guildId: row.guild_id,
+          title: row.title,
+          content: row.content,
+          targetChannelId: row.target_channel_id,
+          type: row.type,
+          executeAt: row.execute_at,
+          intervalMinutes: row.interval_minutes,
+          cronExpression: row.cron_expression,
+          rolePing: row.role_ping,
+          imageUrl: row.image_url,
+          createdBy: row.created_by,
+          createdAt: row.created_at,
+          active: row.active !== false
+        }));
+
         const mergedMap = new Map();
         list.forEach(item => mergedMap.set(item.id, item));
-        data.forEach(item => mergedMap.set(item.id, item));
+        mappedData.forEach(item => mergedMap.set(item.id, item));
         list = Array.from(mergedMap.values());
         saveAnnouncementsLocally(list);
       }
     } catch (err) {
       console.warn('Supabase fetch notice:', err.message);
     }
+  }
+
+  if (guildId) {
+    return list.filter(item => item.guildId === guildId || !item.guildId);
   }
 
   return list;
@@ -80,9 +102,26 @@ async function saveAnnouncements(announcements) {
 
   if (supabase) {
     try {
-      await supabase.from('alliance_announcements').upsert(announcements, { onConflict: 'id' });
+      const rows = announcements.map(item => ({
+        id: String(item.id),
+        guild_id: item.guildId,
+        title: item.title,
+        content: item.content,
+        target_channel_id: item.targetChannelId,
+        type: item.type,
+        execute_at: item.executeAt,
+        interval_minutes: item.intervalMinutes,
+        cron_expression: item.cronExpression,
+        role_ping: item.rolePing,
+        image_url: item.imageUrl,
+        created_by: item.createdBy,
+        created_at: item.createdAt,
+        active: item.active !== false
+      }));
+
+      await supabase.from('alliance_announcements').upsert(rows, { onConflict: 'id' });
     } catch (err) {
-      console.warn('Supabase save notice (will retain local file):', err.message);
+      console.warn('Supabase save notice (retaining local storage):', err.message);
     }
   }
 }
@@ -115,21 +154,22 @@ async function saveAnnouncement(announcement) {
 /**
  * Delete announcement by ID (matches "001", "1", etc.)
  */
-async function deleteAnnouncement(id) {
+async function deleteAnnouncement(id, guildId = null) {
   let list = await loadAnnouncements();
   const initialCount = list.length;
   
-  // Find matching item to get its exact stored ID
-  const itemToDelete = list.find(a => matchId(a.id, id));
+  const itemToDelete = list.find(a => matchId(a.id, id) && (!guildId || a.guildId === guildId || !a.guildId));
   
-  list = list.filter(a => !matchId(a.id, id));
-  saveAnnouncementsLocally(list);
+  if (itemToDelete) {
+    list = list.filter(a => a.id !== itemToDelete.id);
+    saveAnnouncementsLocally(list);
 
-  if (supabase && itemToDelete) {
-    try {
-      await supabase.from('alliance_announcements').delete().eq('id', itemToDelete.id);
-    } catch (err) {
-      console.warn('Supabase delete notice:', err.message);
+    if (supabase) {
+      try {
+        await supabase.from('alliance_announcements').delete().eq('id', itemToDelete.id);
+      } catch (err) {
+        console.warn('Supabase delete notice:', err.message);
+      }
     }
   }
 

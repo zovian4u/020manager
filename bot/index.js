@@ -48,7 +48,7 @@ const client = new Client({
 const sessionState = new Map();
 
 /**
- * Generate sequential clean IDs starting from "001", "002", "003"...
+ * Generate sequential clean IDs starting from "001", "002", "003"... per guild
  */
 function generateNextId(list) {
   let maxId = 0;
@@ -64,7 +64,7 @@ function generateNextId(list) {
 }
 
 /**
- * Parse Start Date & Time from separate Time (HH:MM 24h) and Date (DDMMYYYY) fields:
+ * Parse Start Date & Time from separate Time (HH:MM 24h) and Date (DDMMYYYY) fields
  */
 function parseDateTime(timeRaw, dateRaw) {
   const tStr = (timeRaw || 'now').trim().toLowerCase();
@@ -79,7 +79,6 @@ function parseDateTime(timeRaw, dateRaw) {
   let month = now.getMonth();
   let day = now.getDate();
 
-  // Parse Date (DDMMYYYY or DD-MM-YYYY or DD/MM/YYYY or "today" or "tomorrow")
   if (dStr === 'tomorrow') {
     const tmr = new Date();
     tmr.setDate(tmr.getDate() + 1);
@@ -90,12 +89,11 @@ function parseDateTime(timeRaw, dateRaw) {
     const dMatch = dStr.match(/^(\d{2})[-/]?(\d{2})[-/]?(\d{4})$/);
     if (dMatch) {
       day = parseInt(dMatch[1], 10);
-      month = parseInt(dMatch[2], 10) - 1; // 0-indexed month
+      month = parseInt(dMatch[2], 10) - 1;
       year = parseInt(dMatch[3], 10);
     }
   }
 
-  // Parse Time (HH:MM 24-hr format) e.g. "18:00" or "09:30"
   let hours = now.getHours();
   let minutes = now.getMinutes();
 
@@ -107,7 +105,6 @@ function parseDateTime(timeRaw, dateRaw) {
 
   const target = new Date(year, month, day, hours, minutes, 0, 0);
 
-  // If date was "today" or empty, and target time has passed today, push to tomorrow
   if ((dStr === 'today' || dStr === '') && target.getTime() <= Date.now()) {
     target.setDate(target.getDate() + 1);
   }
@@ -199,19 +196,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       } else if (commandName === 'edit') {
         const id = interaction.options.getString('id');
-        const list = await loadAnnouncements();
+        const list = await loadAnnouncements(interaction.guildId);
         const item = list.find(a => matchId(a.id, id));
 
         if (!item) {
           return interaction.reply({
-            content: `❌ Announcement with ID \`${id}\` not found. Use \`/list\` to see active IDs.`,
+            content: `❌ Announcement with ID \`${id}\` not found in this server. Use \`/list\` to see active IDs.`,
             ephemeral: true
           });
         }
 
         sessionState.set(interaction.user.id, { editingId: item.id, targetChannelId: item.targetChannelId });
 
-        // Pre-fill existing values
         const modal = new ModalBuilder()
           .setCustomId('modal_announce_edit')
           .setTitle(`Edit Announcement [ID: ${item.id}]`);
@@ -280,10 +276,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
         return interaction.showModal(modal);
 
       } else if (commandName === 'list') {
-        const list = await loadAnnouncements();
+        const list = await loadAnnouncements(interaction.guildId);
         if (list.length === 0) {
           return interaction.reply({
-            content: 'ℹ️ No active scheduled announcements found.',
+            content: 'ℹ️ No active scheduled announcements found for this server.',
             ephemeral: true
           });
         }
@@ -311,7 +307,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       } else if (commandName === 'delete') {
         const id = interaction.options.getString('id');
-        const { success } = await deleteAnnouncement(id);
+        const { success } = await deleteAnnouncement(id, interaction.guildId);
         cancelScheduledJob(id);
 
         if (success) {
@@ -321,7 +317,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
           });
         } else {
           return interaction.reply({
-            content: `❌ Announcement with ID \`${id}\` not found. Use \`/list\` to see active IDs.`,
+            content: `❌ Announcement with ID \`${id}\` not found in this server. Use \`/list\` to see active IDs.`,
             ephemeral: true
           });
         }
@@ -348,7 +344,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
             }
           ]);
 
-        const row = new ActionRowBuilder().addComponents(presetsMenu);
+        const row = new ActionRowBuilder().addComponents(selectMenu);
         return interaction.reply({
           content: '⚡ **Select Alliance Preset to quick-deploy:**',
           components: [row],
@@ -479,11 +475,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
           intervalMinutes = 1440;
         }
 
-        const existingList = await loadAnnouncements();
+        const existingList = await loadAnnouncements(interaction.guildId);
         const nextId = generateNextId(existingList);
 
         const newAnnouncement = {
           id: nextId,
+          guildId: interaction.guildId,
           title,
           content,
           targetChannelId,
@@ -537,7 +534,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         if (isEdit && session && session.editingId) {
           id = session.editingId;
         } else {
-          const existingList = await loadAnnouncements();
+          const existingList = await loadAnnouncements(interaction.guildId);
           id = generateNextId(existingList);
         }
 
@@ -545,6 +542,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         const announcementObj = {
           id,
+          guildId: interaction.guildId,
           title,
           content,
           targetChannelId,
