@@ -35,7 +35,8 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.DirectMessages
   ]
 });
 
@@ -113,14 +114,18 @@ async function askStep(channel, userId, question, hint = '') {
 }
 
 // Wait for a reply from the specific user
-async function awaitReply(channel, userId, timeoutMs = 60000) {
-  const collected = await channel.awaitMessages({
-    filter: m => m.author.id === userId,
-    max: 1,
-    time: timeoutMs,
-    errors: ['time']
-  });
-  return collected.first();
+async function awaitReply(channel, userId, timeoutMs = 90000) {
+  try {
+    const collected = await channel.awaitMessages({
+      filter: m => m.author.id === userId && !m.author.bot,
+      max: 1,
+      time: timeoutMs,
+      errors: ['time']
+    });
+    return collected.first();
+  } catch (e) {
+    throw new Error('timeout');
+  }
 }
 
 // Run the full step-by-step announcement creation flow
