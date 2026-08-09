@@ -65,11 +65,6 @@ function generateNextId(list) {
 
 /**
  * Parse Start Date & Time (24h HH:MM format + optional DDMMYYYY date format):
- * Examples:
- * - "now" -> Current time
- * - "18:00" -> 18:00 today (or tomorrow if passed)
- * - "18:00 10082026" -> 18:00 on 10th August 2026
- * - "10082026 18:00" -> 18:00 on 10th August 2026
  */
 function parseStartTime(inputRaw) {
   const str = (inputRaw || 'now').trim();
@@ -150,6 +145,11 @@ function parseInterval(inputRaw) {
     return null;
   }
 
+  // Reject 8-digit date strings accidentally typed into interval field (e.g. 09082026)
+  if (/^\d{8}$/.test(str)) {
+    return null;
+  }
+
   if (str.includes('h') || str.includes('hour')) {
     const numMatch = str.match(/^(\d+(?:\.\d+)?)/);
     if (numMatch) {
@@ -169,6 +169,7 @@ function parseInterval(inputRaw) {
   const minMatch = str.match(/^(\d+(?:\.\d+)?)/);
   if (minMatch) {
     const mins = parseFloat(minMatch[1]);
+    if (mins > 525600) return null; // Reject unreasonable intervals (>1 year)
     return Math.round(mins);
   }
 

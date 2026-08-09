@@ -80,11 +80,14 @@ function scheduleItem(client, item) {
   const hasInterval = item.intervalMinutes && item.intervalMinutes > 0;
   const intervalMs = hasInterval ? item.intervalMinutes * 60 * 1000 : 0;
 
+  const needsImmediateDispatch = item.isNewCreation || (!item.lastExecutedAt && delay <= 0);
+
   if (delay <= 0) {
     // Start time is now or passed
-    if (item.isNewCreation) {
+    if (needsImmediateDispatch) {
       dispatchAnnouncement(client, item);
       item.isNewCreation = false;
+      item.lastExecutedAt = new Date().toISOString();
       saveAnnouncement(item);
     }
 
