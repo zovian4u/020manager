@@ -39,25 +39,41 @@ function matchId(id1, id2) {
 }
 
 /**
- * Load scheduled announcements / reminders. Filter by guildId if provided.
+ * Read local JSON file only (no Supabase).
+ */
+function readLocalFile() {
+  if (!fs.existsSync(FILE_PATH)) return [];
+  try {
+    const data = fs.readFileSync(FILE_PATH, 'utf-8');
+    return JSON.parse(data);
+  } catch (e) {
+    console.error('Error reading local file:', e.message);
+    return [];
+  }
+}
+
+/**
+ * Write list to local JSON file.
+ */
+function writeLocalFile(list) {
+  try {
+    fs.writeFileSync(FILE_PATH, JSON.stringify(list, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Failed to write local announcements file:', err.message);
+  }
+}
+
+/**
+ * Load scheduled announcements. Always reads Supabase as source of truth.
+ * Filter by guildId if provided.
  */
 async function loadAnnouncements(guildId = null) {
-  let list = [];
-  
-  if (fs.existsSync(FILE_PATH)) {
-    try {
-      const data = fs.readFileSync(FILE_PATH, 'utf-8');
-      list = JSON.parse(data);
-    } catch (e) {
-      console.error('Error reading local announcements file:', e.message);
-    }
-  }
+  let list = readLocalFile();
 
   if (supabase) {
     try {
-      let query = supabase.from('alliance_announcements').select('*');
-      const { data, error } = await query;
-      if (!error && data && data.length > 0) {
+      const { data, error } = await supabase.from('alliance_announcements').select('*');
+      if (!error && data) {
         const mappedData = data.map(row => ({
           id: row.id,
           guildId: row.guild_id,
@@ -74,15 +90,11 @@ async function loadAnnouncements(guildId = null) {
           createdAt: row.created_at,
           active: row.active !== false
         }));
-
-        const mergedMap = new Map();
-        list.forEach(item => mergedMap.set(String(item.id), item));
-        mappedData.forEach(item => mergedMap.set(String(item.id), item));
-        list = Array.from(mergedMap.values());
-        saveAnnouncementsLocally(list);
+        list = mappedData;
+        writeLocalFile(list); // Sync local file to Supabase state
       }
     } catch (err) {
-      console.warn('Supabase fetch notice:', err.message);
+      console.warn('Supabase fetch notice (using local):', err.message);
     }
   }
 
@@ -94,30 +106,29 @@ async function loadAnnouncements(guildId = null) {
 }
 
 /**
- * Save array of announcements to local storage and Supabase if configured.
+ * Save array of announcements to Supabase and local file.
  */
 async function saveAnnouncements(announcements) {
-  saveAnnouncementsLocally(announcements);
+  writeLocalFile(announcements);
 
   if (supabase) {
     try {
       const rows = announcements.map(item => ({
         id: String(item.id),
-        guild_id: item.guildId,
+        guild_id: item.guildId || null,
         title: item.title,
         content: item.content,
         target_channel_id: item.targetChannelId,
         type: item.type,
         execute_at: item.executeAt,
         interval_minutes: item.intervalMinutes,
-        cron_expression: item.cronExpression,
-        role_ping: item.rolePing,
-        image_url: item.imageUrl,
-        created_by: item.createdBy,
-        created_at: item.createdAt,
+        cron_expression: item.cronExpression || null,
+        role_ping: item.rolePing || 'everyone',
+        image_url: item.imageUrl || null,
+        created_by: item.createdBy || null,
+        created_at: item.createdAt || new Date().toISOString(),
         active: item.active !== false
       }));
-
       await supabase.from('alliance_announcements').upsert(rows, { onConflict: 'id' });
     } catch (err) {
       console.warn('Supabase save notice (retaining local storage):', err.message);
@@ -126,60 +137,96 @@ async function saveAnnouncements(announcements) {
 }
 
 /**
- * Save locally to JSON file.
- */
-function saveAnnouncementsLocally(announcements) {
-  try {
-    fs.writeFileSync(FILE_PATH, JSON.stringify(announcements, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Failed to write local announcements file:', err.message);
-  }
-}
-
-/**
- * Add or update a single announcement.
+ * Add or update a single announcement in Supabase and local file.
  */
 async function saveAnnouncement(announcement) {
-  const list = await loadAnnouncements();
+  // Save to Supabase directly
+  if (supabase) {
+    try {
+      const row = {
+        id: String(announcement.id),
+        guild_id: announcement.guildId || null,
+        title: announcement.title,
+        content: announcement.content,
+        target_channel_id: announcement.targetChannelId,
+        type: announcement.type,
+        execute_at: announcement.executeAt,
+        interval_minutes: announcement.intervalMinutes,
+        cron_expression: announcement.cronExpression || null,
+        role_ping: announcement.rolePing || 'everyone',
+        image_url: announcement.imageUrl || null,
+        created_by: announcement.createdBy || null,
+        created_at: announcement.createdAt || new Date().toISOString(),
+        active: announcement.active !== false
+      };
+      await supabase.from('alliance_announcements').upsert([row], { onConflict: 'id' });
+    } catch (err) {
+      console.warn('Supabase upsert error:', err.message);
+    }
+  }
+
+  // Also update local file
+  const list = readLocalFile();
   const index = list.findIndex(a => matchId(a.id, announcement.id));
   if (index >= 0) {
     list[index] = announcement;
   } else {
     list.push(announcement);
   }
-  await saveAnnouncements(list);
+  writeLocalFile(list);
 }
 
 /**
- * Delete announcement by ID (matches "002", "2", "ann_002" flexibly across both Local and Supabase)
+ * Delete announcement by ID — deletes from BOTH Supabase and local file.
  */
 async function deleteAnnouncement(id, guildId = null) {
-  let list = await loadAnnouncements();
-  const initialCount = list.length;
-  
-  const itemsToDelete = list.filter(a => matchId(a.id, id) && (!guildId || a.guildId === guildId || !a.guildId));
-  
-  if (itemsToDelete.length > 0) {
-    // Remove from local list
-    list = list.filter(a => !matchId(a.id, id));
-    saveAnnouncementsLocally(list);
+  console.log(`🗑️ Attempting to delete announcement ID: ${id}`);
 
-    if (supabase) {
-      try {
-        const rawId = String(id).trim();
-        const numId = String(parseInt(rawId.replace(/\D/g, ''), 10));
-        const padId = !isNaN(numId) ? numId.padStart(3, '0') : rawId;
-        
-        const deleteIds = Array.from(new Set([rawId, numId, padId, ...itemsToDelete.map(i => String(i.id))]));
+  // Delete from Supabase first (source of truth)
+  let supabaseDeleted = false;
+  if (supabase) {
+    try {
+      // Fetch all rows from Supabase matching the ID flexibly
+      const { data: allRows, error: fetchErr } = await supabase
+        .from('alliance_announcements')
+        .select('id');
 
-        await supabase.from('alliance_announcements').delete().in('id', deleteIds);
-      } catch (err) {
-        console.warn('Supabase delete error:', err.message);
+      if (!fetchErr && allRows) {
+        const matchingIds = allRows
+          .filter(row => matchId(row.id, id))
+          .map(row => row.id);
+
+        if (matchingIds.length > 0) {
+          console.log(`🗑️ Deleting from Supabase IDs: ${matchingIds.join(', ')}`);
+          const { error: delErr } = await supabase
+            .from('alliance_announcements')
+            .delete()
+            .in('id', matchingIds);
+
+          if (delErr) {
+            console.error('Supabase delete error:', delErr.message);
+          } else {
+            supabaseDeleted = true;
+            console.log(`✅ Deleted from Supabase: ${matchingIds.join(', ')}`);
+          }
+        }
       }
+    } catch (err) {
+      console.error('Supabase delete exception:', err.message);
     }
   }
 
-  return { success: list.length < initialCount, list };
+  // Delete from local file
+  let list = readLocalFile();
+  const initialCount = list.length;
+  list = list.filter(a => !matchId(a.id, id));
+  writeLocalFile(list);
+
+  const localDeleted = list.length < initialCount;
+  const success = supabaseDeleted || localDeleted;
+
+  console.log(`🗑️ Delete result — Supabase: ${supabaseDeleted}, Local: ${localDeleted}`);
+  return { success, list };
 }
 
 module.exports = {
