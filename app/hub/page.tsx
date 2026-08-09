@@ -89,6 +89,13 @@ export default function HubPage() {
                         const current = typedData.find(m => m.user_id === user.id);
                         if (current) {
                             setCurrentUser(current);
+                        } else {
+                            // New Stack Auth user has no Supabase row yet — auto-provision and redirect to settings
+                            await supabase
+                                .from('members')
+                                .upsert({ user_id: user.id }, { onConflict: 'user_id' });
+                            window.location.href = '/settings';
+                            return;
                         }
                     }
                 }

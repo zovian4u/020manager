@@ -49,7 +49,7 @@ export default function SettingsPage() {
         async function fetchUserData() {
             try {
                 setIsLoading(true);
-                const { data } = await supabase
+                const { data, error } = await supabase
                     .from('members')
                     .select('*')
                     .eq('user_id', user!.id)
@@ -72,6 +72,11 @@ export default function SettingsPage() {
                         birthday: data.birthday || "",
                         language: data.language || language
                     });
+                } else if (error?.code === 'PGRST116') {
+                    // No row found — new user from Stack Auth. Auto-provision a minimal record.
+                    await supabase
+                        .from('members')
+                        .upsert({ user_id: user!.id }, { onConflict: 'user_id' });
                 }
             } catch (err) {
                 console.error("Error fetching settings:", err);

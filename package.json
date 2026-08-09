@@ -6,13 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "bot": "node bot/index.js",
+    "bot:register": "node bot/register-commands.js"
   },
   "dependencies": {
     "@stackframe/stack": "^2.8.68",
     "@supabase/supabase-js": "^2.96.0",
+    "discord.js": "^14.27.0",
+    "dotenv": "^17.4.2",
     "html-to-image": "^1.11.13",
     "next": "16.1.6",
+    "node-cron": "^4.6.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
