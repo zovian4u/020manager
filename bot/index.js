@@ -19,6 +19,7 @@ require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
 const { isAllianceLeader } = require('./commands/announce');
 const { initScheduler, scheduleItem, cancelScheduledJob } = require('./services/scheduler');
 const { saveAnnouncement, loadAnnouncements, deleteAnnouncement, matchId } = require('./services/database');
+const { getGuildTimezone, setGuildTimezone, parseLocalTime } = require('./services/timezone');
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) { console.error('❌ DISCORD_TOKEN missing!'); process.exit(1); }
@@ -285,10 +286,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const targetChannel = interaction.options.getChannel('channel');
         const imageUrl = interaction.options.getString('image') || null;
 
-        // Generate current bot time to show in modal labels
-        const now = new Date();
-        const botTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-        const botDate = `${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}`;
+        // Show current local time in the guild's configured timezone
+        const tz = getGuildTimezone(interaction.guildId);
+        const localNowStr = new Date().toLocaleString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
 
         const modal = new ModalBuilder()
           .setCustomId(`modal_create_ann_${targetChannel.id}_${imageUrl ? encodeURIComponent(imageUrl) : 'noimg'}`)
@@ -314,9 +314,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
           new ActionRowBuilder().addComponents(
             new TextInputBuilder()
               .setCustomId('create_time')
-              .setLabel('When to send?')
+              .setLabel(`When to send? (${tz} now: ${localNowStr})`)
               .setStyle(TextInputStyle.Short)
-              .setPlaceholder('"now"  "in 2 hours"  "in 30 minutes"  "in 3 days"  "tomorrow"')
+              .setPlaceholder('"now"  "in 2 hours"  "18:30"  "tomorrow 18:30"')
               .setValue('now')
               .setRequired(true)
           ),
@@ -372,6 +372,26 @@ client.on(Events.InteractionCreate, async (interaction) => {
             { label: '💡 Tech Donation & Daily Reset', value: 'preset_tech_reset', description: 'Daily tech donations & arms race alert' }
           ]);
         return interaction.reply({ content: '⚡ Select a preset:', components: [new ActionRowBuilder().addComponents(presetsMenu)], ephemeral: true });
+
+      } else if (commandName === 'timezone') {
+        const sub = interaction.options.getSubcommand();
+        if (sub === 'set') {
+          const zone = interaction.options.getString('zone').trim();
+          const result = setGuildTimezone(interaction.guildId, zone);
+          if (!result.success) return interaction.reply({ content: `❌ ${result.error}`, ephemeral: true });
+          const localNow = new Date().toLocaleString('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false });
+          return interaction.reply({
+            content: `✅ Server timezone set to **${zone}**\n🕐 Current local time in this timezone: **${localNow}**\nAll announcement times you enter will now use this timezone!`,
+            ephemeral: true
+          });
+        } else {
+          const tz = getGuildTimezone(interaction.guildId);
+          const localNow = new Date().toLocaleString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
+          return interaction.reply({
+            content: `🌍 Server timezone: **${tz}**\n🕐 Current local time: **${localNow}**\nChange with: \`/timezone set zone: Asia/Kolkata\``,
+            ephemeral: true
+          });
+        }
       }
 
     // ── Select Menus ─────────────────────────────────────────────────────────
@@ -463,7 +483,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const imageRaw    = interaction.fields.getTextInputValue('create_image').trim();
         const imageUrl    = imageRaw || null;
 
-        const executeAt       = parseUserTime(timeRaw);
+        const executeAt       = parseLocalTime(timeRaw, interaction.guildId);
         const intervalMinutes = parseInterval(intervalRaw);
         const existingList    = await loadAnnouncements(interaction.guildId);
         const id              = generateNextId(existingList);
@@ -506,7 +526,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const intervalRaw = interaction.fields.getTextInputValue('edit_interval').trim();
 
         const timeChanged = timeRaw.toLowerCase() !== 'now' || dateRaw.toLowerCase() !== 'today';
-        const executeAt = parseUserTime(`${timeRaw} ${dateRaw}`);
+        const executeAt = parseLocalTime(`${timeRaw} ${dateRaw}`, interaction.guildId);
         const intervalMinutes = parseInterval(intervalRaw);
 
         const updated = {

@@ -40,6 +40,20 @@ const allCommandsData = [
       .setRequired(true)),
 
   new SlashCommandBuilder()
+    .setName('timezone')
+    .setDescription('Set or view the server timezone for announcement times')
+    .addSubcommand(sub => sub
+      .setName('set')
+      .setDescription('Set the server timezone (e.g. Asia/Kolkata, Europe/London, America/New_York)')
+      .addStringOption(opt => opt
+        .setName('zone')
+        .setDescription('Timezone name (e.g. Asia/Kolkata)')
+        .setRequired(true)))
+    .addSubcommand(sub => sub
+      .setName('show')
+      .setDescription('Show the current server timezone setting')),
+
+  new SlashCommandBuilder()
     .setName('preset')
     .setDescription('Quick-deploy a preset Alliance Event announcement'),
 ];
