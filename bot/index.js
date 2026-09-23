@@ -575,4 +575,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
+// ─────────────────────────────────────────────
+// Discord client-level error handlers
+// ─────────────────────────────────────────────
+client.on('error',   err  => console.error('❌ Discord client error:', err.message));
+client.on('warn',    msg  => console.warn ('⚠️  Discord client warn:', msg));
+client.on('shardError', err => console.error('❌ Shard error:', err.message));
+
+// ─────────────────────────────────────────────
+// Process-level crash guards (keeps bot alive on Render)
+// ─────────────────────────────────────────────
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err.message, err.stack);
+});
+
 client.login(token);
