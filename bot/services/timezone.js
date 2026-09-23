@@ -120,6 +120,16 @@ async function parseLocalTime(rawInput, guildId) {
     return result.toISOString();
   }
 
+  // "YYYYMMDD HH:MM" e.g. "20260930 18:30"
+  const yyyymmddMatch = str.match(/^(\d{4})(\d{2})(\d{2})\s+(\d{1,2}):(\d{2})$/);
+  if (yyyymmddMatch) {
+    const result = localToUTC(
+      parseInt(yyyymmddMatch[1]), parseInt(yyyymmddMatch[2]), parseInt(yyyymmddMatch[3]),
+      parseInt(yyyymmddMatch[4]), parseInt(yyyymmddMatch[5])
+    );
+    return result.toISOString();
+  }
+
   // "HH:MM DD-MM-YYYY" or "HH:MM DDMMYYYY"
   const dtMatch = str.match(/^(\d{1,2}):(\d{2})\s+(\d{2})[-/]?(\d{2})[-/]?(\d{4})$/);
   if (dtMatch) {

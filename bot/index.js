@@ -20,6 +20,7 @@ const { isAllianceLeader } = require('./commands/announce');
 const { initScheduler, scheduleItem, cancelScheduledJob } = require('./services/scheduler');
 const { saveAnnouncement, loadAnnouncements, deleteAnnouncement, matchId } = require('./services/database');
 const { getGuildTimezone, setGuildTimezone, parseLocalTime } = require('./services/timezone');
+const { initWeeklyReset } = require('./services/weeklyReset');
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) { console.error('❌ DISCORD_TOKEN missing!'); process.exit(1); }
@@ -260,6 +261,7 @@ client.once(Events.ClientReady, async (c) => {
   console.log(`🛡️ Server Count: ${c.guilds.cache.size}`);
   console.log('----------------------------------------------------');
   await initScheduler(client);
+  await initWeeklyReset(client); // 🔄 Auto-clear DS & CS signups every Sunday 00:00
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -267,6 +269,73 @@ client.on(Events.InteractionCreate, async (interaction) => {
     // ── Slash Commands ──────────────────────────────────────────────────────
     if (interaction.isChatInputCommand()) {
       const { commandName, member, guildId } = interaction;
+
+      // ── /020 — public info command, no R4/R5 check ──────────────────────
+      if (commandName === '020') {
+        const tz       = await getGuildTimezone(guildId);
+        const localNow = new Date().toLocaleString('en-GB', { timeZone: tz, weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false });
+
+        // Next Sunday 00:00 in guild timezone
+        function getNextSunday(tz) {
+          const now = new Date();
+          const localStr = now.toLocaleString('en-CA', { timeZone: tz, hour12: false });
+          const [datePart] = localStr.split(', ');
+          const [y, m, d] = datePart.split('-').map(Number);
+          const dayOfWeek = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0=Sun
+          const daysUntilSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
+          // Build midnight local time for that Sunday
+          const candidate = new Date(Date.UTC(y, m - 1, d + daysUntilSunday, 0, 0, 0));
+          // Adjust for timezone offset
+          const localMidnightStr = candidate.toLocaleString('en-CA', { timeZone: tz, hour12: false });
+          const [lDatePart, lTimePart] = localMidnightStr.split(', ');
+          const [ly, lm, ld] = lDatePart.split('-').map(Number);
+          const [lh, lmin] = lTimePart.split(':').map(Number);
+          const diff = Date.UTC(ly, lm - 1, ld, lh, lmin) - candidate.getTime();
+          return new Date(candidate.getTime() - diff);
+        }
+
+        const nextReset    = getNextSunday(tz);
+        const resetUnix    = Math.floor(nextReset.getTime() / 1000);
+
+        // Active scheduled announcements
+        const fullList     = await loadAnnouncements(guildId);
+        const announcements = fullList.filter(item => !item.id.startsWith('tz_'));
+
+        const embed = new EmbedBuilder()
+          .setTitle('⚔️ 020 Alliance Bot — Status')
+          .setColor(0x5865F2)
+          .setDescription(
+            '> Automated alliance management for **Last War: Survival**\n' +
+            '> Scheduling, RSVPs, and weekly resets — all hands-free.'
+          )
+          .addFields(
+            {
+              name: '🌍 Server Timezone',
+              value: `\`${tz}\`  •  🕐 Now: **${localNow}**`,
+              inline: false
+            },
+            {
+              name: '🔄 Next Weekly Reset',
+              value: `<t:${resetUnix}:F>  (<t:${resetUnix}:R>)\nClears all DS & CS registration data at Sunday 00:00 ${tz}`,
+              inline: false
+            },
+            {
+              name: `📢 Scheduled Announcements (${announcements.length})`,
+              value: announcements.length === 0
+                ? '*No announcements scheduled. Use `/create` to add one.*'
+                : announcements.map(a => {
+                    const unix = Math.floor(new Date(a.executeAt).getTime() / 1000);
+                    const repeat = a.intervalMinutes ? `🔁 every ${intervalToString(a.intervalMinutes)}` : '1× only';
+                    return `**[\`${a.id}\`] ${a.title}**\n📍 <#${a.targetChannelId}>  •  ⏰ <t:${unix}:R>  •  ${repeat}`;
+                  }).join('\n\n'),
+              inline: false
+            }
+          )
+          .setFooter({ text: '020 Alliance Bot  •  /create  /list  /preset  /timezone' })
+          .setTimestamp();
+
+        return interaction.reply({ embeds: [embed], ephemeral: false });
+      }
 
       if (!isAllianceLeader(member)) {
         return interaction.reply({ content: '❌ Only R4/R5 Alliance Leaders can use bot commands.', ephemeral: true });
@@ -293,20 +362,38 @@ client.on(Events.InteractionCreate, async (interaction) => {
           executeAt, intervalMinutes, rolePing: 'everyone', imageUrl,
           createdBy: interaction.user.tag,
           createdAt: new Date().toISOString(),
-          active: true, isNewCreation: true
+          active: true,
+          // isNewCreation intentionally NOT set — let the scheduled time control dispatch,
+          // prevents immediate @everyone fire the moment /create is run
         };
 
         await saveAnnouncement(announcementObj);
         scheduleItem(client, announcementObj);
 
+        // ── Public confirmation embed — no @everyone, visible in this channel ──
         const startUnix = Math.floor(new Date(executeAt).getTime() / 1000);
-        const isNow = new Date(executeAt).getTime() <= Date.now() + 5000;
-        let reply = isNow
-          ? `✅ **"${title}" [ID: \`${id}\`]** → <#${targetChannel.id}>\n⚡ **First Send**: Immediately`
-          : `✅ **"${title}" [ID: \`${id}\`]** → <#${targetChannel.id}>\n⏰ **First Send**: <t:${startUnix}:F> (<t:${startUnix}:R>)`;
-        if (intervalMinutes) reply += `\n🔁 **Repeat**: Every ${intervalToString(intervalMinutes)}`;
+        const isNow     = new Date(executeAt).getTime() <= Date.now() + 5000;
 
-        return interaction.reply({ content: reply, ephemeral: true });
+        const confirmEmbed = new EmbedBuilder()
+          .setTitle('📅 Announcement Scheduled')
+          .setColor(0x22c55e)
+          .addFields(
+            { name: '📌 Title',          value: title,                                  inline: false },
+            { name: '📍 Target Channel', value: `<#${targetChannel.id}>`,               inline: true  },
+            { name: '🆔 ID',             value: `\`${id}\``,                            inline: true  },
+            { name: '\u200b',             value: '\u200b',                               inline: true  },
+            {
+              name: '⏰ First Send',
+              value: isNow ? '⚡ Immediately' : `<t:${startUnix}:F>  (<t:${startUnix}:R>)`,
+              inline: false
+            },
+            ...(intervalMinutes ? [{ name: '🔁 Repeats', value: `Every ${intervalToString(intervalMinutes)}`, inline: true }] : []),
+          )
+          .setFooter({ text: `Created by ${interaction.user.tag}  •  Use /list to manage` })
+          .setTimestamp();
+
+        return interaction.reply({ embeds: [confirmEmbed], ephemeral: false });
+
 
       // ── /list ──────────────────────────────────────────────────────────────
       } else if (commandName === 'list') {

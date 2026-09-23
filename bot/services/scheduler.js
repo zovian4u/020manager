@@ -13,9 +13,34 @@ const deletedIds = new Set();
 async function initScheduler(client) {
   console.log('⏰ Initializing Alliance Reminder Scheduler...');
   const announcements = await loadAnnouncements();
-  
+
   for (const item of announcements) {
     if (item.active !== false) {
+      const startMs    = item.executeAt ? new Date(item.executeAt).getTime() : Date.now();
+      const hasInterval = item.intervalMinutes && item.intervalMinutes > 0;
+      const isOverdue   = startMs <= Date.now();
+
+      if (isOverdue) {
+        if (hasInterval) {
+          // ── Recurring: advance to next future cycle, don't fire immediately ──
+          const intervalMs   = item.intervalMinutes * 60 * 1000;
+          const elapsed      = Date.now() - startMs;
+          const cyclesPassed = Math.ceil(elapsed / intervalMs);
+          item.executeAt     = new Date(startMs + cyclesPassed * intervalMs).toISOString();
+          item.isNewCreation = false;
+          await saveAnnouncement(item);
+          console.log(`⏩ [Scheduler] Advanced "${item.title}" [${item.id}] → next fire: ${item.executeAt}`);
+        } else {
+          // ── One-time: already past due — skip it, do NOT re-fire on restart ──
+          // Prevents double-pinging @everyone if the bot restarted after the
+          // announcement fired but before active:false was saved to Supabase.
+          item.active = false;
+          await saveAnnouncement(item);
+          console.log(`⏭️  [Scheduler] Skipped past-due one-time item "${item.title}" [${item.id}]`);
+          continue;
+        }
+      }
+
       scheduleItem(client, item);
     }
   }
@@ -66,32 +91,34 @@ async function resolveImageUrl(client, input, targetChannelId) {
 }
 
 /**
- * Schedule an announcement with optional future Start Time and optional Repeat Interval.
+ * Schedule an announcement. Always async via setTimeout — never fires synchronously.
+ * "now" items use delay=0 (next event loop tick). Future items use their actual delay.
  */
 function scheduleItem(client, item) {
   cancelScheduledJob(item.id);
-  deletedIds.delete(String(item.id)); // Re-activate if re-created
+  deletedIds.delete(String(item.id)); // re-activate if re-created
 
   const startTimeMs = item.executeAt ? new Date(item.executeAt).getTime() : Date.now();
-  const now = Date.now();
-  const delay = startTimeMs - now;
-
+  const delay       = Math.max(0, startTimeMs - Date.now()); // never negative
   const hasInterval = item.intervalMinutes && item.intervalMinutes > 0;
-  const intervalMs = hasInterval ? item.intervalMinutes * 60 * 1000 : 0;
-  const needsImmediateDispatch = item.isNewCreation || (!item.lastExecutedAt && delay <= 0);
+  const intervalMs  = hasInterval ? item.intervalMinutes * 60 * 1000 : 0;
 
-  if (delay <= 0) {
-    if (needsImmediateDispatch) {
-      dispatchAnnouncement(client, item);
-      item.isNewCreation = false;
-      item.lastExecutedAt = new Date().toISOString();
-      if (!deletedIds.has(String(item.id))) saveAnnouncement(item);
+  // Always async — prevents @everyone firing synchronously during /create
+  const timer = setTimeout(async () => {
+    if (deletedIds.has(String(item.id))) {
+      activeJobs.delete(item.id);
+      return;
     }
 
+    // First dispatch
+    await dispatchAnnouncement(client, item);
+    item.lastExecutedAt = new Date().toISOString();
+
     if (hasInterval) {
-      const timer = setInterval(async () => {
+      // Set up the repeat interval after first dispatch
+      const intervalTimer = setInterval(async () => {
         if (deletedIds.has(String(item.id))) {
-          clearInterval(timer);
+          clearInterval(intervalTimer);
           activeJobs.delete(item.id);
           return;
         }
@@ -100,47 +127,18 @@ function scheduleItem(client, item) {
         if (!deletedIds.has(String(item.id))) await saveAnnouncement(item);
       }, intervalMs);
 
-      activeJobs.set(item.id, { timer, type: 'interval' });
+      activeJobs.set(item.id, { timer: intervalTimer, type: 'interval' });
     } else {
+      // One-time: mark as done
       item.active = false;
-      if (!deletedIds.has(String(item.id))) saveAnnouncement(item);
+      activeJobs.delete(item.id);
     }
 
-  } else {
-    const timer = setTimeout(async () => {
-      if (deletedIds.has(String(item.id))) {
-        activeJobs.delete(item.id);
-        return;
-      }
+    if (!deletedIds.has(String(item.id))) await saveAnnouncement(item);
 
-      await dispatchAnnouncement(client, item);
-      item.lastExecutedAt = new Date().toISOString();
-      item.isNewCreation = false;
+  }, delay);
 
-      if (hasInterval) {
-        const intervalTimer = setInterval(async () => {
-          if (deletedIds.has(String(item.id))) {
-            clearInterval(intervalTimer);
-            activeJobs.delete(item.id);
-            return;
-          }
-          await dispatchAnnouncement(client, item);
-          item.lastExecutedAt = new Date().toISOString();
-          if (!deletedIds.has(String(item.id))) await saveAnnouncement(item);
-        }, intervalMs);
-
-        activeJobs.set(item.id, { timer: intervalTimer, type: 'interval' });
-      } else {
-        item.active = false;
-        activeJobs.delete(item.id);
-      }
-
-      if (!deletedIds.has(String(item.id))) await saveAnnouncement(item);
-
-    }, delay);
-
-    activeJobs.set(item.id, { timer, type: 'once' });
-  }
+  activeJobs.set(item.id, { timer, type: 'once' });
 }
 
 /**

@@ -32,7 +32,7 @@ const allCommandsData = [
       .setRequired(true))
     .addStringOption(opt => opt
       .setName('time')
-      .setDescription('When to send in your local timezone (e.g. 08/09 6:30PM, in 2 hours, now)')
+      .setDescription('When to send (e.g. now, in 2 hours, 18:30, 20260930 18:30)')
       .setRequired(true))
     .addStringOption(opt => opt
       .setName('interval')
@@ -72,6 +72,10 @@ const allCommandsData = [
   new SlashCommandBuilder()
     .setName('preset')
     .setDescription('Quick-deploy a preset Alliance Event announcement'),
+
+  new SlashCommandBuilder()
+    .setName('020')
+    .setDescription('Show 020 Alliance Bot status, scheduled announcements, and next weekly reset'),
 ];
 
 
