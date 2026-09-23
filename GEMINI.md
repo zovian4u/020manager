@@ -1,4 +1,4 @@
-﻿# 020 - Last War Alliance Manager: Project Context
+# 020 - Last War Alliance Manager: Project Context
 
 This file is auto-loaded by Antigravity (AGY) at the start of every conversation.
 Keep this file updated whenever new features are added.
@@ -22,7 +22,7 @@ Keep this file updated whenever new features are added.
 - Database: Supabase (PostgreSQL + RLS)
 - Discord Bot: discord.js v14
 - Scheduling: node-cron v4
-- Deployment: Vercel (web app), 24/7 server or Railway (bot)
+- Deployment: Vercel (web app), **Render** (Discord bot — free web service)
 - Runtime: Node.js
 
 Key env vars (in .env.local):
@@ -64,6 +64,39 @@ d:\Personal\020\
   - handler/                  - API/event handlers
   - welcome/                  - New member welcome page
   - api/                      - Next.js API routes
+---
+
+## Bot Hosting — 24/7 Setup
+
+The Discord bot is hosted on **Render** (free web service) and kept alive by **UptimeRobot**.
+
+### Render
+- Service name: **Wolfie Bot**
+- URL: https://wolfie-bot-ymyv.onrender.com/
+- Dashboard: https://dashboard.render.com → My project → Production → Wolfie Bot
+- Runtime: Node.js, Region: Singapore
+- Start command: `node bot/index.js`
+- Auto-deploys from GitHub (`main` branch of `zovian4u/020manager`)
+- Environment variables set in Render (see Environment tab):
+  - `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`
+  - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+  - `PORT=10000` (Render's internal port)
+- Free tier spins down after inactivity — UptimeRobot prevents this
+
+### UptimeRobot
+- Pings https://wolfie-bot-ymyv.onrender.com/ every 5 minutes
+- Keeps the Render free instance alive 24/7
+- Dashboard: https://dashboard.uptimerobot.com
+
+### Important Notes
+- **Never run `npm run bot` locally while Render is running** — it will kick the Render bot offline (same token = only one session allowed)
+- After any code changes: `git push origin main` → Render auto-deploys
+- After changing slash commands: run `npm run bot:register` locally to register them with Discord
+- If bot shows offline but https://wolfie-bot-ymyv.onrender.com/ responds: go to Render → Manual Deploy to restart the Node process
+- `DISCORD_GUILD_ID` in Render must be `1294462126634696786` (the alliance Discord server)
+
+---
+
 - bot/                        - Discord Bot
   - index.js                  - Main bot entry point (~493 lines)
   - deploy-commands.js        - Deploy commands helper
@@ -215,3 +248,4 @@ Keep this updated whenever a significant feature is added or changed.
 |------|--------|
 | 2026-09-22 | Initial GEMINI.md created. Documented full project: Next.js web app + Discord bot for Last War: Survival alliance management. |
 | 2026-09-22 | Added bot/services/weeklyReset.js - auto-clears DS and CS signup fields every Sunday 00:00 (guild timezone) and posts Discord announcement to channel 1294462126634696789. Hooked into bot/index.js ClientReady event. |
+| 2026-09-23 | Documented full hosting setup: Render (free web service) + UptimeRobot (keep-alive pinger). Added crash guards to bot/index.js: unhandledRejection, uncaughtException, client error/warn/shardError handlers. Fixed DISCORD_GUILD_ID in Render to 1294462126634696786. |
